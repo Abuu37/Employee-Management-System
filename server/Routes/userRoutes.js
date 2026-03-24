@@ -5,6 +5,7 @@ import { createUserByAdmin } from "../controller/userController.js";
 import { getAllUsers } from "../controller/userController.js";
 import { updateUser } from "../controller/userController.js";
 import { deleteUser } from "../controller/userController.js";
+import { changePassword } from "../controller/userController.js";
 const router = express.Router();
 
 //only admin can access this route
@@ -58,5 +59,13 @@ router.put(
 
 //delete user by admin
 router.delete("/delete-user/:id", veryifyToken, checkRole("admin"), deleteUser);
+
+//change password for logged-in user
+router.put(
+  "/change-password",
+  veryifyToken,
+  checkRole("admin", "manager", "employee"),
+  changePassword,
+);
 
 export { router as UserRoute };

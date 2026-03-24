@@ -1,7 +1,21 @@
-import { NavLink } from "react-router-dom";
-import navItems from "../../data/navItems";
+import { NavLink, useNavigate } from "react-router-dom";
+import { getNavItemsByRole } from "../../data/navItems";
 
 function Sidebar() {
+  const navigate = useNavigate();
+  const role = localStorage.getItem("user-role");
+  const navItems = getNavItemsByRole(role);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user-role");
+    navigate("/login");
+  };
+
+  const panelTitle = role
+    ? `${role[0].toUpperCase()}${role.slice(1)} Panel`
+    : "Panel";
+
   return (
     <aside className="hidden md:flex md:w-72 md:flex-col border-r border-slate-200 bg-white px-6 py-7">
       <div className="mb-10 flex items-center gap-3">
@@ -9,28 +23,40 @@ function Sidebar() {
           EMS
         </div>
         <div>
-          <h1 className="font-semibold text-slate-900">Admin Panel</h1>
+          <h1 className="font-semibold text-slate-900">{panelTitle}</h1>
           <p className="text-xs text-slate-500">Business Workspace</p>
         </div>
       </div>
 
       <nav className="space-y-2">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.key}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`
-            }
-          >
-            <span className="h-2 w-2 rounded-full bg-current" />
-            {item.name}
-          </NavLink>
-        ))}
+        {navItems.map((item) =>
+          item.key === "logout" ? (
+            <button
+              key={item.key}
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-slate-600 transition-all hover:bg-slate-100"
+            >
+              <span className="h-2 w-2 rounded-full bg-current" />
+              {item.name}
+            </button>
+          ) : (
+            <NavLink
+              key={item.key}
+              to={item.path}
+              className={({ isActive }) =>
+                `flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`
+              }
+            >
+              <span className="h-2 w-2 rounded-full bg-current" />
+              {item.name}
+            </NavLink>
+          ),
+        )}
       </nav>
 
       <div className="mt-auto rounded-2xl bg-slate-900 p-4 text-white">

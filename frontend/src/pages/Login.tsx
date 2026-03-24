@@ -16,18 +16,23 @@ const Login = () => {
     axios
       .post("http://localhost:5000/api/auth/login", values)
       .then((result) => {
+
         if (result.data.message === "Login successful") {
+
           if (result.data["user-role"] === "admin") {
             navigate("/dashboard");
           } else if (result.data["user-role"] === "employee") {
-            navigate("/employeedashboard");
+            navigate("/dashboard");
+            
           } else if (result.data["user-role"] === "manager") {
-            navigate("/managerdashboard");
+            navigate("/dashboard");
           }
 
           localStorage.setItem("token", result.data.token);
           localStorage.setItem("user-role", result.data["user-role"]);
-        } else {
+        } 
+        
+        else {
           alert("Login failed: " + result.data.message);
           navigate("/login");
         }
