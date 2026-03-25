@@ -11,6 +11,7 @@ interface ProjectFormProps {
   project?: ProjectItem | null;
 }
 
+// Helper function to convert date string to YYYY-MM-DD format for date input fields
 const toDateInputValue = (value: string) => {
   if (!value) {
     return "";
@@ -24,6 +25,7 @@ const toDateInputValue = (value: string) => {
   return parsed.toISOString().slice(0, 10);
 };
 
+// Main component for creating/editing a project, displayed inside a modal
 function ProjectForm({
   isOpen,
   onClose,
@@ -62,6 +64,7 @@ function ProjectForm({
     });
   }, [project, managers, isOpen]);
 
+  // Handle changes to form fields and update local state accordingly
   const handleChange = (
     event: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -84,6 +87,7 @@ function ProjectForm({
     });
   };
 
+  // Handle form submission by calling the onSave prop with the current form values
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await onSave(formValues);

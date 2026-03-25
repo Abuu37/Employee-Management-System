@@ -1,6 +1,7 @@
 import { FiEdit2, FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
 import type { ProjectItem } from "./types";
 
+// Component for displaying a table of projects with actions to view, edit, or delete each project
 interface ProjectTableProps {
   title: string;
   projects: ProjectItem[];
@@ -11,6 +12,7 @@ interface ProjectTableProps {
   onDelete: (project: ProjectItem) => void;
 }
 
+// Helper function to format date strings for display in the project table
 const formatDate = (value: string) => {
   if (!value) {
     return "-";
@@ -24,12 +26,14 @@ const formatDate = (value: string) => {
   return date.toLocaleDateString("en-GB");
 };
 
+// Mapping of project status to corresponding CSS classes for styling in the project table
 const statusClassMap: Record<ProjectItem["status"], string> = {
   pending: "bg-amber-50 text-amber-700",
   in_progress: "bg-blue-50 text-blue-700",
   complete: "bg-emerald-50 text-emerald-700",
 };
 
+// Mapping of project status to human-readable labels for display in the project table
 const statusLabelMap: Record<ProjectItem["status"], string> = {
   pending: "Pending",
   in_progress: "In Progress",

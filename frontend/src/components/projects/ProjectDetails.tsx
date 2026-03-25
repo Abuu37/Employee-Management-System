@@ -1,6 +1,7 @@
 import ModalShell from "../user/ModalShell";
 import type { ProjectItem, ProjectTask } from "./types";
 
+// Component for displaying project details and associated tasks in a read-only modal
 interface ProjectDetailsProps {
   isOpen: boolean;
   onClose: () => void;
@@ -8,6 +9,7 @@ interface ProjectDetailsProps {
   tasks: ProjectTask[];
 }
 
+// Helper function to format date strings for display in the project details modal
 const formatDate = (value: string) => {
   if (!value) {
     return "-";
@@ -21,6 +23,7 @@ const formatDate = (value: string) => {
   return date.toLocaleDateString("en-GB");
 };
 
+// Helper function to format project/task status for display in the project details modal
 const formatStatus = (status: string) => {
   const map: Record<string, string> = {
     pending: "Pending",
@@ -32,6 +35,7 @@ const formatStatus = (status: string) => {
   return map[status] || status;
 };
 
+// Main component for displaying project details and associated tasks in a read-only modal
 function ProjectDetails({
   isOpen,
   onClose,
@@ -102,8 +106,10 @@ function ProjectDetails({
                 <thead className="bg-slate-50 text-slate-500">
                   <tr>
                     <th className="px-5 py-3 font-medium">Task Name</th>
+                    <th className="px-5 py-3 font-medium">Description</th>
                     <th className="px-5 py-3 font-medium">Assigned</th>
                     <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Deadline</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -114,17 +120,23 @@ function ProjectDetails({
                           {task.title}
                         </td>
                         <td className="px-5 py-4 text-slate-600">
+                          {task.description}
+                        </td>
+                        <td className="px-5 py-4 text-slate-600">
                           {task.assignedName}
                         </td>
                         <td className="px-5 py-4 text-slate-600">
                           {formatStatus(task.status)}
+                        </td>
+                        <td className="px-5 py-4 text-slate-600">
+                          {formatDate(task.deadline)}
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
                       <td
-                        colSpan={3}
+                        colSpan={6}
                         className="px-5 py-8 text-center text-sm text-slate-500"
                       >
                         No tasks found for this project.
@@ -140,7 +152,8 @@ function ProjectDetails({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium
+               text-white transition hover:bg-slate-800"
             >
               Close
             </button>

@@ -14,9 +14,11 @@ export interface ProjectItem {
 export interface ProjectTask {
   id: number;
   title: string;
+  description?: string;
   assignedTo: number;
   assignedName: string;
   status: string;
+  deadline?: string;
 }
 
 export interface ManagerOption {

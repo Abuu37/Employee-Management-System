@@ -1,6 +1,7 @@
 import ModalShell from "../user/ModalShell";
 import type { ProjectItem } from "./types";
 
+// Modal component for confirming project deletion, displaying project details and asking the user to confirm the action
 interface DeleteProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -9,6 +10,7 @@ interface DeleteProjectModalProps {
   isDeleting: boolean;
 }
 
+// Main component for confirming project deletion, displayed inside a modal
 function DeleteProjectModal({
   isOpen,
   onClose,

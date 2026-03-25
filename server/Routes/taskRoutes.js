@@ -4,9 +4,11 @@ import { checkRole } from "../Middlewares/roleMiddleware.js";
 import {
   createTask,
   getAllTasks,
-  getMyTasks,
+  getTasksByProject,
   updateTask,
   deleteTask,
+  getMyTasks,
+  updateTaskStatus,
 } from "../controller/taskController.js";
 
 const router = Express.Router();
@@ -17,13 +19,35 @@ router.post("/create", veryifyToken, checkRole("manager"), createTask);
 // Get / VIEW all tasks (Admin and Manager)
 router.get("/all", veryifyToken, checkRole("admin", "manager"), getAllTasks);
 
-// Get / VIEW my tasks (Employee)
+// Get tasks by project id (Admin and Manager)
+router.get(
+  "/project/:project_id",
+  veryifyToken,
+  checkRole("admin", "manager"),
+  getTasksByProject,
+);
+
+// Update task status (Manager only)
+router.put("/update/:id", veryifyToken, checkRole("manager"), updateTask);
+
+// Delete task (Admin and Manager)
+router.delete(
+  "/delete/:id",
+  veryifyToken,
+  checkRole("admin", "manager"),
+  deleteTask,
+);
+
+// Get tasks assigned (employee)
+router.get("/mytasks", veryifyToken, checkRole("employee"), getMyTasks);
 router.get("/my-tasks", veryifyToken, checkRole("employee"), getMyTasks);
 
-// Update task status (Employee)
-router.put("/update/:id", veryifyToken, checkRole("employee"), updateTask);
-
-// Delete task (Admin)
-router.delete("/delete/:id", veryifyToken, checkRole("admin"), deleteTask);
+// Update task status (Employee only)
+router.put(
+  "/:id/status",
+  veryifyToken,
+  checkRole("employee"),
+  updateTaskStatus,
+);
 
 export { router as TaskRoute };

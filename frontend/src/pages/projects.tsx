@@ -40,10 +40,12 @@ type RawUser = {
 type RawTask = {
   id: number;
   title: string;
+  description?: string;
   projectId?: number;
   project_id?: number;
   assignedTo: number;
   status: string;
+  deadline?: string;
 };
 
 const normalizeUsers = (payload: unknown): RawUser[] => {
@@ -79,6 +81,7 @@ function Projects() {
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
+  // Build a map of userId to userName for quick lookup when normalizing projects and tasks
   const userNameById = useMemo(() => {
     const map = new Map<number, string>();
     users.forEach((user) => {
@@ -87,6 +90,7 @@ function Projects() {
     return map;
   }, [users]);
 
+  // Normalize projects to ensure consistent field naming and to enrich with managerName
   const normalizeProjects = (data: RawProject[]): ProjectItem[] => {
     return data.map((project) => {
       const managerId = project.managerId ?? project.manager_id ?? 0;
@@ -103,6 +107,8 @@ function Projects() {
     });
   };
 
+
+  // Fetch users and projects in parallel, then normalize and set state
   const fetchUsersAndProjects = async () => {
     const token = localStorage.getItem("token");
 
@@ -124,6 +130,7 @@ function Projects() {
       }),
     ]);
 
+    // Normalize users and set state first so that we have the latest user data available when normalizing projects
     const usersData = normalizeUsers(usersResponse.data);
     setUsers(usersData);
     setManagers(
@@ -139,6 +146,7 @@ function Projects() {
       usersData.map((user) => [user.id, user.name]),
     );
 
+    // Normalize projects using the fresh name map to ensure we display the most up-to-date manager names
     const normalizeWithFreshUsers = (data: RawProject[]): ProjectItem[] =>
       data.map((project) => {
         const managerId = project.managerId ?? project.manager_id ?? 0;
@@ -151,6 +159,7 @@ function Projects() {
           startDate: project.startDate ?? project.start_date ?? "",
           endDate: project.endDate ?? project.end_date ?? "",
           status: project.status ?? "pending",
+          deadline: project.deadline ?? project.deadline_date ?? "",
         };
       });
 
@@ -181,6 +190,7 @@ function Projects() {
     load();
   }, [navigate]);
 
+  //
   const closeAllModals = () => {
     setCreateOpen(false);
     setEditOpen(false);
@@ -190,6 +200,7 @@ function Projects() {
     setTasks([]);
   };
 
+  // Handlers for opening modals and performing CRUD operations
   const handleCreateOpen = () => {
     setFeedback(null);
     setCreateOpen(true);
@@ -221,9 +232,11 @@ function Projects() {
         .map((task) => ({
           id: task.id,
           title: task.title,
+          description: task.description,
           assignedTo: task.assignedTo,
           assignedName: userNameById.get(task.assignedTo) || "Unknown User",
           status: task.status,
+          deadline: task.deadline,
         }));
 
       setTasks(filteredTasks);

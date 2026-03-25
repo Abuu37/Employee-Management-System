@@ -16,6 +16,7 @@ app.use("/api/auth", AuthRoute);
 app.use("/api/user", UserRoute);
 app.use("/api/task", TaskRoute);
 app.use("/api/project", ProjectRoute);
+app.use("/api/tasks", TaskRoute);
 
 const startServer = async () => {
   try {

@@ -11,6 +11,7 @@ export const register = async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
+      console.log("User already exists with email:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -43,6 +44,7 @@ export const createUserByAdmin = async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
+      console.log("User already exists with email:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -117,6 +119,7 @@ export const updateUser = async (req, res) => {
     const user = await User.findByPk(id);
 
     if (!user) {
+      console.log("User not found with id:", id);
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -161,6 +164,7 @@ export const deleteUser = async (req, res) => {
     const { id } = req.params;
     const user = await User.findByPk(id);
     if (!user) {
+      console.log("User not found with id:", id);
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -181,12 +185,14 @@ export const login = async (req, res) => {
     // Find user
     const user = await User.findOne({ where: { email } });
     if (!user) {
+      console.log("User not found with email:", email);
       return res.status(404).json({ message: "User not found" });
     }
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
+      console.log("Invalid password for email:", email);
       return res.status(400).json({ message: "Invalid password" });
     }
 

@@ -4,8 +4,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Employee from "./pages/Employee";
 import Managers from "./pages/Manager";
-
 import Reports from "./pages/Reports";
+import Tasks from "./pages/Task";
 import Settings from "./pages/Settings";
 import Projects from "./pages/projects";
 
@@ -20,6 +20,7 @@ function App() {
         <Route path="/employee" element={<Employee />} />
         <Route path="/manager" element={<Managers />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/tasks" element={<Tasks />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

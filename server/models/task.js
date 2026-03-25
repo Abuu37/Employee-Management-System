@@ -5,6 +5,12 @@ class Task extends Model {}
 
 Task.init(
   {
+    projectId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: "project_id",
+    },
+
     title: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -18,17 +24,13 @@ Task.init(
     assignedTo: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: "assigned_to",
     },
 
     assignedBy: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },
-
-    projectId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      field: "project_id",
+      field: "created_by",
     },
 
     status: {
@@ -49,14 +51,14 @@ Task.init(
     employeeComment: {
       type: DataTypes.TEXT,
       allowNull: true,
-      field: "employee_comment",
+      field: "comments",
     },
   },
-
   {
     sequelize,
     modelName: "Task",
     tableName: "tasks",
   },
 );
+
 export default Task;
