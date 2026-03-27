@@ -13,8 +13,9 @@ const toDbStatus = (status) => {
     completed: "Completed",
     complete: "Completed",
   };
-
-  return map[String(status).toLowerCase()] || null;
+  if (!status) return null;
+  const key = String(status).toLowerCase();
+  return map[key] || null;
 };
 
 const toApiStatus = (status) => {
@@ -23,40 +24,33 @@ const toApiStatus = (status) => {
     "In Progress": "in_progress",
     Completed: "completed",
   };
-
+  if (!status) return "pending";
   return map[status] || "pending";
 };
 
+// Priority is always lowercase: "low", "medium", "high"
 const toDbPriority = (priority) => {
-  if (!priority) {
-    return "Medium";
-  }
-
-  const map = {
-    low: "Low",
-    medium: "Medium",
-    high: "High",
-  };
-
-  return map[String(priority).toLowerCase()] || null;
+  if (!priority) return "medium";
+  const p = String(priority).toLowerCase();
+  if (["low", "medium", "high"].includes(p)) return p;
+  return null;
 };
 
+// Priority is always lowercase: "low", "medium", "high"
 const toApiPriority = (priority) => {
-  const map = {
-    Low: "low",
-    Medium: "medium",
-    High: "high",
-  };
-
-  return map[priority] || "medium";
+  if (!priority) return "medium";
+  const p = String(priority).toLowerCase();
+  if (["low", "medium", "high"].includes(p)) return p;
+  return "medium";
 };
 
+// Normalize task object for API response
 const normalizeTask = (task) => {
   const plain = task.toJSON();
   return {
     ...plain,
     status: toApiStatus(plain.status),
-    priority: toApiPriority(plain.priority),
+    priority: toApiPriority(plain.priority), // always lowercase now
   };
 };
 
@@ -106,17 +100,23 @@ export const createTask = async (req, res) => {
     }
 
     if (project.status !== "in_progress") {
-      return res
-        .status(400)
-        .json({
-          message: "Tasks can only be created in projects that are in progress",
-        });
+      return res.status(400).json({
+        message: "Tasks can only be created in projects that are in progress",
+      });
     }
 
     if (project.managerId !== req.user.id) {
       return res.status(403).json({
         message: "Managers can only create tasks for their assigned projects",
       });
+    }
+
+    // Validate status if provided
+    if (req.body.status !== undefined) {
+      const mappedStatus = toDbStatus(req.body.status);
+      if (!mappedStatus) {
+        return res.status(400).json({ message: "Invalid task status" });
+      }
     }
 
     const mappedPriority = toDbPriority(priority);
@@ -130,8 +130,9 @@ export const createTask = async (req, res) => {
       assignedTo: assignedToId,
       assignedBy: req.user.id,
       projectId: parsedProjectId,
-      priority: mappedPriority,
+      priority: mappedPriority, // always lowercase
       deadline: deadline ?? null,
+      status: req.body.status ? toDbStatus(req.body.status) : undefined,
     });
 
     return res.status(201).json(normalizeTask(task));
@@ -208,6 +209,18 @@ export const getMyTasks = async (req, res) => {
   try {
     const tasks = await Task.findAll({
       where: { assignedTo: req.user.id },
+      include: [
+        {
+          model: Project,
+          as: "project",
+          attributes: ["id", "name"],
+        },
+        {
+          model: User,
+          as: "assigner",
+          attributes: ["id", "name"],
+        },
+      ],
       order: [["id", "DESC"]],
     });
 
@@ -280,7 +293,7 @@ export const updateTask = async (req, res) => {
       if (!mappedPriority) {
         return res.status(400).json({ message: "Invalid task priority" });
       }
-      task.priority = mappedPriority;
+      task.priority = mappedPriority; // always lowercase
     }
 
     if (status !== undefined) {
@@ -296,12 +309,10 @@ export const updateTask = async (req, res) => {
     }
 
     await task.save();
-    return res
-      .status(200)
-      .json({
-        message: "Task updated successfully",
-        task: normalizeTask(task),
-      });
+    return res.status(200).json({
+      message: "Task updated successfully",
+      task: normalizeTask(task),
+    });
   } catch (error) {
     return res.status(500).json({ message: "Failed to update task" });
   }
@@ -317,7 +328,7 @@ export const updateTaskStatus = async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (task.assignedTo !== req.user.id) {
+    if (Number(task.assignedTo) !== Number(req.user.id)) {
       return res
         .status(403)
         .json({ message: "Employees can only update their own tasks" });
@@ -336,12 +347,10 @@ export const updateTaskStatus = async (req, res) => {
     }
 
     await task.save();
-    return res
-      .status(200)
-      .json({
-        message: "Task updated successfully",
-        task: normalizeTask(task),
-      });
+    return res.status(200).json({
+      message: "Task updated successfully",
+      task: normalizeTask(task),
+    });
   } catch (error) {
     return res.status(500).json({ message: "Failed to update task" });
   }

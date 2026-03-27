@@ -14,4 +14,8 @@ Project.belongsTo(User, { foreignKey: "managerId", as: "manager" });
 Project.hasMany(Task, { foreignKey: "projectId", as: "tasks" });
 Task.belongsTo(Project, { foreignKey: "projectId", as: "project" });
 
+// User <-> Task relationships (who assigned the task)
+User.hasMany(Task, { foreignKey: "assignedBy", as: "assignedTasks" });
+Task.belongsTo(User, { foreignKey: "assignedBy", as: "assigner" });
+
 export { User, Task, Project };

@@ -1,6 +1,22 @@
 import { FiBell, FiSearch } from "react-icons/fi";
 
-function Header({ searchTerm, onSearchChange }: { searchTerm: string; onSearchChange: (value: string) => void }) {
+function Header({
+  searchTerm,
+  onSearchChange,
+}: {
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+}) {
+  const userName = localStorage.getItem("user-name") ?? "User";
+  const userRole = localStorage.getItem("user-role") ?? "";
+  const userEmail = localStorage.getItem("user-email") ?? "";
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <header className="mb-6 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm md:px-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -27,13 +43,15 @@ function Header({ searchTerm, onSearchChange }: { searchTerm: string; onSearchCh
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
             <div className="h-9 w-9 rounded-full bg-linear-to-tr from-slate-800 to-blue-600" />
             <div>
-              <p className="text-sm font-semibold leading-none">Admin User</p>
-              <p className="text-xs text-slate-500">Admin@gmail.com</p>
+              <p className="text-sm font-semibold leading-none capitalize">
+                {userRole}
+              </p>
+              <p className="text-xs text-slate-500">{userEmail}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-xs text-slate-400 hidden lg:block">Wednesday</p>
+            <p className="text-xs text-slate-400 hidden lg:block">{today}</p>
           </div>
         </div>
       </div>

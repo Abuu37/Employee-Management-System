@@ -1,4 +1,7 @@
+import { useState } from "react";
+import { FiPlus } from "react-icons/fi";
 import ModalShell from "../user/ModalShell";
+import TaskFormModal, { type TaskFormValues } from "../tasks/TaskFormModal";
 import type { ProjectItem, ProjectTask } from "./types";
 
 // Component for displaying project details and associated tasks in a read-only modal
@@ -7,6 +10,8 @@ interface ProjectDetailsProps {
   onClose: () => void;
   project: ProjectItem | null;
   tasks: ProjectTask[];
+  assignees: Array<{ id: number; name: string }>;
+  onCreateTask: (values: TaskFormValues) => Promise<void>;
 }
 
 // Helper function to format date strings for display in the project details modal
@@ -41,7 +46,18 @@ function ProjectDetails({
   onClose,
   project,
   tasks,
+  assignees,
+  onCreateTask,
 }: ProjectDetailsProps) {
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const role = localStorage.getItem("user-role");
+
+  const canCreateTask = role === "manager" && project?.status === "in_progress";  // Only allow task creation if user is a manager and project is in progress 
+
+  const handleTaskFormSubmit = async (values: TaskFormValues) => {
+    await onCreateTask(values);
+  };
+
   return (
     <ModalShell
       isOpen={isOpen}
@@ -96,18 +112,27 @@ function ProjectDetails({
           </div>
 
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h4 className="text-sm font-semibold text-slate-900">
-                Tasks (Read Only)
-              </h4>
+            <div className="border-b border-slate-200 px-5 py-4 flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-slate-900">Tasks</h4>
+              <button
+                type="button"
+                onClick={() => setIsTaskModalOpen(true)}
+                disabled={!canCreateTask}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition
+                 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                <FiPlus className="h-4 w-4" />
+                Create Task
+              </button>
             </div>
+
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-slate-50 text-slate-500">
                   <tr>
                     <th className="px-5 py-3 font-medium">Task Name</th>
                     <th className="px-5 py-3 font-medium">Description</th>
-                    <th className="px-5 py-3 font-medium">Assigned</th>
+                    <th className="px-5 py-3 font-medium">Assigned To</th>
                     <th className="px-5 py-3 font-medium">Status</th>
                     <th className="px-5 py-3 font-medium">Deadline</th>
                   </tr>
@@ -160,6 +185,13 @@ function ProjectDetails({
           </div>
         </div>
       ) : null}
+
+      <TaskFormModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        assignees={assignees}
+        onSubmit={handleTaskFormSubmit}
+      />
     </ModalShell>
   );
 }

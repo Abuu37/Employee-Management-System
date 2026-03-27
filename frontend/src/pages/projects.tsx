@@ -7,6 +7,7 @@ import ProjectTable from "../components/projects/ProjectTable";
 import ProjectForm from "../components/projects/ProjectForm";
 import ProjectDetails from "../components/projects/ProjectDetails";
 import DeleteProjectModal from "../components/projects/DeleteProjectModal";
+import type { TaskFormValues } from "../components/tasks/TaskFormModal";
 import type {
   ManagerOption,
   ProjectFormValues,
@@ -48,6 +49,7 @@ type RawTask = {
   deadline?: string;
 };
 
+// Helper function to normalize user data, ensuring consistent structure(ensure not return null or undefined)
 const normalizeUsers = (payload: unknown): RawUser[] => {
   if (Array.isArray(payload)) {
     return payload as RawUser[];
@@ -80,6 +82,9 @@ function Projects() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+  const employeeOptions = users
+    .filter((user) => user.role === "employee")
+    .map((user) => ({ id: user.id, name: user.name }));
 
   // Build a map of userId to userName for quick lookup when normalizing projects and tasks
   const userNameById = useMemo(() => {
@@ -106,7 +111,6 @@ function Projects() {
       };
     });
   };
-
 
   // Fetch users and projects in parallel, then normalize and set state
   const fetchUsersAndProjects = async () => {
@@ -190,6 +194,33 @@ function Projects() {
     load();
   }, [navigate]);
 
+  const fetchTasks = async (projectId: number) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const response = await axios.get(`${TASK_API}/project/${projectId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const projectTasks = (response.data as RawTask[]).map((task) => ({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      assignedTo: task.assignedTo,
+      assignedName: userNameById.get(task.assignedTo) || "Unknown User",
+      status: task.status,
+      deadline: task.deadline,
+    }));
+
+    setTasks(projectTasks);
+  };
+
   //
   const closeAllModals = () => {
     setCreateOpen(false);
@@ -211,37 +242,61 @@ function Projects() {
     setActiveProject(project);
     setViewOpen(true);
 
+    try {
+      await fetchTasks(project.id);
+    } catch {
+      setTasks([]);
+    }
+  };
+
+  const handleCreateTask = async (values: TaskFormValues) => {
+    if (!activeProject) {
+      throw new Error("No active project selected");
+    }
+
     const token = localStorage.getItem("token");
+
     if (!token) {
-      return;
+      navigate("/login");
+      throw new Error("Missing token");
     }
 
     try {
-      const response = await axios.get(`${TASK_API}/all`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      setFeedback(null);
+
+      await axios.post(
+        `${TASK_API}/create`,
+        {
+          title: values.title,
+          description: values.description,
+          assignedTo: values.assignedTo,
+          priority: values.priority,
+          deadline: values.deadline || null,
+          projectId: activeProject.id,
         },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      await fetchTasks(activeProject.id);
+      setFeedback({
+        type: "success",
+        message: "Task created successfully.",
       });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setFeedback({
+          type: "error",
+          message: err.response?.data?.message || "Failed to create task.",
+        });
+      } else {
+        setFeedback({ type: "error", message: "Failed to create task." });
+      }
 
-      const allTasks = response.data as RawTask[];
-      const filteredTasks = allTasks
-        .filter((task) => {
-          const projectId = task.projectId ?? task.project_id;
-          return projectId === project.id;
-        })
-        .map((task) => ({
-          id: task.id,
-          title: task.title,
-          description: task.description,
-          assignedTo: task.assignedTo,
-          assignedName: userNameById.get(task.assignedTo) || "Unknown User",
-          status: task.status,
-          deadline: task.deadline,
-        }));
-
-      setTasks(filteredTasks);
-    } catch {
-      setTasks([]);
+      throw err;
     }
   };
 
@@ -454,6 +509,8 @@ function Projects() {
           onClose={closeAllModals}
           project={activeProject}
           tasks={tasks}
+          assignees={employeeOptions}
+          onCreateTask={handleCreateTask}
         />
         <DeleteProjectModal
           isOpen={deleteOpen}

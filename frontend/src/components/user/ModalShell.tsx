@@ -7,6 +7,8 @@ interface ModalShellProps {
   onClose: () => void;
   title: string;
   maxWidth?: string;
+  overlayClassName?: string;
+  panelClassName?: string;
   children: ReactNode;
 }
 
@@ -15,6 +17,8 @@ function ModalShell({
   onClose,
   title,
   maxWidth = "max-w-2xl",
+  overlayClassName,
+  panelClassName,
   children,
 }: ModalShellProps) {
 
@@ -48,11 +52,11 @@ function ModalShell({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm ${overlayClassName ?? ""}`}
       onClick={onClose}
     >
       <div
-        className={`w-full ${maxWidth} rounded-3xl border border-slate-200 bg-white shadow-2xl`}
+        className={`w-full ${maxWidth} rounded-3xl border border-slate-200 bg-white shadow-2xl ${panelClassName ?? ""}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">

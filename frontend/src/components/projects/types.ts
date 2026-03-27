@@ -1,3 +1,5 @@
+// define datashape used in Projects page
+
 export type ProjectStatus = "pending" | "in_progress" | "complete";
 
 export interface ProjectItem {

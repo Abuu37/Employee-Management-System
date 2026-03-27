@@ -204,7 +204,7 @@ export const login = async (req, res) => {
     // Exclude password before sending
     const { password: pwd, ...userWithoutPassword } = user.toJSON();
 
-    res.json({ message: "Login successful", token, "user-role": user.role });
+    res.json({ message: "Login successful", token, "user-role": user.role, "user-name": user.name, "user-email": user.email });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
