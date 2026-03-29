@@ -7,7 +7,7 @@ export interface ProjectItem {
   name: string;
   description: string;
   managerId: number;
-  managerName: string;
+  managerName?: string;
   startDate: string;
   endDate: string;
   status: ProjectStatus;

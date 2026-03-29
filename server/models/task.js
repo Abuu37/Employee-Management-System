@@ -34,8 +34,8 @@ Task.init(
     },
 
     status: {
-      type: DataTypes.ENUM("Pending", "In Progress", "Completed"),
-      defaultValue: "Pending",
+      type: DataTypes.ENUM("pending", "in_progress", "completed"),
+      defaultValue: "pending",
     },
 
     priority: {

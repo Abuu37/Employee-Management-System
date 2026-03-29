@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DeleteTaskModal from "../tasks/DeleteTaskModal";
 import { FiPlus } from "react-icons/fi";
 import ModalShell from "../user/ModalShell";
 import TaskFormModal, { type TaskFormValues } from "../tasks/TaskFormModal";
@@ -12,6 +13,7 @@ interface ProjectDetailsProps {
   tasks: ProjectTask[];
   assignees: Array<{ id: number; name: string }>;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
+  onDeleteTask?: (taskId: number) => Promise<void>;
 }
 
 // Helper function to format date strings for display in the project details modal
@@ -36,11 +38,18 @@ const formatStatus = (status: string) => {
     complete: "Complete",
     completed: "Completed",
   };
-
   return map[status] || status;
 };
 
+// Status color map for badge styling
+const statusColorMap: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 border border-yellow-300",
+  in_progress: "bg-blue-100 text-blue-800 border border-blue-300",
+  completed: "bg-green-100 text-green-800 border border-green-300",
+};
+
 // Main component for displaying project details and associated tasks in a read-only modal
+
 function ProjectDetails({
   isOpen,
   onClose,
@@ -48,14 +57,38 @@ function ProjectDetails({
   tasks,
   assignees,
   onCreateTask,
+  onDeleteTask,
 }: ProjectDetailsProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<ProjectTask | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const role = localStorage.getItem("user-role");
 
-  const canCreateTask = role === "manager" && project?.status === "in_progress";  // Only allow task creation if user is a manager and project is in progress 
+  const canCreateTask = role === "manager" && project?.status === "in_progress";
+
+  const canDeleteTask =
+    role === "manager" && project?.status === "in_progress" && !!onDeleteTask;
 
   const handleTaskFormSubmit = async (values: TaskFormValues) => {
     await onCreateTask(values);
+  };
+
+  const handleDeleteClick = (task: ProjectTask) => {
+    setSelectedTask(task);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedTask || !onDeleteTask) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteTask(selectedTask.id);
+      setDeleteModalOpen(false);
+      setSelectedTask(null);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -135,6 +168,8 @@ function ProjectDetails({
                     <th className="px-5 py-3 font-medium">Assigned To</th>
                     <th className="px-5 py-3 font-medium">Status</th>
                     <th className="px-5 py-3 font-medium">Deadline</th>
+                    <th className="px-5 py-3 font-medium">View</th>
+                    <th className="px-5 py-3 font-medium">Delete</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -151,10 +186,41 @@ function ProjectDetails({
                           {task.assignedName}
                         </td>
                         <td className="px-5 py-4 text-slate-600">
-                          {formatStatus(task.status)}
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap
+                               ${statusColorMap[task.status] || "bg-slate-100 text-slate-700 border border-slate-200"}`}
+                          >
+                            {formatStatus(task.status)}
+                          </span>
                         </td>
                         <td className="px-5 py-4 text-slate-600">
                           {formatDate(task.deadline)}
+                        </td>
+
+                        <td className="px-5 py-4 text-right">
+                          {canDeleteTask && (
+                            <button
+                              type="button"
+                              className="rounded-xl bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 border border-red-200 hover:bg-red-100"
+                              onClick={() => handleDeleteClick(task)}
+                              title="Delete Task"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4 text-right">
+                          {canDeleteTask && (
+                            <button
+                              type="button"
+                              className="rounded-xl bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 border border-red-200 hover:bg-red-100"
+                              onClick={() => handleDeleteClick(task)}
+                              title="Delete Task"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -191,6 +257,13 @@ function ProjectDetails({
         onClose={() => setIsTaskModalOpen(false)}
         assignees={assignees}
         onSubmit={handleTaskFormSubmit}
+      />
+      <DeleteTaskModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        taskTitle={selectedTask?.title}
+        isDeleting={isDeleting}
       />
     </ModalShell>
   );

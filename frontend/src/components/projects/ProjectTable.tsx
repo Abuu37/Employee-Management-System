@@ -74,8 +74,8 @@ function ProjectTable({
             <tr>
               <th className="px-5 py-3 font-medium">Project Name</th>
               <th className="px-5 py-3 font-medium">Manager</th>
-              <th className="px-5 py-3 font-medium">Start</th>
-              <th className="px-5 py-3 font-medium">End</th>
+              <th className="px-5 py-3 font-medium">Start Date</th>
+              <th className="px-5 py-3 font-medium">End Date</th>
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3 text-right font-medium">Actions</th>
             </tr>

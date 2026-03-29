@@ -5,6 +5,7 @@ import { UserRoute } from "./Routes/userRoutes.js";
 import { TaskRoute } from "./Routes/taskRoutes.js";
 import { ProjectRoute } from "./Routes/projectRoutes.js";
 import { sequelize, connectDB } from "./config/db.js";
+import { TaskCommentRoute } from "./Routes/taskCommentRountes.js";
 import "./models/index.js";
 
 const app = express();
@@ -14,9 +15,14 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", AuthRoute);
 app.use("/api/user", UserRoute);
+// Use only /api/task for all task operations
 app.use("/api/task", TaskRoute);
 app.use("/api/project", ProjectRoute);
-app.use("/api/tasks", TaskRoute);
+
+// Task comments route
+app.use("/api/tasks_comments", TaskCommentRoute);
+
+// Start the server after syncing the database
 
 const startServer = async () => {
   try {

@@ -63,6 +63,30 @@ const normalizeUsers = (payload: unknown): RawUser[] => {
 };
 
 function Projects() {
+  // Delete a specific task by id
+  const handleDeleteTask = async (taskId: number) => {
+    const token = localStorage.getItem("token");
+    if (!token || !activeProject) {
+      navigate("/login");
+      return;
+    }
+    try {
+      await axios.delete(`${TASK_API}/delete/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await fetchTasks(activeProject.id);
+      setFeedback({ type: "success", message: "Task deleted successfully." });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setFeedback({
+          type: "error",
+          message: err.response?.data?.message || "Failed to delete task.",
+        });
+      } else {
+        setFeedback({ type: "error", message: "Failed to delete task." });
+      }
+    }
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [managers, setManagers] = useState<ManagerOption[]>([]);
@@ -511,6 +535,7 @@ function Projects() {
           tasks={tasks}
           assignees={employeeOptions}
           onCreateTask={handleCreateTask}
+          onDeleteTask={handleDeleteTask}
         />
         <DeleteProjectModal
           isOpen={deleteOpen}

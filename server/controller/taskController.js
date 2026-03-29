@@ -3,29 +3,21 @@ import Project from "../models/project.js";
 import User from "../models/user.js";
 
 const toDbStatus = (status) => {
-  if (!status) {
-    return null;
-  }
-
-  const map = {
-    pending: "Pending",
-    in_progress: "In Progress",
-    completed: "Completed",
-    complete: "Completed",
-  };
   if (!status) return null;
-  const key = String(status).toLowerCase();
-  return map[key] || null;
+
+  const value = String(status).toLowerCase().trim();
+
+  if (value === "pending") return "pending";
+  if (value === "in_progress" || value === "in progress") return "in_progress";
+  if (value === "completed") return "completed";
+
+  return null;
 };
 
 const toApiStatus = (status) => {
-  const map = {
-    Pending: "pending",
-    "In Progress": "in_progress",
-    Completed: "completed",
-  };
+  
   if (!status) return "pending";
-  return map[status] || "pending";
+  return status;
 };
 
 // Priority is always lowercase: "low", "medium", "high"
@@ -111,12 +103,10 @@ export const createTask = async (req, res) => {
       });
     }
 
-    // Validate status if provided
-    if (req.body.status !== undefined) {
-      const mappedStatus = toDbStatus(req.body.status);
-      if (!mappedStatus) {
-        return res.status(400).json({ message: "Invalid task status" });
-      }
+    // Always set a valid status (default to 'pending')
+    let statusValue = toDbStatus(req.body.status) || "pending";
+    if (!["pending", "in_progress", "completed"].includes(statusValue)) {
+      return res.status(400).json({ message: "Invalid task status" });
     }
 
     const mappedPriority = toDbPriority(priority);
@@ -132,7 +122,7 @@ export const createTask = async (req, res) => {
       projectId: parsedProjectId,
       priority: mappedPriority, // always lowercase
       deadline: deadline ?? null,
-      status: req.body.status ? toDbStatus(req.body.status) : undefined,
+      status: statusValue,
     });
 
     return res.status(201).json(normalizeTask(task));
@@ -322,6 +312,8 @@ export const updateTask = async (req, res) => {
 export const updateTaskStatus = async (req, res) => {
   try {
     const { status, employeeComment } = req.body;
+
+    console.log("Incoming status:", status); // Debug log
     const task = await Task.findByPk(req.params.id);
 
     if (!task) {
@@ -336,6 +328,10 @@ export const updateTaskStatus = async (req, res) => {
 
     if (status !== undefined) {
       const mappedStatus = toDbStatus(status);
+
+      console.log("Mapped status:", mappedStatus); // Debug log
+
+
       if (!mappedStatus) {
         return res.status(400).json({ message: "Invalid task status" });
       }
@@ -347,6 +343,9 @@ export const updateTaskStatus = async (req, res) => {
     }
 
     await task.save();
+
+    console.log("Saved status in DB:", task.status); // Debug log
+
     return res.status(200).json({
       message: "Task updated successfully",
       task: normalizeTask(task),
