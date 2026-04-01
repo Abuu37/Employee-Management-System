@@ -15,7 +15,6 @@ const toDbStatus = (status) => {
 };
 
 const toApiStatus = (status) => {
-  
   if (!status) return "pending";
   return status;
 };
@@ -331,7 +330,6 @@ export const updateTaskStatus = async (req, res) => {
 
       console.log("Mapped status:", mappedStatus); // Debug log
 
-
       if (!mappedStatus) {
         return res.status(400).json({ message: "Invalid task status" });
       }
@@ -384,5 +382,46 @@ export const deleteTask = async (req, res) => {
     return res.status(200).json({ message: "Task deleted successfully" });
   } catch (error) {
     return res.status(500).json({ message: "Failed to delete task" });
+  }
+};
+
+// Get a single task by ID (employee or manager)
+export const getTaskByIdForUser = async (req, res) => {
+  try {
+    const task = await Task.findByPk(req.params.id, {
+      include: [
+        {
+          model: Project,
+          as: "project",
+          required: false,
+          attributes: ["id", "name", "managerId"],
+        },
+      ],
+    });
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+    // Allow if the user is assigned to this task (employee) or is the project manager (manager)
+    const isEmployee = req.user.role === "employee" &&  Number(task.assignedTo) === Number(req.user.id);
+    const isManager =  req.user.role === "manager" && task.project && Number(task.project.managerId) === Number(req.user.id);
+
+    if (!isEmployee && !isManager) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+    
+    return res.json({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      status: toApiStatus(task.status),
+      priority: toApiPriority(task.priority),
+      deadline: task.deadline,
+      project: task.project
+        ? { id: task.project.id, name: task.project.name }
+        : null,
+      assigner: task.project ? { id: task.project.managerId } : null,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error" });
   }
 };

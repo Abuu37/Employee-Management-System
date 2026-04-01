@@ -8,6 +8,7 @@ import Reports from "./pages/Reports";
 import Tasks from "./pages/Task";
 import Settings from "./pages/Settings";
 import Projects from "./pages/projects";
+import TaskCommentPage from "./pages/TaskCommentPage";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/manager" element={<Managers />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/tasks/:id/comments" element={<TaskCommentPage />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

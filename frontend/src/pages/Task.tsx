@@ -1,9 +1,12 @@
 import Header from "../components/layout/Header";
 import Sidebar from "../components/layout/Sidebar";
 import TaskTable, { type TaskItem } from "../components/tasks/TaskTable";
+import TaskDetailsModal from "../components/tasks/TaskDetailsModal";
+import { TaskComment } from "../components/tasks/types";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Task from "../../../server/models/task";
 
 const TASK_API = "http://localhost:5000/api/task";
 
@@ -40,15 +43,23 @@ const normalizePriority = (priority?: string): TaskItem["priority"] => {
   return "medium";
 };
 
-
 function Tasks() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
-
+  const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [comments, setComments] = useState<TaskComment[]>([]);
+  const currentUserId = Number(localStorage.getItem("user-id")); // or get from auth context
+  const [users, setUsers] = useState<any[]>([]); // for user name/role lookup
   const [searchTerm, setSearchTerm] = useState("");
+
+  const getUserNameById = (id: number) =>
+    users.find((u) => u.id === id)?.name || "Unknown";
+  const getUserRoleById = (id: number) =>
+    users.find((u) => u.id === id)?.role || "employee";
 
   const fetchMyTasks = async () => {
     const token = localStorage.getItem("token");
@@ -139,6 +150,41 @@ function Tasks() {
     }
   };
 
+  const fetchComments = async (taskId: number) => {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      `http://localhost:5000/api/tasks_comments/${taskId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    setComments(
+      response.data.map((c: any) => ({
+        id: c.id,
+        authorId: c.userId,
+        authorName: getUserNameById(c.userId),
+        role: getUserRoleById(c.userId),
+        content: c.message,
+        createdAt: new Date(c.createdAt).toLocaleTimeString(),
+      })),
+    );
+  };
+
+  const handleAddComment = async (content: string) => {
+    const token = localStorage.getItem("token");
+    if (!selectedTask) return;
+    await axios.post(
+      `http://localhost:5000/api/tasks_comments/${selectedTask.id}`,
+      { message: content },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    fetchComments(selectedTask.id);
+  };
+
+  const handleCommentTask = (task: TaskItem) => {
+    navigate(`/tasks/${task.id}/comments`);
+  };
+
   useEffect(() => {
     fetchMyTasks();
   }, []);
@@ -157,6 +203,12 @@ function Tasks() {
       task.priority.toLowerCase().includes(query)
     );
   });
+
+  const handleViewTask = (task: TaskItem) => {
+    setSelectedTask(task);
+    fetchComments(task.id);
+    setDetailsOpen(true);
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -178,7 +230,19 @@ function Tasks() {
           updatingId={updatingId}
           emptyMessage="No assigned tasks found."
           onStatusChange={handleStatusChange}
+          onViewTask={handleCommentTask}
         />
+
+        {selectedTask && (
+          <TaskDetailsModal
+            isOpen={detailsOpen}
+            onClose={() => setDetailsOpen(false)}
+            task={selectedTask}
+            comments={comments}
+            onAddComment={handleAddComment}
+            currentUserId={currentUserId}
+          />
+        )}
       </main>
     </div>
   );

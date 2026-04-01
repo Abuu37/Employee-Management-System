@@ -9,6 +9,7 @@ import {
   deleteTask,
   getMyTasks,
   updateTaskStatus,
+  getTaskByIdForUser,
 } from "../controller/taskController.js";
 
 const router = Express.Router();
@@ -46,8 +47,11 @@ router.get("/my-tasks", veryifyToken, checkRole("employee"), getMyTasks);
 router.put(
   "/:id/status",
   veryifyToken,
-  checkRole("employee"),
+  checkRole("employee", "manager"),
   updateTaskStatus,
 );
+
+// Get a single task by ID (employee can only access their own)
+router.get("/:id", veryifyToken, checkRole("employee", "manager"), getTaskByIdForUser);
 
 export { router as TaskRoute };

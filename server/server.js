@@ -5,7 +5,7 @@ import { UserRoute } from "./Routes/userRoutes.js";
 import { TaskRoute } from "./Routes/taskRoutes.js";
 import { ProjectRoute } from "./Routes/projectRoutes.js";
 import { sequelize, connectDB } from "./config/db.js";
-import { TaskCommentRoute } from "./Routes/taskCommentRountes.js";
+import { TaskCommentRoute } from "./Routes/taskCommentRoutes.js";
 import "./models/index.js";
 
 const app = express();

@@ -19,6 +19,13 @@ const Login = () => {
 
         if (result.data.message === "Login successful") {
 
+          localStorage.setItem("token", result.data.token);
+          localStorage.setItem("user-role", result.data["user-role"]);
+          localStorage.setItem("user-id", result.data["user-id"]);
+          localStorage.setItem("user-name", result.data["user-name"]);
+          localStorage.setItem("user-email", result.data["user-email"]);
+
+
           if (result.data["user-role"] === "admin") {
             navigate("/dashboard");
           } else if (result.data["user-role"] === "employee") {
@@ -28,10 +35,7 @@ const Login = () => {
             navigate("/dashboard");
           }
 
-          localStorage.setItem("token", result.data.token);
-          localStorage.setItem("user-role", result.data["user-role"]);
-          localStorage.setItem("user-name", result.data["user-name"]);
-          localStorage.setItem("user-email", result.data["user-email"]);
+        
         } 
         
         else {

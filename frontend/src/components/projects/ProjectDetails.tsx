@@ -1,9 +1,11 @@
 import { useState } from "react";
 import DeleteTaskModal from "../tasks/DeleteTaskModal";
 import { FiPlus } from "react-icons/fi";
+import { FiMessageCircle } from "react-icons/fi";
 import ModalShell from "../user/ModalShell";
 import TaskFormModal, { type TaskFormValues } from "../tasks/TaskFormModal";
 import type { ProjectItem, ProjectTask } from "./types";
+import { useNavigate } from "react-router-dom";
 
 // Component for displaying project details and associated tasks in a read-only modal
 interface ProjectDetailsProps {
@@ -64,6 +66,7 @@ function ProjectDetails({
   const [selectedTask, setSelectedTask] = useState<ProjectTask | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const role = localStorage.getItem("user-role");
+  const navigate = useNavigate();
 
   const canCreateTask = role === "manager" && project?.status === "in_progress";
 
@@ -168,7 +171,7 @@ function ProjectDetails({
                     <th className="px-5 py-3 font-medium">Assigned To</th>
                     <th className="px-5 py-3 font-medium">Status</th>
                     <th className="px-5 py-3 font-medium">Deadline</th>
-                    <th className="px-5 py-3 font-medium">View</th>
+                    <th className="px-5 py-3 font-medium">Comment</th>
                     <th className="px-5 py-3 font-medium">Delete</th>
                   </tr>
                 </thead>
@@ -198,16 +201,17 @@ function ProjectDetails({
                         </td>
 
                         <td className="px-5 py-4 text-right">
-                          {canDeleteTask && (
-                            <button
-                              type="button"
-                              className="rounded-xl bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 border border-red-200 hover:bg-red-100"
-                              onClick={() => handleDeleteClick(task)}
-                              title="Delete Task"
-                            >
-                              Delete
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                            onClick={() =>
+                              navigate(`/tasks/${task.id}/comments`)
+                            }
+                            title="Comment on Tasks"
+                          >
+                            <FiMessageCircle className="h-5 w-5" />
+                            Comment
+                          </button>
                         </td>
 
                         <td className="px-5 py-4 text-right">

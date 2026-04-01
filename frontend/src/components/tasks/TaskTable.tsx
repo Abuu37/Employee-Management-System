@@ -1,4 +1,4 @@
-import { FiEye } from "react-icons/fi";
+import { FiMessageCircle } from "react-icons/fi";
 
 export interface TaskItem {
   id: number;
@@ -18,6 +18,7 @@ interface TaskTableProps {
   loading?: boolean;
   updatingId?: number | null;
   onStatusChange: (id: number, status: TaskItem["status"]) => void;
+  onViewTask: (task: TaskItem) => void; // callback to open task details modal
 }
 
 const formatDate = (value: string) => {
@@ -46,6 +47,7 @@ function TaskTable({
   loading = false,
   updatingId = null,
   onStatusChange,
+  onViewTask,
 }: TaskTableProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -67,7 +69,7 @@ function TaskTable({
               <th className="px-5 py-3 font-medium">Priority</th>
               <th className="px-5 py-3 font-medium">Deadline</th>
               <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">View</th>
+              <th className="px-5 py-3 font-medium">Comments</th>
             </tr>
           </thead>
 
@@ -130,10 +132,11 @@ function TaskTable({
                     <td className="px-5 py-4">
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                        className="inline-flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                        onClick={() => onViewTask(task)}
                       >
-                        <FiEye className="h-3.5 w-3.5" />
-                        View
+                        <FiMessageCircle className="h-3.5 w-3.5" />
+                        Comment
                       </button>
                     </td>
                   </tr>
