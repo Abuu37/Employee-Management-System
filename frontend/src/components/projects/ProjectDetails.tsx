@@ -4,6 +4,7 @@ import { FiPlus } from "react-icons/fi";
 import { FiMessageCircle } from "react-icons/fi";
 import ModalShell from "../user/ModalShell";
 import TaskFormModal, { type TaskFormValues } from "../tasks/TaskFormModal";
+import TaskCommentPage from "../../pages/TaskCommentPage";
 import type { ProjectItem, ProjectTask } from "./types";
 import { useNavigate } from "react-router-dom";
 
@@ -93,6 +94,9 @@ function ProjectDetails({
       setIsDeleting(false);
     }
   };
+
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   return (
     <ModalShell
@@ -204,9 +208,10 @@ function ProjectDetails({
                           <button
                             type="button"
                             className="inline-flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                            onClick={() =>
-                              navigate(`/tasks/${task.id}/comments`)
-                            }
+                            onClick={() => {
+                              setSelectedTaskId(task.id);
+                              setCommentModalOpen(true);
+                            }}
                             title="Comment on Tasks"
                           >
                             <FiMessageCircle className="h-5 w-5" />
@@ -242,6 +247,18 @@ function ProjectDetails({
               </table>
             </div>
           </section>
+
+          {/* Comment Modal */}
+          <ModalShell
+            isOpen={commentModalOpen}
+            onClose={() => setCommentModalOpen(false)}
+            title="Task Comments"
+            maxWidth="max-w-3xl"
+          >
+            {selectedTaskId && (
+              <TaskCommentPage taskId={selectedTaskId.toString()} modalMode />
+            )}
+          </ModalShell>
 
           <div className="flex justify-end">
             <button

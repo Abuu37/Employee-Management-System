@@ -77,7 +77,7 @@ function ProjectTable({
               <th className="px-5 py-3 font-medium">Start Date</th>
               <th className="px-5 py-3 font-medium">End Date</th>
               <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 text-right font-medium">Actions</th>
+              <th className="px-5 py-3 justify-end font-medium">Actions</th>
             </tr>
           </thead>
 
@@ -105,11 +105,13 @@ function ProjectTable({
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => onView(project)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                        className="inline-flex items-center gap-1 rounded-lg border 
+                        border-slate-200 px-3 py-1.5 text-xs font-medium
+                         text-slate-700 transition hover:bg-slate-100"
                       >
                         <FiEye className="h-3.5 w-3.5" />
                         View
@@ -117,7 +119,8 @@ function ProjectTable({
                       <button
                         type="button"
                         onClick={() => onEdit(project)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                        className="inline-flex items-center gap-1 rounded-lg border
+                         border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
                       >
                         <FiEdit2 className="h-3.5 w-3.5" />
                         Edit
@@ -125,7 +128,9 @@ function ProjectTable({
                       <button
                         type="button"
                         onClick={() => onDelete(project)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                        className="inline-flex items-center gap-1 rounded-lg border
+                         border-red-100 bg-red-50 px-3 py-1.5 text-xs font-medium
+                          text-red-600 transition hover:bg-red-100"
                       >
                         <FiTrash2 className="h-3.5 w-3.5" />
                         Delete

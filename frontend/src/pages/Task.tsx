@@ -1,15 +1,15 @@
 import Header from "../components/layout/Header";
 import Sidebar from "../components/layout/Sidebar";
 import TaskTable, { type TaskItem } from "../components/tasks/TaskTable";
-import TaskDetailsModal from "../components/tasks/TaskDetailsModal";
+import TaskDetailsModal from "../components/tasks/TaskDetailsModal.";
 import { TaskComment } from "../components/tasks/types";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Task from "../../../server/models/task";
+import CommentModal from "../components/CommentModal";
+import TaskCommentPage from "./TaskCommentPage";
 
 const TASK_API = "http://localhost:5000/api/task";
-
 type RawTask = {
   id: number;
   title: string;
@@ -117,6 +117,7 @@ function Tasks() {
     }
   };
 
+  // Update task status (e.g. from pending to in_progress or completed)
   const handleStatusChange = async (
     taskId: number,
     newStatus: TaskItem["status"],
@@ -150,6 +151,8 @@ function Tasks() {
     }
   };
 
+  // Fetch comments for a task
+
   const fetchComments = async (taskId: number) => {
     const token = localStorage.getItem("token");
     const response = await axios.get(
@@ -170,6 +173,7 @@ function Tasks() {
     );
   };
 
+  // Add comment to task
   const handleAddComment = async (content: string) => {
     const token = localStorage.getItem("token");
     if (!selectedTask) return;
@@ -181,8 +185,10 @@ function Tasks() {
     fetchComments(selectedTask.id);
   };
 
+  // When user clicks "View Task" in the table, navigate to comment page
   const handleCommentTask = (task: TaskItem) => {
-    navigate(`/tasks/${task.id}/comments`);
+       setSelectedTask(task);
+       setDetailsOpen(true);
   };
 
   useEffect(() => {
@@ -190,7 +196,7 @@ function Tasks() {
   }, []);
 
   const displayedTasks = tasks.filter((task) => {
-    const query = searchTerm.toLowerCase().trim();
+  const query = searchTerm.toLowerCase().trim();
 
     if (!query) {
       return true;
@@ -206,7 +212,6 @@ function Tasks() {
 
   const handleViewTask = (task: TaskItem) => {
     setSelectedTask(task);
-    fetchComments(task.id);
     setDetailsOpen(true);
   };
 
@@ -234,15 +239,16 @@ function Tasks() {
         />
 
         {selectedTask && (
-          <TaskDetailsModal
-            isOpen={detailsOpen}
-            onClose={() => setDetailsOpen(false)}
-            task={selectedTask}
-            comments={comments}
-            onAddComment={handleAddComment}
-            currentUserId={currentUserId}
-          />
-        )}
+         <CommentModal
+  isOpen={detailsOpen}
+  onClose={() => {
+    setDetailsOpen(false);
+    setSelectedTask(null);
+  }}
+>
+             <TaskCommentPage modalMode taskId={selectedTask.id} />
+             </CommentModal>
+          )}
       </main>
     </div>
   );

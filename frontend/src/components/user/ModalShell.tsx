@@ -56,7 +56,8 @@ function ModalShell({
       onClick={onClose}
     >
       <div
-        className={`w-full ${maxWidth} rounded-3xl border border-slate-200 bg-white shadow-2xl ${panelClassName ?? ""}`}
+        className={`w-full ${maxWidth} rounded-3xl border border-slate-200
+        bg-white shadow-2xl ${panelClassName ?? ""}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -64,7 +65,8 @@ function ModalShell({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-xl border border-slate-200 p-2 text-slate-500 transition
+           hover:bg-slate-100 hover:text-slate-700"
           >
             <FiX className="h-4 w-4" />
           </button>
