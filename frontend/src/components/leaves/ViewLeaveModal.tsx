@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  FiX,
-  FiUser,
-  FiMail,
-  FiHash,
-  FiBriefcase,
-  FiCalendar,
-  FiFileText,
-} from "react-icons/fi";
+import { FiBriefcase, FiHash, FiMail, FiUser, FiCalendar, FiFileText } from "react-icons/fi";
 
 interface ViewLeaveModalProps {
   isOpen: boolean;
@@ -26,123 +18,97 @@ interface ViewLeaveModalProps {
   } | null;
 }
 
-const ViewLeaveModal: React.FC<ViewLeaveModalProps> = ({
-  isOpen,
-  onClose,
-  leave,
-}) => {
+const detailItems = [
+  { key: "id", label: "Leave ID", icon: FiHash },
+  { key: "employeeName", label: "Employee", icon: FiUser },
+  { key: "type", label: "Type", icon: FiBriefcase },
+  { key: "startDate", label: "Start Date", icon: FiCalendar },
+  { key: "endDate", label: "End Date", icon: FiCalendar },
+  { key: "days", label: "Days", icon: FiHash },
+  { key: "reason", label: "Reason", icon: FiFileText },
+  { key: "approvedBy", label: "Approved By", icon: FiUser },
+  { key: "approvedAt", label: "Approved At", icon: FiCalendar },
+];
+
+const ViewLeaveModal: React.FC<ViewLeaveModalProps> = ({ isOpen, onClose, leave }) => {
   if (!isOpen || !leave) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-      <div className="bg-white rounded-2xl shadow-xl min-w-100 max-w-[95vw] p-0 relative">
-        {/* Close button */}
-        <button
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-700"
-          onClick={onClose}
-        >
-          <FiX size={22} />
-        </button>
-        {/* Header */}
-        <div className="border-b px-8 pt-6 pb-4">
-          <h2 className="text-lg font-semibold">Leave Details</h2>
-        </div>
-        {/* Profile Snapshot */}
-        <div className="px-8 pt-6 pb-4">
-          <div className="border rounded-xl p-4 mb-4">
-            <div className="text-slate-800 text-xl font-bold">
-              {leave.employeeName || "-"}
-            </div>
-            <div className="text-slate-500 text-sm">{leave.type}</div>
-            <span
-              className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold
-              ${
+      <div className="fixed inset-0 flex items-center justify-center bg-black/70 bg-opacity-30 z-50">
+        <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full p-0 relative">
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-700"
+            onClick={onClose}
+          >
+            <span className="sr-only">Close</span>
+            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+          {/* Profile Snapshot */}
+          <div className="rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500 p-px mx-8 mt-8">
+            <div className="rounded-2xl bg-white px-5 py-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+                Profile Snapshot
+              </p>
+              <h3 className="mt-3 text-2xl font-semibold text-slate-900">
+                {leave.employeeName || "-"}
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">{leave.type}</p>
+              <div className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                 leave.status === "approved"
                   ? "bg-emerald-50 text-emerald-700"
                   : leave.status === "pending"
-                    ? "bg-yellow-50 text-yellow-700"
-                    : "bg-red-50 text-red-600"
-              }`}
-            >
-              {leave.status}
-            </span>
+                  ? "bg-yellow-50 text-yellow-700"
+                  : "bg-red-50 text-red-600"
+              }`}>
+                {leave.status}
+              </div>
+            </div>
           </div>
+
           {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiHash className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">LEAVE ID</div>
-                <div className="font-semibold">{leave.id}</div>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiUser className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">EMPLOYEE</div>
-                <div className="font-semibold">{leave.employeeName || "-"}</div>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiCalendar className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">START DATE</div>
-                <div className="font-semibold">{leave.startDate}</div>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiCalendar className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">END DATE</div>
-                <div className="font-semibold">{leave.endDate}</div>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiFileText className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">REASON</div>
-                <div className="font-semibold">{leave.reason}</div>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiBriefcase className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">APPROVED BY</div>
-                <div className="font-semibold">{leave.approvedBy || "-"}</div>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiHash className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">DAYS</div>
-                <div className="font-semibold">{leave.days}</div>
-              </div>
-            </div>
-            <div className="border rounded-lg p-3 flex items-center gap-2">
-              <FiCalendar className="text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">APPROVED AT</div>
-                <div className="font-semibold">
-                  {leave.approvedAt
-                    ? new Date(leave.approvedAt).toLocaleString()
-                    : "-"}
+          <div className="grid gap-3 sm:grid-cols-2 px-8 py-8">
+            {detailItems.map((item) => {
+              const Icon = item.icon;
+              let value = leave[item.key as keyof typeof leave];
+              if (item.key === "approvedAt") {
+                value = value ? new Date(value as string).toLocaleString() : "-";
+              }
+              return (
+                <div
+                  key={item.key}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-white p-2 text-slate-500 shadow-sm">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        {item.label}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                        {value || "-"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
-        </div>
-        {/* Footer */}
-        <div className="flex justify-end border-t px-8 py-4">
-          <button
-            className="px-5 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-700"
-            onClick={onClose}
-          >
-            Close
-          </button>
+
+          {/* Footer */}
+          <div className="flex justify-end px-8 pb-8">
+            <button
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
-export default ViewLeaveModal;
+  export default ViewLeaveModal;
