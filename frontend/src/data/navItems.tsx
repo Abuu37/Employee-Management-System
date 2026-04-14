@@ -11,6 +11,7 @@ const adminNavItems: NavItem[] = [
   { name: "Employees", key: "employee", path: "/employee" },
   { name: "Managers", key: "managers", path: "/manager" },
   { name: "Projects", key: "projects", path: "/projects" },
+  { name: "leaves", key: "leaves", path: "/leaves"},
   { name: "Reports", key: "reports", path: "/reports" },
   { name: "Settings", key: "settings", path: "/settings" },
   { name: "Logout", key: "logout", path: "/logout" },
@@ -20,6 +21,7 @@ const managerNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
   { name: "Employees", key: "employee", path: "/employee" },
   { name: "Projects", key: "projects", path: "/projects" },
+  { name: "Leaves ", key: "leaves", path: "/leaves" },
   { name: "Reports", key: "reports", path: "/reports" },
   { name: "Settings", key: "settings", path: "/settings" },
   { name: "Logout", key: "logout", path: "/logout" },
@@ -28,6 +30,7 @@ const managerNavItems: NavItem[] = [
 const employeeNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
   { name: "Tasks", key: "tasks", path: "/tasks" },
+  { name: "Leaves", key: "leaves", path: "/leaves" },
   { name: "Reports", key: "reports", path: "/reports" },
   { name: "Settings", key: "settings", path: "/settings" },
   { name: "Logout", key: "logout", path: "/logout" },

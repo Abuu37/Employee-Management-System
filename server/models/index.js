@@ -1,8 +1,19 @@
+// models/index.js
+
 // Centralized model associations.
-import User from "./user.js";
 import Task from "./task.js";
 import Project from "./project.js";
 import TaskComment from "./taskComment.js";
+import User from "./user.js";
+import Holiday from "./Holiday.js";
+
+
+// Leave <-> User relationship (employee who requested leave)
+Leave.belongsTo(User, { foreignKey: "userId", as: "user" });
+User.hasMany(Leave, { foreignKey: "userId", as: "leaves" });
+
+// Leave <-> User relationship (manager who approved leave)
+Leave.belongsTo(User, { foreignKey: "approvedBy", as: "approver" });
 
 
 // User <-> Project relationships
@@ -20,20 +31,17 @@ Task.belongsTo(Project, { foreignKey: "projectId", as: "project" });
 User.hasMany(Task, { foreignKey: "assignedBy", as: "assignedTasks" });
 Task.belongsTo(User, { foreignKey: "assignedBy", as: "assigner" });
 
+TaskComment.belongsTo(User, { foreignKey: "userId", as: "user" });
 
-TaskComment.belongsTo(User,
-  {foreignKey: "userId", 
-    as: "user"
+User.hasMany(TaskComment, {
+  foreignKey: "userId",
+  as: "comments",
 });
 
-User.hasMany(TaskComment, 
-    {
-        foreignKey: "userId", 
-        as: "comments"
-    });
+TaskComment.belongsTo(Task, { foreignKey: "taskId", as: "task" });
+Task.hasMany(TaskComment, { foreignKey: "taskId", as: "comments" });
 
-TaskComment.belongsTo(Task, {foreignKey: "taskId", as: "task"});
-Task.hasMany(TaskComment, {foreignKey: "taskId", as: "comments"});
+import Leave from "./Leave.js";
+import LeaveBalance from "./LeaveBalance.js";
 
-
-export { User, Task, Project };
+export { User, Task, Project, Leave, LeaveBalance };

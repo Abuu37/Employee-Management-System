@@ -1,16 +1,16 @@
 import express from "express";
-import { veryifyToken } from "../Middlewares/authMiddleware.js";
+import { verifyToken } from "../Middlewares/authMiddleware.js";
 import {
-    addComment,
-    getComments,
+  addComment,
+  getComments,
 } from "../controller/taskCommentController.js";
 
 const router = express.Router();
 
 // Add a comment to a task
-router.post("/:taskId", veryifyToken, addComment);
+router.post("/:taskId", verifyToken, addComment);
 
 // Get comments for a task
-router.get("/:taskId", veryifyToken, getComments);
+router.get("/:taskId", verifyToken, getComments);
 
 export { router as TaskCommentRoute };

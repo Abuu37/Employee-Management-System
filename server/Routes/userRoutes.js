@@ -1,5 +1,5 @@
 import express from "express";
-import { veryifyToken } from "../Middlewares/authMiddleware.js";
+import { verifyToken } from "../Middlewares/authMiddleware.js";
 import { checkRole } from "../Middlewares/roleMiddleware.js";
 import { createUserByAdmin } from "../controller/userController.js";
 import { getAllUsers } from "../controller/userController.js";
@@ -9,14 +9,14 @@ import { changePassword } from "../controller/userController.js";
 const router = express.Router();
 
 //only admin can access this route
-router.get("/admin", veryifyToken, checkRole("admin"), (req, res) => {
+router.get("/admin", verifyToken, checkRole("admin"), (req, res) => {
   res.json({ message: "Welcome Admin!" });
 });
 
 //Both admin and manager can access this route
 router.get(
   "/manager",
-  veryifyToken,
+  verifyToken,
   checkRole("admin", "manager"),
   (req, res) => {
     res.json({ message: "Welcome Manager!" });
@@ -26,7 +26,7 @@ router.get(
 // All employee can access this route
 router.get(
   "/employee",
-  veryifyToken,
+  verifyToken,
   checkRole("admin", "manager", "employee"),
   (req, res) => {
     res.json({ message: "Welcome Employee!" });
@@ -34,17 +34,12 @@ router.get(
 );
 
 //create user by admin
-router.post(
-  "/create-user",
-  veryifyToken,
-  checkRole("admin"),
-  createUserByAdmin,
-);
+router.post("/create-user", verifyToken, checkRole("admin"), createUserByAdmin);
 
 //view users by admin, manager and employee
 router.get(
   "/view-users",
-  veryifyToken,
+  verifyToken,
   checkRole("admin", "manager", "employee"),
   getAllUsers,
 );
@@ -52,18 +47,18 @@ router.get(
 //update user by admin and manager
 router.put(
   "/update-user/:id",
-  veryifyToken,
+  verifyToken,
   checkRole("admin", "manager"),
   updateUser,
 );
 
 //delete user by admin
-router.delete("/delete-user/:id", veryifyToken, checkRole("admin"), deleteUser);
+router.delete("/delete-user/:id", verifyToken, checkRole("admin"), deleteUser);
 
 //change password for logged-in user
 router.put(
   "/change-password",
-  veryifyToken,
+  verifyToken,
   checkRole("admin", "manager", "employee"),
   changePassword,
 );

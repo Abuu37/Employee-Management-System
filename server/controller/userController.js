@@ -2,6 +2,7 @@ import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sendCredentialsEmail } from "../utils/sendEmail.js";
+import { LeaveBalance } from "../models/index.js";
 
 // REGISTER
 export const register = async (req, res) => {
@@ -25,6 +26,21 @@ export const register = async (req, res) => {
       password: hashedPassword,
       role,
     });
+
+    //create the leaves balance for the user
+
+    let leaveBalance;
+    try {
+      leaveBalance = await LeaveBalance.create({
+        userId: user.id,
+        annual: 20,
+        sick: 10,
+        casual: 5,
+      });
+      console.log("Leave balance created:", leaveBalance.toJSON());
+    } catch (error) {
+      console.error("Error creating leave balance:", error);
+    }
 
     await user.save(); // save to database
     res.status(201).json({
@@ -64,6 +80,22 @@ export const createUserByAdmin = async (req, res) => {
 
     // Send email with credentials
     await sendCredentialsEmail(name, email, plainPassword);
+
+    // Create leave balance for the new user
+    try {
+      const leaveBalance = await LeaveBalance.create({
+        userId: user.id,
+        annual: 20,
+        sick: 10,
+        casual: 5,
+      });
+      console.log(
+        "Leave balance created (admin create):",
+        leaveBalance.toJSON(),
+      );
+    } catch (error) {
+      console.error("Error creating leave balance (admin create):", error);
+    }
 
     await user.save(); // save to database
     res.status(201).json({
@@ -204,14 +236,14 @@ export const login = async (req, res) => {
     // Exclude password before sending
     const { password: pwd, ...userWithoutPassword } = user.toJSON();
 
-    res.json({ 
-      message: "Login successful", 
-      token, "user-role": user.role, 
-      "user-name": user.name, 
-      "user-email": user.email, 
-      "user-id": user.id
-     });
-
+    res.json({
+      message: "Login successful",
+      token,
+      "user-role": user.role,
+      "user-name": user.name,
+      "user-email": user.email,
+      "user-id": user.id,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -265,9 +297,7 @@ export const changePassword = async (req, res) => {
     await user.save();
 
     return res.status(200).json({ message: "Password updated successfully" });
-  } 
-  
-  catch (error) {
+  } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
   }

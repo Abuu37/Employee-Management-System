@@ -6,6 +6,9 @@ import { TaskRoute } from "./Routes/taskRoutes.js";
 import { ProjectRoute } from "./Routes/projectRoutes.js";
 import { sequelize, connectDB } from "./config/db.js";
 import { TaskCommentRoute } from "./Routes/taskCommentRoutes.js";
+import LeaveRoute from "./Routes/LeaveRoute.js";
+import PayrollRoute from "./Routes/payrollRoutes.js";
+import SalaryRoute from "./Routes/salaryRoutes.js";
 import "./models/index.js";
 
 const app = express();
@@ -21,6 +24,16 @@ app.use("/api/project", ProjectRoute);
 
 // Task comments route
 app.use("/api/tasks_comments", TaskCommentRoute);
+
+// Leave management routes
+app.use("/api/leaves", LeaveRoute);
+
+// Payroll routes
+app.use("/api/payroll", PayrollRoute);
+
+//salary routes
+app.use("/api/salary", SalaryRoute);
+
 
 // Start the server after syncing the database
 

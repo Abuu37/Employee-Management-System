@@ -1,5 +1,5 @@
 import express from "express";
-import { veryifyToken } from "../Middlewares/authMiddleware.js";
+import { verifyToken } from "../Middlewares/authMiddleware.js";
 import { checkRole } from "../Middlewares/roleMiddleware.js";
 import {
   createProject,
@@ -12,43 +12,18 @@ import {
 const router = express.Router();
 
 // Create a new project (Admin only)
-router.post(
-    "/create", 
-    veryifyToken, 
-    checkRole("admin"), 
-    createProject
-);
+router.post("/create", verifyToken, checkRole("admin"), createProject);
 
 // Get / VIEW all projects (Admin and Manager)
-router.get(
-    "/all", 
-    veryifyToken, 
-    checkRole("admin", "manager"), 
-    getProjects
-);
+router.get("/all", verifyToken, checkRole("admin", "manager"), getProjects);
 
 // Get / VIEW project by id (Admin and Manager)
-router.get(
-    "/:id", 
-    veryifyToken, 
-    checkRole("admin", "manager"), 
-    getProjectById
-);
+router.get("/:id", verifyToken, checkRole("admin", "manager"), getProjectById);
 
 // Update a project (Admin)
-router.put(
-  "/update/:id",
-  veryifyToken,
-  checkRole("admin"),
-  updateProject,
-);
+router.put("/update/:id", verifyToken, checkRole("admin"), updateProject);
 
 // Delete a project (Admin only)
-router.delete(
-    "/delete/:id", 
-    veryifyToken, 
-    checkRole("admin"), 
-    deleteProject
-);
+router.delete("/delete/:id", verifyToken, checkRole("admin"), deleteProject);
 
 export { router as ProjectRoute };
