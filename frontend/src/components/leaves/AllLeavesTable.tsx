@@ -1,3 +1,7 @@
+
+//This is used by AMIN to view all leaves in the system, with pagination and actions for pending leaves
+
+import { FiEye } from "react-icons/fi";
 import React, { useState } from "react";
 import ViewLeaveModal from "./ViewLeaveModal";
 
@@ -12,7 +16,6 @@ export interface AllLeave {
   status: string;
   approvedBy?: string;
   approvedAt?: string;
-
 }
 
 interface AllLeavesTableProps {
@@ -53,16 +56,14 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">IDs</th>
               <th className="px-5 py-3 font-medium">Employee</th>
               <th className="px-5 py-3 font-medium">Type</th>
               <th className="px-5 py-3 font-medium">Start Date</th>
               <th className="px-5 py-3 font-medium">End Date</th>
               <th className="px-5 py-3 font-medium">Days</th>
-              <th className="px-5 py-3 font-medium">Reason</th>
               <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Approved By</th>
-              <th className="px-5 py-3 font-medium">Approved At</th>
+              <th className="px-5 py-3 font-medium">Processed By</th>
+              <th className="px-5 py-3 font-medium">Processed At</th>
               {showActions && (
                 <th className="px-5 py-3 font-medium">Actions</th>
               )}
@@ -75,9 +76,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                   <td className="px-5 py-4 font-medium text-slate-600">
                     {(currentPage - 1) * pageSize + idx + 1}
                   </td>
-                  <td className="px-5 py-4 font-medium text-slate-600">
-                    {leave.id}
-                  </td>
+                 
                   <td className="px-5 py-4 text-slate-600">
                     {leave.employeeName || "-"}
                   </td>
@@ -89,13 +88,14 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                   </td>
                   <td className="px-5 py-4 text-slate-600">{leave.endDate}</td>
                   <td className="px-5 py-4 text-slate-600">{leave.days}</td>
-                  <td className="px-5 py-4 text-slate-600">{leave.reason}</td>
                   <td className="px-5 py-4">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        leave.status === "pending" ? "bg-yellow-50 text-yellow-700" :
-                        leave.status === "approved" ? "bg-emerald-50 text-emerald-700" :
-                         "bg-red-50 text-red-600"
+                        leave.status === "pending"
+                          ? "bg-yellow-50 text-yellow-700"
+                          : leave.status === "approved"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-red-50 text-red-600"
                       }`}
                     >
                       {leave.status}
@@ -106,7 +106,9 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                   </td>
 
                   <td className="px-5 py-4 text-slate-600">
-                    {leave.approvedAt ? new Date(leave.approvedAt).toLocaleString() : "-"}
+                    {leave.approvedAt
+                      ? new Date(leave.approvedAt).toLocaleString()
+                      : "-"}
                   </td>
 
                   {showActions && (
@@ -133,19 +135,16 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                             setSelectedLeave(leave);
                             setIsViewModalOpen(true);
                           }}
-                          className="inline-flex items-center gap-1 rounded-lg border
-                           border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700
-                            hover:bg-blue-500 transition hover:text-white"
+                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
                         >
+                          <FiEye className="h-4 w-4" />
                           View
                         </button>
                       )}
                     </td>
                   )}
-                  
                 </tr>
               ))
-              
             ) : (
               <tr>
                 <td
@@ -181,14 +180,12 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
           </button>
         </div>
       </div>
-
-      // View Leave Modal
+  
       <ViewLeaveModal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         leave={selectedLeave}
       />
-
     </section>
   );
 };

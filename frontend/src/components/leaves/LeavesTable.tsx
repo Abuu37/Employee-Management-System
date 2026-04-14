@@ -1,5 +1,7 @@
+// This component is used by both Employee and Manager views, with some conditional rendering based on role.
+
 import React, { useState } from "react";
-import { FiCheck, FiX } from "react-icons/fi";
+import { FiCheck, FiX, FiEye } from "react-icons/fi";
 import ViewLeaveModal from "./ViewLeaveModal";
 
 export interface Leave {
@@ -84,7 +86,6 @@ function LeavesTable({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">IDs</th>
               {/* Show Employee column for manager/admin */}
               {(role === "manager" || role === "admin") && (
                 <th className="px-5 py-3 font-medium">Employee</th>
@@ -93,14 +94,12 @@ function LeavesTable({
               <th className="px-5 py-3 font-medium">Start Date</th>
               <th className="px-5 py-3 font-medium">End Date</th>
               <th className="px-5 py-3 font-medium">Days</th>
-              <th className="px-5 py-3 font-medium">Reason</th>
+              
               <th className="px-5 py-3 font-medium">Status</th>
 
-              {/* Show Approved By column for admin */}
+              {/* Show Processed By column for admin */}
 
-              <th className="px-5 py-3 font-medium">Approved By</th>
-              <th className="px-5 py-3 font-medium">Approved At</th>
-
+              <th className="px-5 py-3 font-medium">Processed By</th>
               <th className="px-5 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
@@ -112,10 +111,7 @@ function LeavesTable({
                   <td className="px-5 py-4 font-medium text-slate-600">
                     {(currentPage - 1) * pageSize + idx + 1}
                   </td>
-                  <td className="px-5 py-4 font-medium text-slate-600">
-                    {leave.id}
-                  </td>
-
+                 
                   {/* Show Employee cell for manager/admin */}
                   {(role === "manager" || role === "admin") && (
                     <td className="px-5 py-4 text-slate-600">
@@ -133,7 +129,7 @@ function LeavesTable({
 
                   <td className="px-5 py-4 text-slate-600">{leave.endDate}</td>
                   <td className="px-5 py-4 text-slate-600">{leave.days}</td>
-                  <td className="px-5 py-4 text-slate-600">{leave.reason}</td>
+                
                   <td className="px-5 py-4">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -150,12 +146,6 @@ function LeavesTable({
 
                   <td className="px-5 py-4 text-slate-600">
                     {leave.approvedBy || "-"}
-                  </td>
-
-                  <td className="px-5 py-4 text-slate-600">
-                    {leave.approvedAt
-                      ? new Date(leave.approvedAt).toLocaleString()
-                      : "-"}
                   </td>
 
                   <td className="px-5 py-4 ">
@@ -216,12 +206,10 @@ function LeavesTable({
                           onClick={() => {
                             setSelectedLeave(leave);
                             setIsViewModalOpen(true);
-
                           }}
-                          className="inline-flex items-center gap-1 rounded-lg border
-                           border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700
-                            hover:bg-blue-500 transition hover:text-white"
+                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
                         >
+                          <FiEye className="h-4 w-4" />
                           View
                         </button>
                       )}

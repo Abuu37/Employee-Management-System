@@ -76,9 +76,9 @@ function UserTable({
                       <button
                         type="button"
                         onClick={() => onView(user)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                        className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
                       >
-                        <FiEye className="h-3.5 w-3.5" />
+                        <FiEye className="h-4 w-4" />
                         View
                       </button>
                       <button
