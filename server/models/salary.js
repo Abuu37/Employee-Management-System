@@ -10,9 +10,11 @@ Salary.init(
       primaryKey: true,
       autoIncrement: true,
     },
+
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      unique: true,
       field: "user_id",
     },
 
@@ -24,30 +26,29 @@ Salary.init(
 
     bonus: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
+      defaultValue: 0,
       field: "bonus",
     },
 
     allowance: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
+      defaultValue: 0,
       field: "allowance",
     },
 
     tax_percentage: {
       type: DataTypes.DECIMAL(5, 2),
-      allowNull: true,
+      defaultValue: 0,
       field: "tax_percentage",
     },
   },
-
   {
     sequelize,
     modelName: "Salary",
     tableName: "salaries",
     timestamps: true,
     underscored: true,
-  },
+  }
 );
 
 export default Salary;

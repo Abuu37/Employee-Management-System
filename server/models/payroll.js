@@ -10,16 +10,22 @@ Payroll.init(
       primaryKey: true,
       autoIncrement: true,
     },
+
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "user_id",
     },
 
+    // Better to use INTEGER (optional but recommended)
     month: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER, // 1 - 12 (better than string)
       allowNull: false,
       field: "month",
+      validate: {
+        min: 1,
+        max: 12,
+      },
     },
 
     year: {
@@ -36,27 +42,28 @@ Payroll.init(
 
     bonus: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
+      defaultValue: 0,
       field: "bonus",
     },
 
     allowance: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
+      defaultValue: 0,
       field: "allowance",
     },
 
     deductions: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
+      defaultValue: 0,
       field: "deductions",
     },
+
     tax: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
+      defaultValue: 0,
       field: "tax",
     },
-    // ...existing code...
+
     net_salary: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
@@ -68,6 +75,18 @@ Payroll.init(
       defaultValue: "pending",
       field: "status",
     },
+
+    approvedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "approved_at",
+    },
+
+    paidAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "paid_at",
+    },
   },
   {
     sequelize,
@@ -76,7 +95,15 @@ Payroll.init(
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
-  },
+
+    // Prevent duplicate payroll (VERY IMPORTANT)
+    indexes: [
+      {
+        unique: true,
+        fields: ["user_id", "month", "year"],
+      },
+    ],
+  }
 );
 
 export default Payroll;

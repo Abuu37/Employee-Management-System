@@ -6,6 +6,11 @@ import { checkRole } from "../Middlewares/roleMiddleware.js";
 const router = express.Router();
 
 // Only admin can set salary
-router.post("/", verifyToken, checkRole("admin"), setSalary);
+router.post(
+    "/generate", 
+    verifyToken, 
+    checkRole("admin"), 
+    setSalary
+);
 
 export default router;
