@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { FiXCircle } from "react-icons/fi";
 import axios from "axios";
 import Header from "../components/layout/Header";
 import Sidebar from "../components/layout/Sidebar";
@@ -65,7 +66,6 @@ const Leaves: React.FC = () => {
   useEffect(() => {
     fetchLeaves();
   }, []);
-
 
   // Handle leave application (modal form)
   const handleApply = async (form: {
@@ -178,7 +178,12 @@ const Leaves: React.FC = () => {
         {balanceLoading ? (
           <div className="mb-6">Loading leave balance...</div>
         ) : balanceError ? (
-          <div className="mb-6 text-red-600">{balanceError}</div>
+          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 mb-6">
+            <span className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500">
+              <FiXCircle className="text-white h-5 w-5" />
+            </span>
+            <span className="text-base text-slate-900">{balanceError}</span>
+          </div>
         ) : balance ? (
           <LeaveBalanceCards
             annual={balance.annual}
@@ -190,7 +195,14 @@ const Leaves: React.FC = () => {
           />
         ) : null}
 
-        {error && <div style={{ color: "red" }}>{error}</div>}
+        {error && (
+          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 mb-4">
+            <span className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500">
+              <FiXCircle className="text-white h-5 w-5" />
+            </span>
+            <span className="text-base text-slate-900">{error}</span>
+          </div>
+        )}
 
         {/* Tab Navigation for Admin and Manager */}
         {isAdmin && (

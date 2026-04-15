@@ -116,6 +116,31 @@ const ViewLeaveModal: React.FC<ViewLeaveModalProps> = ({
                 ? new Date(leave.approvedAt).toLocaleString()
                 : "-";
             }
+            if (item.key === "reason") {
+              return (
+                <div
+                  key={item.key}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 sm:col-span-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-white p-2 text-slate-500 shadow-sm">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        {item.label}
+                      </p>
+                      <p
+                        className="mt-1 text-sm font-semibold text-slate-900 whitespace-nowrap overflow-x-auto truncate"
+                        title={value || "-"}
+                      >
+                        {value || "-"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={item.key}
@@ -129,10 +154,7 @@ const ViewLeaveModal: React.FC<ViewLeaveModalProps> = ({
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                       {item.label}
                     </p>
-                    <p
-                      className={`mt-1 text-sm font-semibold 
-                      text-slate-900${item.key === "reason" ? " wrap-break-word" : ""}`}
-                    >
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
                       {value || "-"}
                     </p>
                   </div>
@@ -145,8 +167,7 @@ const ViewLeaveModal: React.FC<ViewLeaveModalProps> = ({
         {/* Footer */}
         <div className="flex justify-end px-8 pb-8">
           <button
-            className="rounded-xl bg-slate-900 px-4 
-            py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
             onClick={onClose}
           >
             Close

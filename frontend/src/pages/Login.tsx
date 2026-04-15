@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import "./Login.css";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,6 +9,7 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
@@ -16,29 +18,21 @@ const Login = () => {
     axios
       .post("http://localhost:5000/api/auth/login", values)
       .then((result) => {
-
         if (result.data.message === "Login successful") {
-
           localStorage.setItem("token", result.data.token);
           localStorage.setItem("user-role", result.data["user-role"]);
           localStorage.setItem("user-id", result.data["user-id"]);
           localStorage.setItem("user-name", result.data["user-name"]);
           localStorage.setItem("user-email", result.data["user-email"]);
 
-
           if (result.data["user-role"] === "admin") {
             navigate("/dashboard");
           } else if (result.data["user-role"] === "employee") {
             navigate("/dashboard");
-            
           } else if (result.data["user-role"] === "manager") {
             navigate("/dashboard");
           }
-
-        
-        } 
-        
-        else {
+        } else {
           alert("Login failed: " + result.data.message);
           navigate("/login");
         }
@@ -111,7 +105,7 @@ const Login = () => {
             </div>
 
             {/* Password */}
-            <div className="flex items-center border-2 mb-12 py-2 px-3 rounded-2xl">
+            <div className="flex items-center border-2 mb-12 py-2 px-3 rounded-2xl relative">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-gray-400"
@@ -126,7 +120,7 @@ const Login = () => {
               </svg>
               <input
                 className="pl-2 w-full outline-none border-none"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 id="password"
                 placeholder="Password"
@@ -134,6 +128,19 @@ const Login = () => {
                   setValues({ ...values, password: e.target.value })
                 }
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 focus:outline-none"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <FiEyeOff className="h-5 w-5" />
+                ) : (
+                  <FiEye className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             <button

@@ -1,5 +1,29 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { getNavItemsByRole } from "../../data/navItems";
+import {
+  FiHome,
+  FiUsers,
+  FiUserCheck,
+  FiFolder,
+  FiCalendar,
+  FiBarChart2,
+  FiSettings,
+  FiLogOut,
+  FiClipboard,
+} from "react-icons/fi";
+// Map nav item keys to icons
+const navIcons = {
+  dashboard: <FiHome className="h-5 w-5" />,
+  employee: <FiUsers className="h-5 w-5" />,
+  employees: <FiUsers className="h-5 w-5" />,
+  managers: <FiUserCheck className="h-5 w-5" />,
+  projects: <FiFolder className="h-5 w-5" />,
+  leaves: <FiCalendar className="h-5 w-5" />,
+  tasks: <FiClipboard className="h-5 w-5" />,
+  reports: <FiBarChart2 className="h-5 w-5" />,
+  settings: <FiSettings className="h-5 w-5" />,
+  logout: <FiLogOut className="h-5 w-5" />,
+};
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -40,7 +64,7 @@ function Sidebar() {
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-slate-600 transition-all hover:bg-slate-100"
             >
-              <span className="h-2 w-2 rounded-full bg-current" />
+              {navIcons[item.key] || <span className="h-5 w-5" />}
               {item.name}
             </button>
           ) : (
@@ -55,7 +79,7 @@ function Sidebar() {
                 }`
               }
             >
-              <span className="h-2 w-2 rounded-full bg-current" />
+              {navIcons[item.key] || <span className="h-5 w-5" />}
               {item.name}
             </NavLink>
           ),
