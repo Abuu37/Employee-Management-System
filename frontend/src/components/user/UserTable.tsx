@@ -20,6 +20,10 @@ function UserTable({
   onEdit,
   onDelete,
 }: UserTableProps) {
+  // Only show Add User button for admin
+  const isAdmin =
+    typeof window !== "undefined" &&
+    localStorage.getItem("user-role") === "admin";
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -28,14 +32,16 @@ function UserTable({
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             {users.length} records
           </div>
-          <button
-            type="button"
-            onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            <FiPlus className="h-4 w-4" />
-            Add User
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={onAdd}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            >
+              <FiPlus className="h-4 w-4" />
+              Add User
+            </button>
+          )}
         </div>
       </div>
 
@@ -43,10 +49,9 @@ function UserTable({
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-5 py-3 font-medium">ID</th>
+              <th className="px-5 py-3 font-medium">S/N</th>
               <th className="px-5 py-3 font-medium">Name</th>
               <th className="px-5 py-3 font-medium">Email</th>
-              <th className="px-5 py-3 font-medium">Role</th>
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3 font-medium text-right">Actions</th>
             </tr>
@@ -54,18 +59,13 @@ function UserTable({
 
           <tbody>
             {users.length > 0 ? (
-              users.map((user) => (
+              users.map((user, index) => (
                 <tr key={user.id} className="border-t border-slate-100">
-                  <td className="px-5 py-4 font-medium text-slate-600">
-                    {user.id}
-                  </td>
+                  <td className="px-5 py-4 text-slate-600">{index + 1}</td>
                   <td className="px-5 py-4 font-semibold text-slate-900">
                     {user.name}
                   </td>
                   <td className="px-5 py-4 text-slate-600">{user.email}</td>
-                  <td className="px-5 py-4 capitalize text-slate-600">
-                    {user.role}
-                  </td>
                   <td className="px-5 py-4">
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                       {user.status}

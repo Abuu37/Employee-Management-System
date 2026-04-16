@@ -10,6 +10,7 @@ interface ProjectTableProps {
   onView: (project: ProjectItem) => void;
   onEdit: (project: ProjectItem) => void;
   onDelete: (project: ProjectItem) => void;
+  onUpdateStatus: (project: ProjectItem, status: string) => void;
 }
 
 // Helper function to format date strings for display in the project table
@@ -40,6 +41,11 @@ const statusLabelMap: Record<ProjectItem["status"], string> = {
   complete: "Complete",
 };
 
+// Determine if the current user is an admin to conditionally render certain columns and actions in the project table
+const isAdmin =
+  typeof window !== "undefined" &&
+  localStorage.getItem("user-role") === "admin";
+
 function ProjectTable({
   title,
   projects,
@@ -48,6 +54,7 @@ function ProjectTable({
   onView,
   onEdit,
   onDelete,
+  onUpdateStatus,
 }: ProjectTableProps) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -57,14 +64,16 @@ function ProjectTable({
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             {projects.length} records
           </div>
-          <button
-            type="button"
-            onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            <FiPlus className="h-4 w-4" />
-            Create Project
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={onAdd}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            >
+              <FiPlus className="h-4 w-4" />
+              Create Project
+            </button>
+          )}
         </div>
       </div>
 
@@ -72,25 +81,27 @@ function ProjectTable({
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
+              <th className="px-5 py-3 font-medium">S/N</th>
               <th className="px-5 py-3 font-medium">Project Name</th>
-              <th className="px-5 py-3 font-medium">Manager</th>
               <th className="px-5 py-3 font-medium">Start Date</th>
               <th className="px-5 py-3 font-medium">End Date</th>
               <th className="px-5 py-3 font-medium">Status</th>
+              {isAdmin && <th className="px-5 py-3 font-medium">Manager</th>}
               <th className="px-5 py-3 justify-end font-medium">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {projects.length > 0 ? (
-              projects.map((project) => (
+              projects.map((project, index) => (
                 <tr key={project.id} className="border-t border-slate-100">
+                  <td className="px-5 py-4 font-semibold text-slate-900">
+                    {index + 1}
+                  </td>
                   <td className="px-5 py-4 font-semibold text-slate-900">
                     {project.name}
                   </td>
-                  <td className="px-5 py-4 text-slate-600">
-                    {project.managerName || "Unassigned"}
-                  </td>
+
                   <td className="px-5 py-4 text-slate-600">
                     {formatDate(project.startDate)}
                   </td>
@@ -98,22 +109,29 @@ function ProjectTable({
                     {formatDate(project.endDate)}
                   </td>
                   <td className="px-5 py-4">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClassMap[project.status]}`}
+                    <select
+                      className={`rounded-xl border px-2 py-1 text-xs font-medium ${statusClassMap[project.status]}`}
+                      value={project.status}
+                      onChange={(e) => onUpdateStatus(project, e.target.value)}
                     >
-                      {statusLabelMap[project.status]}
-                    </span>
+                      <option value="pending">Pending</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="complete">Complete</option>
+                    </select>
                   </td>
+                  {isAdmin && (
+                    <td className="px-5 py-4 text-slate-600">
+                      {project.managerName || "Unassigned"}
+                    </td>
+                  )}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => onView(project)}
-                        className="inline-flex items-center gap-1 rounded-lg border 
-                        border-slate-200 px-3 py-1.5 text-xs font-medium
-                         text-slate-700 transition hover:bg-slate-100"
+                        className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
                       >
-                        <FiEye className="h-3.5 w-3.5" />
+                        <FiEye className="h-4 w-4" />
                         View
                       </button>
                       <button

@@ -4,47 +4,43 @@ import jwt from "jsonwebtoken";
 import { sendCredentialsEmail } from "../utils/sendEmail.js";
 import { LeaveBalance } from "../models/index.js";
 
-// REGISTER
+// ================= REGISTER =================
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, manager_id } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      console.log("User already exists with email:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // ✅ Manager assignment logic
+    let assignedManagerId = null;
+
+    if (role === "employee") {
+      assignedManagerId = manager_id || null;
+    }
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
+      manager_id: assignedManagerId,
     });
 
-    //create the leaves balance for the user
+    // ✅ Create Leave Balance
+    await LeaveBalance.create({
+      userId: user.id,
+      annual: 20,
+      sick: 10,
+      casual: 5,
+    });
 
-    let leaveBalance;
-    try {
-      leaveBalance = await LeaveBalance.create({
-        userId: user.id,
-        annual: 20,
-        sick: 10,
-        casual: 5,
-      });
-      console.log("Leave balance created:", leaveBalance.toJSON());
-    } catch (error) {
-      console.error("Error creating leave balance:", error);
-    }
-
-    await user.save(); // save to database
     res.status(201).json({
-      message: `User registered successfully: ${name} `,
+      message: `User registered successfully: ${name}`,
     });
   } catch (error) {
     console.error(error);
@@ -52,54 +48,55 @@ export const register = async (req, res) => {
   }
 };
 
-//..................ADMIN CREATE USER...........................
+// ================= ADMIN / MANAGER CREATE USER =================
 export const createUserByAdmin = async (req, res) => {
   try {
-    const { name, email, role } = req.body;
+    const { name, email, role, manager_id } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      console.log("User already exists with email:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // generate password Auto
-    const plainPassword = Math.random().toString(36).slice(-8); // generate random 8 character password
-
-    // Hash password
+    const plainPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    // Create user
+    // ✅ Manager assignment logic
+    let assignedManagerId = null;
+
+    if (req.user.role === "manager") {
+      // Manager creates → auto assign to himself
+      assignedManagerId = req.user.id;
+    } 
+    
+    else if (req.user.role === "admin") {
+      // Admin creates employee → must assign manager (optional but recommended)
+      if (role === "employee") {
+        assignedManagerId = manager_id || null;
+      }
+    }
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
+      manager_id: assignedManagerId,
     });
 
-    // Send email with credentials
+    // ✅ Send credentials email
     await sendCredentialsEmail(name, email, plainPassword);
 
-    // Create leave balance for the new user
-    try {
-      const leaveBalance = await LeaveBalance.create({
-        userId: user.id,
-        annual: 20,
-        sick: 10,
-        casual: 5,
-      });
-      console.log(
-        "Leave balance created (admin create):",
-        leaveBalance.toJSON(),
-      );
-    } catch (error) {
-      console.error("Error creating leave balance (admin create):", error);
-    }
+    // ✅ Create leave balance
+    await LeaveBalance.create({
+      userId: user.id,
+      annual: 20,
+      sick: 10,
+      casual: 5,
+    });
 
-    await user.save(); // save to database
     res.status(201).json({
-      message: `User created successfully and email sent to: ${name} `,
+      message: `User created successfully: ${name}`,
     });
   } catch (error) {
     console.log(error);
@@ -107,8 +104,7 @@ export const createUserByAdmin = async (req, res) => {
   }
 };
 
-//..............VIEW USERS...........................
-
+// ================= GET USERS =================
 export const getAllUsers = async (req, res) => {
   try {
     let users;
@@ -117,41 +113,37 @@ export const getAllUsers = async (req, res) => {
       users = await User.findAll({
         attributes: { exclude: ["password"] },
       });
-      res.json(users);
-    }
-
-    // manager find employee only
-    else if (req.user.role === "manager") {
+    } else if (req.user.role === "manager") {
+      // ✅ ONLY their employees
       users = await User.findAll({
-        where: { role: "employee" },
+        where: {
+          role: "employee",
+          manager_id: req.user.id,
+        },
         attributes: { exclude: ["password"] },
       });
-      res.json(users);
-    }
-
-    // employee find only himself
-    else if (req.user.role === "employee") {
+    } else {
       users = await User.findOne({
         where: { id: req.user.id },
         attributes: { exclude: ["password"] },
       });
-      res.json(users);
     }
+
+    res.json(users);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-//..... UPDATE USER...................
+// ================= UPDATE USER =================
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role } = req.body;
-    const user = await User.findByPk(id);
+    const { name, email, role, manager_id } = req.body;
 
+    const user = await User.findByPk(id);
     if (!user) {
-      console.log("User not found with id:", id);
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -159,30 +151,42 @@ export const updateUser = async (req, res) => {
       user.name = name || user.name;
       user.email = email || user.email;
       user.role = role || user.role;
+
+      // ✅ Admin can reassign manager
+      if (manager_id !== undefined) {
+        user.manager_id = manager_id;
+      }
+
       await user.save();
-      res.json({ message: `User updated successfully: ${user.name}` });
-    } else if (req.user.role === "manager") {
-      if (user.role === "employee") {
+      return res.json({ message: `User updated: ${user.name}` });
+    }
+
+    if (req.user.role === "manager") {
+      if (user.role === "employee" && user.manager_id === req.user.id) {
         user.name = name || user.name;
         user.email = email || user.email;
         await user.save();
-        res.json({ message: `Employee updated successfully: ${user.name}` });
-      } else {
-        res
-          .status(403)
-          .json({ message: "Forbidden: Managers can only update employees" });
+
+        return res.json({ message: `Employee updated: ${user.name}` });
       }
-    } else if (req.user.role === "employee") {
+
+      return res.status(403).json({
+        message: "Managers can only update their own employees",
+      });
+    }
+
+    if (req.user.role === "employee") {
       if (user.id === req.user.id) {
         user.name = name || user.name;
         user.email = email || user.email;
         await user.save();
-        res.json({ message: `Employee updated successfully: ${user.name}` });
-      } else {
-        res.status(403).json({
-          message: "Forbidden: Employees can only update their own profile",
-        });
+
+        return res.json({ message: "Profile updated" });
       }
+
+      return res.status(403).json({
+        message: "You can only update your own profile",
+      });
     }
   } catch (error) {
     console.log(error);
@@ -190,51 +194,55 @@ export const updateUser = async (req, res) => {
   }
 };
 
-//..............DELETE USER...........................
+// ================= DELETE USER =================
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
+
     const user = await User.findByPk(id);
     if (!user) {
-      console.log("User not found with id:", id);
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Optional: restrict manager delete
+    if (
+      req.user.role === "manager" &&
+      user.manager_id !== req.user.id
+    ) {
+      return res.status(403).json({
+        message: "You can only delete your own employees",
+      });
+    }
+
     await user.destroy();
-    res.json({ message: `User deleted successfully: ${user.name}` });
+
+    res.json({ message: `User deleted: ${user.name}` });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// ............LOGIN...........................
-
+// ================= LOGIN =================
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      console.log("User not found with email:", email);
       return res.status(404).json({ message: "User not found" });
     }
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
 
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("Invalid password for email:", email);
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // Generate JWT
-    const token = jwt.sign({ id: user.id, role: user.role }, "secretkey", {
-      expiresIn: "1d",
-    });
-
-    // Exclude password before sending
-    const { password: pwd, ...userWithoutPassword } = user.toJSON();
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      "secretkey",
+      { expiresIn: "1d" }
+    );
 
     res.json({
       message: "Login successful",
@@ -250,55 +258,38 @@ export const login = async (req, res) => {
   }
 };
 
-// ............CHANGE PASSWORD...........................
+// ================= CHANGE PASSWORD =================
 export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       return res.status(400).json({
-        message:
-          "currentPassword, newPassword, and confirmPassword are required",
-      });
-    }
-
-    if (newPassword.length < 8) {
-      return res.status(400).json({
-        message: "New password must be at least 8 characters",
+        message: "All fields are required",
       });
     }
 
     if (newPassword !== confirmPassword) {
       return res.status(400).json({
-        message: "New password and confirm password do not match",
+        message: "Passwords do not match",
       });
     }
 
     const user = await User.findByPk(req.user.id);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const isCurrentMatch = await bcrypt.compare(currentPassword, user.password);
-
-    if (!isCurrentMatch) {
-      return res.status(400).json({ message: "Current password is incorrect" });
-    }
-
-    const isSameAsOld = await bcrypt.compare(newPassword, user.password);
-    if (isSameAsOld) {
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
       return res.status(400).json({
-        message: "New password must be different from current password",
+        message: "Current password is incorrect",
       });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    return res.status(200).json({ message: "Password updated successfully" });
+    res.json({ message: "Password updated successfully" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };

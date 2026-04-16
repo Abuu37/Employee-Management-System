@@ -25,12 +25,18 @@ User.init(
       type: DataTypes.ENUM("admin", "manager", "employee"),
       allowNull: false,
     },
+
+    // ✅ NEW FIELD
+    manager_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     sequelize,
     modelName: "User",
-    tableName: "users", // optional: force table name
-  }
+    tableName: "users",
+  },
 );
 
 export default User;

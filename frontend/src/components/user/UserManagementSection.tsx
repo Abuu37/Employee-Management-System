@@ -64,7 +64,6 @@ function UserManagementSection({
   const navigate = useNavigate();
 
   useEffect(() => {
-
     // Fetch users from the API and handle authentication errors
     const fetchUsers = async () => {
       try {
@@ -141,7 +140,6 @@ function UserManagementSection({
   const handleAddUser = () => {
     setAddOpen(true);
   };
-
 
   // Action handlers for create, update, delete operations
   const handleCreateUser = async (formValues: AddUserFormValues) => {
@@ -239,7 +237,6 @@ function UserManagementSection({
       setIsSaving(false);
     }
   };
-
 
   // Handler for deleting a user
 

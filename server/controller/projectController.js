@@ -86,7 +86,7 @@ const buildProjectPayload = async (body, { partial = false } = {}) => {
   return { payload };
 };
 
-// Create project by admin only
+//=========== Create project by admin only ===========//
 export const createProject = async (req, res) => {
   try {
     const { payload, error } = await buildProjectPayload(req.body);
@@ -126,7 +126,7 @@ export const getProjects = async (req, res) => {
   }
 };
 
-// Get single project
+//=========== Get single project ===========//
 export const getProjectById = async (req, res) => {
   try {
     const project = await Project.findByPk(req.params.id);
@@ -146,7 +146,7 @@ export const getProjectById = async (req, res) => {
   }
 };
 
-// Update project
+//=========== Update project ===========//
 export const updateProject = async (req, res) => {
   try {
     const project = await Project.findByPk(req.params.id);
@@ -155,6 +155,21 @@ export const updateProject = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
+    //=========== If manager, only allow status update ===========//
+    if (req.user.role === "manager") {
+      const { status } = req.body;
+      if (!status || !allowedStatuses.has(status)) {
+        return res.status(400).json({ message: "Invalid status value." });
+      }
+      project.status = status;
+      await project.save();
+      return res.status(200).json({
+        project,
+        message: "Project status updated successfully by manager",
+      });
+    }
+
+    //=========== Admin: allow full update ===========//
     const { payload, error } = await buildProjectPayload(req.body, {
       partial: true,
     });
@@ -183,7 +198,7 @@ export const updateProject = async (req, res) => {
   }
 };
 
-// Delete project
+//=========== Delete project ===========//
 export const deleteProject = async (req, res) => {
   try {
     const project = await Project.findByPk(req.params.id);

@@ -21,7 +21,7 @@ router.get("/all", verifyToken, checkRole("admin", "manager"), getProjects);
 router.get("/:id", verifyToken, checkRole("admin", "manager"), getProjectById);
 
 // Update a project (Admin)
-router.put("/update/:id", verifyToken, checkRole("admin"), updateProject);
+router.put("/update/:id", verifyToken, checkRole("admin", "manager"), updateProject);
 
 // Delete a project (Admin only)
 router.delete("/delete/:id", verifyToken, checkRole("admin"), deleteProject);

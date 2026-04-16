@@ -19,7 +19,7 @@ const adminNavItems: NavItem[] = [
 
 const managerNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
-  { name: "Employees", key: "employee", path: "/employee" },
+  { name: "My Team", key: "employee", path: "/employee" },
   { name: "Projects", key: "projects", path: "/projects" },
   { name: "Leaves ", key: "leaves", path: "/leaves" },
   { name: "Reports", key: "reports", path: "/reports" },

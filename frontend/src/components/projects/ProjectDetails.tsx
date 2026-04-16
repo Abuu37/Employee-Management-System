@@ -69,15 +69,16 @@ function ProjectDetails({
   const role = localStorage.getItem("user-role");
   const navigate = useNavigate();
 
-  const canCreateTask = role === "manager" && project?.status === "in_progress";
+  // Managers can always create tasks
+  const canCreateTask = role === "manager";
 
-  const canDeleteTask =
-    role === "manager" && project?.status === "in_progress" && !!onDeleteTask;
+  // constant that only MANAGER and project is IN_PROGRESS and onDeleteTask exists
+  const canDeleteTask = role === "manager" && project?.status === "in_progress" && !!onDeleteTask;
 
   const handleTaskFormSubmit = async (values: TaskFormValues) => {
     await onCreateTask(values);
   };
-
+ 
   const handleDeleteClick = (task: ProjectTask) => {
     setSelectedTask(task);
     setDeleteModalOpen(true);
@@ -107,50 +108,75 @@ function ProjectDetails({
     >
       {project ? (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5">
-            <h3 className="text-xl font-semibold text-slate-900">
-              {project.name}
-            </h3>
-            <p className="mt-2 text-sm text-slate-600">
-              {project.description || "No description"}
-            </p>
+          {/* Static card style like user details */}
+          <div className="rounded-2xl bg-linear-to-br from-blue-600 via-cyan-600 to-teal-500 p-px">
+            <div className="rounded-2xl bg-white px-5 py-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+                Project Snapshot
+              </p>
+              <h3 className="mt-3 text-2xl font-semibold text-slate-900">
+                {project.name}
+              </h3>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl bg-white px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Manager
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {project.managerName}
-                </p>
-              </div>
-              <div className="rounded-xl bg-white px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Start Date
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {formatDate(project.startDate)}
-                </p>
-              </div>
-              <div className="rounded-xl bg-white px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  End Date
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {formatDate(project.endDate)}
-                </p>
-              </div>
-              <div className="rounded-xl bg-white px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Status
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {formatStatus(project.status)}
-                </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {/* Only show Manager card for admin, otherwise show Description */}
+                {(() => {
+                  const isAdmin =
+                    typeof window !== "undefined" &&
+                    localStorage.getItem("user-role") === "admin";
+                  if (isAdmin) {
+                    return (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
+                          Manager
+                        </p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {project.managerName || ""}
+                        </p>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
+                          Description
+                        </p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {project.description || ""}
+                        </p>
+                      </div>
+                    );
+                  }
+                })()}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
+                    Start Date
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatDate(project.startDate)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
+                    End Date
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatDate(project.endDate)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
+                    Status
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {formatStatus(project.status)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* ====================== Tasks Table ======================= */}
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-5 py-4 flex items-center justify-between">
               <h4 className="text-sm font-semibold text-slate-900">Tasks</h4>
@@ -236,7 +262,7 @@ function ProjectDetails({
                   ) : (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-5 py-8 text-center text-sm text-slate-500"
                       >
                         No tasks found for this project.

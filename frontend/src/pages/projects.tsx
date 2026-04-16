@@ -63,6 +63,34 @@ const normalizeUsers = (payload: unknown): RawUser[] => {
 };
 
 function Projects() {
+    // Handler to update project status
+    const handleUpdateStatus = async (project: ProjectItem, status: string) => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+      try {
+        await axios.put(
+          `${PROJECT_API}/update/${project.id}`,
+          { status },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        await fetchUsersAndProjects();
+        setFeedback({ type: "success", message: `Status updated for ${project.name}.` });
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          setFeedback({
+            type: "error",
+            message: err.response?.data?.message || "Failed to update status.",
+          });
+        } else {
+          setFeedback({ type: "error", message: "Failed to update status." });
+        }
+      }
+    };
   // Delete a specific task by id
   const handleDeleteTask = async (taskId: number) => {
     const token = localStorage.getItem("token");
@@ -511,6 +539,7 @@ function Projects() {
           onView={handleViewOpen}
           onEdit={handleEditOpen}
           onDelete={handleDeleteOpen}
+          onUpdateStatus={handleUpdateStatus}
         />
 
         <ProjectForm
