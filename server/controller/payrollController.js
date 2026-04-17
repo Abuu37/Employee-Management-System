@@ -7,13 +7,12 @@ export const generatePayroll = async (req, res) => {
   const t = await sequelize.transaction();
 
   try {
-    const { user_id, month, year} = req.body; // Get salary details for the user
-    
+    const { user_id, month, year } = req.body; // Get salary details for the user
+
     if (!user_id || !month || !year) {
       await t.rollback();
       return res.status(400).json({
         message: "user_id, month and year are required to generate payroll",
-
       });
     }
 
@@ -21,7 +20,6 @@ export const generatePayroll = async (req, res) => {
     const salaryRecord = await Salary.findOne({
       where: { user_id },
       transaction: t,
-
     });
 
     if (!salaryRecord) {
@@ -48,7 +46,7 @@ export const generatePayroll = async (req, res) => {
     const base = Number(salaryRecord.base_salary);
     const bonus = Number(salaryRecord.bonus || 0);
     const allowance = Number(salaryRecord.allowance || 0);
-    const taxPercent  = Number(salaryRecord.tax_percentage || 0);
+    const taxPercent = Number(salaryRecord.tax_percentage || 0);
 
     //calculate payroll components
     const gross = base + bonus + allowance;
@@ -70,24 +68,21 @@ export const generatePayroll = async (req, res) => {
         net_salary,
         status: "pending",
       },
-      { transaction: t }
+      { transaction: t },
     );
 
     await t.commit();
-     res.status(201).json({
-       message: "Payroll generated successfully",
-       payroll,
-     });
-
-
-  }catch (error) {
+    res.status(201).json({
+      message: "Payroll generated successfully",
+      payroll,
+    });
+  } catch (error) {
     await t.rollback();
     console.error("Error generating payroll:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Internal server error",
     });
   }
-
 };
 
 // ================= GET ALL PAYROLL  =================
@@ -100,10 +95,32 @@ export const getPayrollDetails = async (req, res) => {
       message: "Payroll details fetched successfully",
       payrolls,
     });
-
-  }catch (error) {
+  } catch (error) {
     console.error("Error fetching payroll details:", error);
-    res.status(500).json({ 
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+};
+
+// ================= GET MY PAYROLL (for logged-in user) =================
+export const getMyPayroll = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const payrolls = await Payroll.findAll({
+      where: { user_id: userId },
+      order: [
+        ["year", "DESC"],
+        ["month", "DESC"],
+      ],
+    });
+    res.status(200).json({
+      message: "My payroll fetched successfully",
+      payrolls,
+    });
+  } catch (error) {
+    console.error("Error fetching my payroll:", error);
+    res.status(500).json({
       error: "Internal server error",
     });
   }
@@ -123,7 +140,7 @@ export const approvePayroll = async (req, res) => {
     }
 
     if (payroll.status !== "pending") {
-        return res.status(400).json({
+      return res.status(400).json({
         message: "Only pending payroll can be approved",
       });
     }
@@ -136,10 +153,9 @@ export const approvePayroll = async (req, res) => {
       message: "Payroll approved successfully",
       payroll,
     });
-
-  }catch (error) {
+  } catch (error) {
     console.error("Error approving payroll:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Internal server error",
     });
   }
@@ -174,7 +190,6 @@ export const markAsPaid = async (req, res) => {
       message: "Payroll marked as paid",
       payroll,
     });
-
   } catch (error) {
     console.error("Error marking payroll paid:", error);
     res.status(500).json({

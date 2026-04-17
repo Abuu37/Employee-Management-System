@@ -187,8 +187,8 @@ function Tasks() {
 
   // When user clicks "View Task" in the table, navigate to comment page
   const handleCommentTask = (task: TaskItem) => {
-       setSelectedTask(task);
-       setDetailsOpen(true);
+    setSelectedTask(task);
+    setDetailsOpen(true);
   };
 
   useEffect(() => {
@@ -196,7 +196,7 @@ function Tasks() {
   }, []);
 
   const displayedTasks = tasks.filter((task) => {
-  const query = searchTerm.toLowerCase().trim();
+    const query = searchTerm.toLowerCase().trim();
 
     if (!query) {
       return true;
@@ -239,16 +239,16 @@ function Tasks() {
         />
 
         {selectedTask && (
-         <CommentModal
-  isOpen={detailsOpen}
-  onClose={() => {
-    setDetailsOpen(false);
-    setSelectedTask(null);
-  }}
->
-             <TaskCommentPage modalMode taskId={selectedTask.id} />
-             </CommentModal>
-          )}
+          <CommentModal
+            isOpen={detailsOpen}
+            onClose={() => {
+              setDetailsOpen(false);
+              setSelectedTask(null);
+            }}
+          >
+            <TaskCommentPage modalMode taskId={selectedTask.id} />
+          </CommentModal>
+        )}
       </main>
     </div>
   );

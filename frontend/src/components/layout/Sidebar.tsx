@@ -10,6 +10,8 @@ import {
   FiSettings,
   FiLogOut,
   FiClipboard,
+  FiDollarSign,
+  FiFileText,
 } from "react-icons/fi";
 // Map nav item keys to icons
 const navIcons = {
@@ -20,6 +22,8 @@ const navIcons = {
   projects: <FiFolder className="h-5 w-5" />,
   leaves: <FiCalendar className="h-5 w-5" />,
   tasks: <FiClipboard className="h-5 w-5" />,
+  payroll: <FiDollarSign className="h-5 w-5" />,
+  salary: <FiFileText className="h-5 w-5" />,
   reports: <FiBarChart2 className="h-5 w-5" />,
   settings: <FiSettings className="h-5 w-5" />,
   logout: <FiLogOut className="h-5 w-5" />,

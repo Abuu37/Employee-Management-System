@@ -10,6 +10,8 @@ import Settings from "./pages/Settings";
 import Projects from "./pages/projects";
 import TaskCommentPage from "./pages/TaskCommentPage";
 import Leave from "./pages/Leaves";
+import Payslip from "./pages/payslip/MyPayslipPage";
+import Payroll from "./pages/payroll/PayrollPage";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/tasks/:id/comments" element={<TaskCommentPage />} />
         <Route path="/leaves" element={<Leave />} />
+        <Route path="/salary" element={<Payslip />} />
+        <Route path="/payroll" element={<Payroll />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

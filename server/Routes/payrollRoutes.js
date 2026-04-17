@@ -2,6 +2,7 @@ import express from "express";
 import {
   generatePayroll,
   getPayrollDetails,
+  getMyPayroll,
   approvePayroll,
   markAsPaid,
 } from "../controller/payrollController.js";
@@ -19,6 +20,8 @@ router.post(
 
 router.get("/", verifyToken, getPayrollDetails);
 
+router.get("/me", verifyToken, getMyPayroll);
+
 router.put(
   "/:id/approve",
   verifyToken,
@@ -26,11 +29,6 @@ router.put(
   approvePayroll,
 );
 
-router.put(
-    "/:id/pay", 
-    verifyToken, 
-    checkRole("admin"), 
-    markAsPaid
-);
+router.put("/:id/pay", verifyToken, checkRole("admin"), markAsPaid);
 
 export default router;

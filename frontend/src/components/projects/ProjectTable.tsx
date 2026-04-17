@@ -160,7 +160,7 @@ function ProjectTable({
             ) : (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={isAdmin ? 7 : 6}
                   className="px-5 py-10 text-center text-sm text-slate-500"
                 >
                   {emptyMessage}
