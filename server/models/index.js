@@ -6,7 +6,9 @@ import Project from "./project.js";
 import TaskComment from "./taskComment.js";
 import User from "./user.js";
 import Holiday from "./Holiday.js";
-
+import Salary from "./salary.js";
+import Payroll from "./payroll.js";
+import Document from "./document.js";
 
 // Leave <-> User relationship (employee who requested leave)
 Leave.belongsTo(User, { foreignKey: "userId", as: "user" });
@@ -15,6 +17,20 @@ User.hasMany(Leave, { foreignKey: "userId", as: "leaves" });
 // Leave <-> User relationship (manager who approved leave)
 Leave.belongsTo(User, { foreignKey: "approvedBy", as: "approver" });
 
+// User <-> Salary relationship
+User.hasOne(Salary, { foreignKey: "user_id", as: "salary" });
+Salary.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// User <-> Payroll relationship
+User.hasMany(Payroll, { foreignKey: "user_id", as: "payrolls" });
+Payroll.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+// User <-> Document relationships
+User.hasMany(Document, { foreignKey: "user_id", as: "documents" });
+Document.belongsTo(User, { foreignKey: "user_id", as: "owner" });
+
+User.hasMany(Document, { foreignKey: "uploaded_by", as: "uploadedDocuments" });
+Document.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader" });
 
 // User <-> Project relationships
 User.hasMany(Project, { foreignKey: "createdBy", as: "createdProjects" });
@@ -44,4 +60,4 @@ Task.hasMany(TaskComment, { foreignKey: "taskId", as: "comments" });
 import Leave from "./Leave.js";
 import LeaveBalance from "./LeaveBalance.js";
 
-export { User, Task, Project, Leave, LeaveBalance };
+export { User, Task, Project, Leave, LeaveBalance, Salary, Payroll, Document };

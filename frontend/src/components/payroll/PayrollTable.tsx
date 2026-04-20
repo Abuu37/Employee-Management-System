@@ -1,3 +1,4 @@
+import { FiPlus } from "react-icons/fi";
 import { approvePayroll, markAsPaid } from "../../services/payrollService";
 
 interface PayrollRecord {
@@ -12,6 +13,7 @@ interface PayrollRecord {
   tax: string;
   net_salary: string;
   status: "pending" | "approved" | "paid";
+  user?: { id: number; name: string; email: string };
 }
 
 const statusClass: Record<string, string> = {
@@ -39,9 +41,11 @@ const monthNames = [
 export default function PayrollTable({
   data,
   onRefresh,
+  onAdd,
 }: {
   data: PayrollRecord[];
   onRefresh: () => void;
+  onAdd: () => void;
 }) {
   const handleApprove = async (id: number) => {
     await approvePayroll(id);
@@ -54,13 +58,30 @@ export default function PayrollTable({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <h3 className="text-lg font-semibold text-slate-900">Payroll</h3>
+        <div className="flex items-center gap-3">
+          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            {data.length} records
+          </div>
+          <button
+            type="button"
+            onClick={onAdd}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            <FiPlus className="h-4 w-4" />
+            Generate Payroll
+          </button>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">Employee ID</th>
+              <th className="px-5 py-3 font-medium">Employee</th>
               <th className="px-5 py-3 font-medium">Period</th>
               <th className="px-5 py-3 font-medium">Base Salary</th>
               <th className="px-5 py-3 font-medium">Bonus</th>
@@ -80,7 +101,14 @@ export default function PayrollTable({
                   <td className="px-5 py-4 font-semibold text-slate-900">
                     {idx + 1}
                   </td>
-                  <td className="px-5 py-4 text-slate-600">{item.user_id}</td>
+                  <td className="px-5 py-4 text-slate-600">
+                    <div>
+                      <span className="font-medium text-slate-900">
+                        {item.user?.name ?? `User #${item.user_id}`}
+                      </span>
+                      <p className="text-xs text-slate-400">ID: {item.user_id}</p>
+                    </div>
+                  </td>
                   <td className="px-5 py-4 text-slate-600">
                     {monthNames[item.month]} {item.year}
                   </td>
@@ -146,6 +174,6 @@ export default function PayrollTable({
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }

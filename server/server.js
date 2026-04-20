@@ -9,6 +9,7 @@ import { TaskCommentRoute } from "./Routes/taskCommentRoutes.js";
 import LeaveRoute from "./Routes/LeaveRoute.js";
 import PayrollRoute from "./Routes/payrollRoutes.js";
 import SalaryRoute from "./Routes/salaryRoutes.js";
+import DocumentRoute from "./Routes/documentRoutes.js";
 import "./models/index.js";
 
 const app = express();
@@ -34,6 +35,8 @@ app.use("/api/payroll", PayrollRoute);
 //salary routes
 app.use("/api/salary", SalaryRoute);
 
+// Document routes
+app.use("/api/documents", DocumentRoute);
 
 // Start the server after syncing the database
 

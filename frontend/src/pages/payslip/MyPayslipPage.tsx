@@ -115,7 +115,9 @@ export default function MyPayslipPage() {
                               <button
                                 type="button"
                                 onClick={() => setSelected(slip)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-500 hover:text-white"
+                                className="inline-flex items-center gap-1 rounded-lg border border-blue-200
+                                bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition
+                                hover:bg-blue-500 hover:text-white"
                               >
                                 <FiEye className="h-4 w-4" />
                                 View

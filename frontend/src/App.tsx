@@ -12,6 +12,8 @@ import TaskCommentPage from "./pages/TaskCommentPage";
 import Leave from "./pages/Leaves";
 import Payslip from "./pages/payslip/MyPayslipPage";
 import Payroll from "./pages/payroll/PayrollPage";
+import Salary from "./pages/salary/SalaryPage";
+import Documents from "./pages/documents/DocumentPage";
 
 function App() {
   return (
@@ -27,7 +29,9 @@ function App() {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/tasks/:id/comments" element={<TaskCommentPage />} />
         <Route path="/leaves" element={<Leave />} />
-        <Route path="/salary" element={<Payslip />} />
+        <Route path="/salary" element={<Salary />} />
+        <Route path="/documents" element={<Documents />} />
+        <Route path="/pay-slips" element={<Payslip />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />

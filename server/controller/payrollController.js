@@ -1,5 +1,6 @@
 import Payroll from "../models/payroll.js";
 import Salary from "../models/salary.js";
+import User from "../models/user.js";
 import { sequelize } from "../config/db.js";
 
 // ================= GENERATE PAYROLL =================
@@ -89,6 +90,7 @@ export const generatePayroll = async (req, res) => {
 export const getPayrollDetails = async (req, res) => {
   try {
     const payrolls = await Payroll.findAll({
+      include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }],
       order: [["created_at", "DESC"]],
     });
     res.status(200).json({

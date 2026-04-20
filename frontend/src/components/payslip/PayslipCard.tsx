@@ -1,4 +1,7 @@
+import { useRef } from "react";
 import { FiDownload } from "react-icons/fi";
+import html2canvas from "html2canvas-pro";
+import jsPDF from "jspdf";
 
 interface PayslipRecord {
   id: number;
@@ -58,6 +61,27 @@ export default function PayslipCard({
   const tax = Number(data.tax);
   const net = Number(data.net_salary);
   const gross = base + bonus + allowance;
+  // For PDF generation
+  const payslipRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadPDF = async () => {
+    if (!payslipRef.current) return;
+
+    const canvas = await html2canvas(payslipRef.current, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Payslip_${monthNames[data.month]}_${data.year}.pdf`);
+  };
 
   const paymentDate = data.paid_at
     ? new Date(data.paid_at).toLocaleDateString("en-GB", {
@@ -68,11 +92,15 @@ export default function PayslipCard({
     : "-";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div
+      className="mx-auto max-w-3xl space-y-4"
+      style={{ fontFamily: "'Inter', sans-serif" }}
+    >
       {/* Top bar */}
       <div className="flex items-center justify-end gap-2">
         <button
           type="button"
+          onClick={handleDownloadPDF}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
           <FiDownload className="h-4 w-4" />
@@ -101,10 +129,13 @@ export default function PayslipCard({
       </div>
 
       {/* Payslip document */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div
+        ref={payslipRef}
+        className="rounded-xl border border-slate-200 bg-white shadow-sm"
+      >
         {/* Title */}
-        <div className="border-b border-slate-200 px-6 py-3.5">
-          <h2 className="text-base font-semibold text-slate-900">
+        <div className="border-b border-blue-100 bg-blue-600 px-6 py-3.5 rounded-t-xl">
+          <h2 className="text-base font-semibold text-white">
             Payslip Details
           </h2>
         </div>
@@ -118,7 +149,10 @@ export default function PayslipCard({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-lg
+                  bg-blue-600 text-xs font-bold text-white"
+              >
                 EMS
               </div>
               <div>
@@ -135,7 +169,7 @@ export default function PayslipCard({
         <div className="grid grid-cols-1 gap-5 px-6 py-5 md:grid-cols-3">
           {/* Left column — Employee Info */}
           <div className="md:col-span-1">
-            <h3 className="mb-2.5 text-xs font-bold text-slate-900 uppercase tracking-wide">
+            <h3 className="mb-2.5 rounded-md bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 uppercase tracking-wide">
               Employee Information
             </h3>
             <div className="space-y-2.5 text-sm">
@@ -166,7 +200,10 @@ export default function PayslipCard({
           <div className="space-y-4 md:col-span-2">
             {/* Earnings */}
             <div>
-              <h3 className="mb-1.5 text-xs font-bold text-slate-900 uppercase tracking-wide">
+              <h3
+                className="mb-1.5 rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-bold
+                  text-emerald-700 uppercase tracking-wide"
+              >
                 Earnings
               </h3>
               <table className="w-full text-sm">
@@ -199,7 +236,7 @@ export default function PayslipCard({
 
             {/* Deductions */}
             <div>
-              <h3 className="mb-1.5 text-xs font-bold text-slate-900 uppercase tracking-wide">
+              <h3 className="mb-1.5 rounded-md bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 uppercase tracking-wide">
                 Deductions
               </h3>
               <table className="w-full text-sm">
@@ -225,8 +262,8 @@ export default function PayslipCard({
             </div>
 
             {/* Net Pay */}
-            <div className="rounded-lg bg-slate-50 px-5 py-3.5">
-              <p className="mb-0.5 text-sm text-slate-500">Net Pay Summary</p>
+            <div className="rounded-lg bg-blue-50 border border-blue-100 px-5 py-3.5">
+              <p className="mb-0.5 text-sm text-blue-500">Net Pay Summary</p>
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold text-slate-900">
                   NET PAY
