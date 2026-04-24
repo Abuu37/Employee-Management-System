@@ -5,4 +5,8 @@
   --color-secondary: #fbbf24;
   --color-background: #ffffff;
   --color-text: #111111;
-} 
+}
+
+* {
+  font-family: "Inter", sans-serif;
+}

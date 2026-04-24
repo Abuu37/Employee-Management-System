@@ -14,6 +14,7 @@ import Payslip from "./pages/payslip/MyPayslipPage";
 import Payroll from "./pages/payroll/PayrollPage";
 import Salary from "./pages/salary/SalaryPage";
 import Documents from "./pages/documents/DocumentPage";
+import AttendancePage from "./pages/attendance/AttendancePage";
 
 function App() {
   return (
@@ -35,6 +36,8 @@ function App() {
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/attendance" element={<AttendancePage />} />
+        <Route path="/my-attendance" element={<AttendancePage />} />
       </Routes>
     </BrowserRouter>
   );

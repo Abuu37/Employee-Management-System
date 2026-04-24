@@ -196,7 +196,7 @@ const TaskCommentPage: React.FC<{
                         isOwn
                           ? "bg-blue-600 text-white ml-auto"
                           : "bg-blue-50 text-slate-800"
-                      } flex flex-col min-w-[220px] max-w-xl relative`}
+                      } flex flex-col min-w-55 max-w-xl relative`}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-semibold text-base">
@@ -219,7 +219,7 @@ const TaskCommentPage: React.FC<{
                           {c.createdAt}
                         </span>
                       </div>
-                      <div className="text-base whitespace-pre-line break-words
+                      <div className="text-base whitespace-pre-line wrap-break-word
                            max-w-xs md:max-w-sm lg:max-w-md overflow-x-auto">
                         {c.content}
                       </div>
@@ -312,7 +312,7 @@ const TaskCommentPage: React.FC<{
                           isOwn
                             ? "bg-blue-600 text-white ml-auto"
                             : "bg-blue-50 text-slate-800"
-                        } flex flex-col min-w-[220px] max-w-xl relative`}
+                        } flex flex-col min-w-55 max-w-xl relative`}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-base">
@@ -335,7 +335,7 @@ const TaskCommentPage: React.FC<{
                             {c.createdAt}
                           </span>
                         </div>
-                        <div className="text-base whitespace-pre-line break-words max-w-xs md:max-w-sm lg:max-w-md overflow-x-auto">
+                        <div className="text-base whitespace-pre-line wrap-break-word max-w-xs md:max-w-sm lg:max-w-md overflow-x-auto">
                           {c.content}
                         </div>
                       </div>

@@ -103,7 +103,7 @@ export default function SetSalaryModal({
         <div className="grid gap-4">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Select Employee
+              Select Staff
             </span>
             <select
               name="user_id"
@@ -114,7 +114,7 @@ export default function SetSalaryModal({
               required
             >
               <option value="" disabled>
-                Select Employee
+                Select Staff
               </option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
@@ -133,7 +133,8 @@ export default function SetSalaryModal({
               name="base_salary"
               value={formValues.base_salary || ""}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+              text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               placeholder="e.g. 50000"
               required
             />
@@ -149,7 +150,8 @@ export default function SetSalaryModal({
                 name="bonus"
                 value={formValues.bonus || ""}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+                text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
                 placeholder="0"
               />
             </label>
@@ -163,7 +165,8 @@ export default function SetSalaryModal({
                 name="allowance"
                 value={formValues.allowance || ""}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+                text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
                 placeholder="0"
               />
             </label>
@@ -178,7 +181,8 @@ export default function SetSalaryModal({
               name="tax_percentage"
               value={formValues.tax_percentage || ""}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+               text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               placeholder="0"
             />
           </label>

@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { FiEdit2, FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
 import type { ProjectItem } from "./types";
+
+const PAGE_SIZE = 8;
 
 // Component for displaying a table of projects with actions to view, edit, or delete each project
 interface ProjectTableProps {
@@ -56,6 +59,10 @@ function ProjectTable({
   onDelete,
   onUpdateStatus,
 }: ProjectTableProps) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE));
+  const paginated = projects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -93,10 +100,10 @@ function ProjectTable({
 
           <tbody>
             {projects.length > 0 ? (
-              projects.map((project, index) => (
+              paginated.map((project, index) => (
                 <tr key={project.id} className="border-t border-slate-100">
                   <td className="px-5 py-4 font-semibold text-slate-900">
-                    {index + 1}
+                    {(page - 1) * PAGE_SIZE + index + 1}
                   </td>
                   <td className="px-5 py-4 font-semibold text-slate-900">
                     {project.name}
@@ -169,6 +176,23 @@ function ProjectTable({
             )}
           </tbody>
         </table>
+      </div>
+      {/* Pagination */}
+      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Next
+        </button>
       </div>
     </section>
   );

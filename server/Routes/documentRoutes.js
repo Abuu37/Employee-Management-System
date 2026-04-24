@@ -71,8 +71,13 @@ router.get("/my", verifyToken, getMyDocuments);
 // Manager: get team documents
 router.get("/team", verifyToken, checkRole("manager"), getTeamDocuments);
 
-// Admin: verify document
-router.patch("/verify/:id", verifyToken, checkRole("admin"), verifyDocument);
+// Admin + Manager: verify document
+router.patch(
+  "/verify/:id",
+  verifyToken,
+  checkRole("admin", "manager"),
+  verifyDocument,
+);
 
 // Download document (access-controlled in controller)
 router.get("/download/:id", verifyToken, downloadDocument);

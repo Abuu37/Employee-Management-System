@@ -7,6 +7,7 @@ import ProjectTable from "../components/projects/ProjectTable";
 import ProjectForm from "../components/projects/ProjectForm";
 import ProjectDetails from "../components/projects/ProjectDetails";
 import DeleteProjectModal from "../components/projects/DeleteProjectModal";
+import StatCard from "../components/attendance/StatCard";
 import type { TaskFormValues } from "../components/tasks/TaskFormModal";
 import type {
   ManagerOption,
@@ -14,6 +15,13 @@ import type {
   ProjectItem,
   ProjectTask,
 } from "../components/projects/types";
+import {
+  FiFolder,
+  FiClock,
+  FiCheckCircle,
+  FiSearch,
+  FiList,
+} from "react-icons/fi";
 
 const PROJECT_API = "http://localhost:5000/api/project";
 const USER_API = "http://localhost:5000/api/user";
@@ -63,34 +71,37 @@ const normalizeUsers = (payload: unknown): RawUser[] => {
 };
 
 function Projects() {
-    // Handler to update project status
-    const handleUpdateStatus = async (project: ProjectItem, status: string) => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
+  // Handler to update project status
+  const handleUpdateStatus = async (project: ProjectItem, status: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    try {
+      await axios.put(
+        `${PROJECT_API}/update/${project.id}`,
+        { status },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      await fetchUsersAndProjects();
+      setFeedback({
+        type: "success",
+        message: `Status updated for ${project.name}.`,
+      });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setFeedback({
+          type: "error",
+          message: err.response?.data?.message || "Failed to update status.",
+        });
+      } else {
+        setFeedback({ type: "error", message: "Failed to update status." });
       }
-      try {
-        await axios.put(
-          `${PROJECT_API}/update/${project.id}`,
-          { status },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        await fetchUsersAndProjects();
-        setFeedback({ type: "success", message: `Status updated for ${project.name}.` });
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          setFeedback({
-            type: "error",
-            message: err.response?.data?.message || "Failed to update status.",
-          });
-        } else {
-          setFeedback({ type: "error", message: "Failed to update status." });
-        }
-      }
-    };
+    }
+  };
   // Delete a specific task by id
   const handleDeleteTask = async (taskId: number) => {
     const token = localStorage.getItem("token");
@@ -511,68 +522,127 @@ function Projects() {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
-      <main className="flex-1 p-6">
-        <Header searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+      <main className="flex-1 flex flex-col overflow-auto">
+        <Header searchTerm="" onSearchChange={() => {}} />
 
-        {error ? (
-          <p className="mb-4 rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-600">
-            {error}
-          </p>
-        ) : null}
-        {feedback ? (
-          <p
-            className={`mb-4 rounded-2xl px-5 py-4 text-sm ${
-              feedback.type === "success"
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-red-50 text-red-600"
-            }`}
-          >
-            {feedback.message}
-          </p>
-        ) : null}
+        <div className="p-6 space-y-5">
+          {/* Page header */}
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage and track all ongoing projects
+            </p>
+          </div>
 
-        <ProjectTable
-          title="Projects"
-          projects={displayedProjects}
-          emptyMessage="No projects found."
-          onAdd={handleCreateOpen}
-          onView={handleViewOpen}
-          onEdit={handleEditOpen}
-          onDelete={handleDeleteOpen}
-          onUpdateStatus={handleUpdateStatus}
-        />
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Total Projects"
+              value={projects.length}
+              icon={<FiFolder />}
+              color=""
+              featured
+              subtitle="All projects"
+            />
+            <StatCard
+              label="In Progress"
+              value={
+                projects.filter(
+                  (p) =>
+                    p.status === "in_progress" || p.status === "in progress",
+                ).length
+              }
+              icon={<FiClock />}
+              color="bg-blue-100 text-blue-600"
+              subtitle="Currently active"
+            />
+            <StatCard
+              label="Completed"
+              value={projects.filter((p) => p.status === "completed").length}
+              icon={<FiCheckCircle />}
+              color="bg-emerald-100 text-emerald-600"
+              subtitle="Finished projects"
+            />
+            <StatCard
+              label="Pending"
+              value={projects.filter((p) => p.status === "pending").length}
+              icon={<FiList />}
+              color="bg-amber-100 text-amber-600"
+              subtitle="Not yet started"
+            />
+          </div>
 
-        <ProjectForm
-          isOpen={createOpen}
-          onClose={closeAllModals}
-          onSave={handleCreate}
-          managers={managers}
-          isSaving={isCreating}
-        />
-        <ProjectForm
-          isOpen={editOpen}
-          onClose={closeAllModals}
-          onSave={handleEdit}
-          managers={managers}
-          isSaving={isSaving}
-          project={activeProject}
-        />
-        <ProjectDetails
-          isOpen={viewOpen}
-          onClose={closeAllModals}
-          project={activeProject}
-          tasks={tasks}
-          assignees={employeeOptions}
-          onCreateTask={handleCreateTask}
-          onDeleteTask={handleDeleteTask}
-        />
-        <DeleteProjectModal
-          isOpen={deleteOpen}
-          onClose={closeAllModals}
-          onConfirm={handleDelete}
-          project={activeProject}
-          isDeleting={isDeleting}
-        />
+          {/* Search bar */}
+          <div className="relative w-full max-w-sm">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          {error ? (
+            <p className="rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-600">
+              {error}
+            </p>
+          ) : null}
+          {feedback ? (
+            <p
+              className={`mb-4 rounded-2xl px-5 py-4 text-sm ${
+                feedback.type === "success"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-red-50 text-red-600"
+              }`}
+            >
+              {feedback.message}
+            </p>
+          ) : null}
+
+          <ProjectTable
+            title="Projects"
+            projects={displayedProjects}
+            emptyMessage="No projects found."
+            onAdd={handleCreateOpen}
+            onView={handleViewOpen}
+            onEdit={handleEditOpen}
+            onDelete={handleDeleteOpen}
+            onUpdateStatus={handleUpdateStatus}
+          />
+
+          <ProjectForm
+            isOpen={createOpen}
+            onClose={closeAllModals}
+            onSave={handleCreate}
+            managers={managers}
+            isSaving={isCreating}
+          />
+          <ProjectForm
+            isOpen={editOpen}
+            onClose={closeAllModals}
+            onSave={handleEdit}
+            managers={managers}
+            isSaving={isSaving}
+            project={activeProject}
+          />
+          <ProjectDetails
+            isOpen={viewOpen}
+            onClose={closeAllModals}
+            project={activeProject}
+            tasks={tasks}
+            assignees={employeeOptions}
+            onCreateTask={handleCreateTask}
+            onDeleteTask={handleDeleteTask}
+          />
+          <DeleteProjectModal
+            isOpen={deleteOpen}
+            onClose={closeAllModals}
+            onConfirm={handleDelete}
+            project={activeProject}
+            isDeleting={isDeleting}
+          />
+        </div>
       </main>
     </div>
   );

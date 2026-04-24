@@ -18,6 +18,8 @@ interface UserManagementSectionProps {
   emptyMessage: string;
   roleOptions?: UserRole[];
   searchTerm?: string;
+  onFilteredUsers?: (users: User[]) => void;
+  hideTitle?: boolean;
 }
 
 type RawUser = {
@@ -49,6 +51,8 @@ function UserManagementSection({
   emptyMessage,
   roleOptions = [],
   searchTerm = "",
+  onFilteredUsers,
+  hideTitle = false,
 }: UserManagementSectionProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
@@ -289,6 +293,11 @@ function UserManagementSection({
     );
   });
 
+  useEffect(() => {
+    onFilteredUsers?.(displayedUser);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(displayedUser)]);
+
   return (
     <>
       {error ? (
@@ -316,6 +325,7 @@ function UserManagementSection({
         onView={handleOpenView}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
+        hideTitle={hideTitle}
       />
 
       <AddUserModal

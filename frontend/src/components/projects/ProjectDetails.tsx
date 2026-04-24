@@ -8,6 +8,8 @@ import TaskCommentPage from "../../pages/TaskCommentPage";
 import type { ProjectItem, ProjectTask } from "./types";
 import { useNavigate } from "react-router-dom";
 
+const PAGE_SIZE = 8;
+
 // Component for displaying project details and associated tasks in a read-only modal
 interface ProjectDetailsProps {
   isOpen: boolean;
@@ -61,6 +63,7 @@ function ProjectDetails({
   assignees,
   onCreateTask,
   onDeleteTask,
+  isAdmin,
 }: ProjectDetailsProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -73,12 +76,13 @@ function ProjectDetails({
   const canCreateTask = role === "manager";
 
   // constant that only MANAGER and project is IN_PROGRESS and onDeleteTask exists
-  const canDeleteTask = role === "manager" && project?.status === "in_progress" && !!onDeleteTask;
+  const canDeleteTask =
+    role === "manager" && project?.status === "in_progress" && !!onDeleteTask;
 
   const handleTaskFormSubmit = async (values: TaskFormValues) => {
     await onCreateTask(values);
   };
- 
+
   const handleDeleteClick = (task: ProjectTask) => {
     setSelectedTask(task);
     setDeleteModalOpen(true);
@@ -98,6 +102,12 @@ function ProjectDetails({
 
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [taskPage, setTaskPage] = useState(1);
+  const taskTotalPages = Math.max(1, Math.ceil(tasks.length / PAGE_SIZE));
+  const paginatedTasks = tasks.slice(
+    (taskPage - 1) * PAGE_SIZE,
+    taskPage * PAGE_SIZE,
+  );
 
   return (
     <ModalShell
@@ -203,11 +213,12 @@ function ProjectDetails({
                     <th className="px-5 py-3 font-medium">Deadline</th>
                     <th className="px-5 py-3 font-medium">Comment</th>
                     <th className="px-5 py-3 font-medium">Delete</th>
+                    
                   </tr>
                 </thead>
                 <tbody>
                   {tasks.length > 0 ? (
-                    tasks.map((task) => (
+                    paginatedTasks.map((task) => (
                       <tr key={task.id} className="border-t border-slate-100">
                         <td className="px-5 py-4 font-medium text-slate-900">
                           {task.title}
@@ -244,6 +255,7 @@ function ProjectDetails({
                             Comment
                           </button>
                         </td>
+                          
 
                         <td className="px-5 py-4 text-right">
                           {canDeleteTask && (
@@ -271,6 +283,24 @@ function ProjectDetails({
                   )}
                 </tbody>
               </table>
+            </div>
+            <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+              <button
+                onClick={() => setTaskPage((p) => Math.max(1, p - 1))}
+                disabled={taskPage === 1}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() =>
+                  setTaskPage((p) => Math.min(taskTotalPages, p + 1))
+                }
+                disabled={taskPage === taskTotalPages}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+              >
+                Next
+              </button>
             </div>
           </section>
 

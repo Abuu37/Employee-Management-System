@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { FiEdit2, FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
 import type { User } from "./types";
+
+const PAGE_SIZE = 8;
 
 interface UserTableProps {
   title: string;
@@ -9,6 +12,7 @@ interface UserTableProps {
   onView: (user: User) => void;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
+  hideTitle?: boolean;
 }
 
 function UserTable({
@@ -19,16 +23,26 @@ function UserTable({
   onView,
   onEdit,
   onDelete,
+  hideTitle = false,
 }: UserTableProps) {
   // Only show Add User button for admin
   const isAdmin =
     typeof window !== "undefined" &&
     localStorage.getItem("user-role") === "admin";
+
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+  const paginated = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        <div className="flex items-center gap-3">
+        {!hideTitle && (
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+        )}
+        <div
+          className={`flex items-center gap-3 ${hideTitle ? "ml-auto" : ""}`}
+        >
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             {users.length} records
           </div>
@@ -59,9 +73,11 @@ function UserTable({
 
           <tbody>
             {users.length > 0 ? (
-              users.map((user, index) => (
+              paginated.map((user, index) => (
                 <tr key={user.id} className="border-t border-slate-100">
-                  <td className="px-5 py-4 text-slate-600">{index + 1}</td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {(page - 1) * PAGE_SIZE + index + 1}
+                  </td>
                   <td className="px-5 py-4 font-semibold text-slate-900">
                     {user.name}
                   </td>
@@ -113,6 +129,23 @@ function UserTable({
             )}
           </tbody>
         </table>
+      </div>
+      {/* Pagination */}
+      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Next
+        </button>
       </div>
     </section>
   );

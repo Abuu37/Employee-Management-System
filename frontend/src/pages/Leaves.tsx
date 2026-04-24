@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { FiXCircle } from "react-icons/fi";
+import {
+  FiXCircle,
+  FiCalendar,
+  FiCheckCircle,
+  FiClock,
+  FiSlash,
+} from "react-icons/fi";
 import axios from "axios";
+import StatCard from "../components/attendance/StatCard";
 import Header from "../components/layout/Header";
 import Sidebar from "../components/layout/Sidebar";
 import LeavesTable from "../components/leaves/LeavesTable";
@@ -171,142 +178,191 @@ const Leaves: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
-      <main className="flex-1 p-6">
+      <main className="flex-1 flex flex-col overflow-auto">
         <Header searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
-        {/* Leave Balance Cards UI */}
-        {balanceLoading ? (
-          <div className="mb-6">Loading leave balance...</div>
-        ) : balanceError ? (
-          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 mb-6">
-            <span className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500">
-              <FiXCircle className="text-white h-5 w-5" />
-            </span>
-            <span className="text-base text-slate-900">{balanceError}</span>
+        <div className="p-6 space-y-5">
+          {/* Page header */}
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Leave Management
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Track and manage all leave requests
+            </p>
           </div>
-        ) : balance ? (
-          <LeaveBalanceCards
-            annual={balance.annual}
-            annualTotal={balance.annualTotal}
-            sick={balance.sick}
-            sickTotal={balance.sickTotal}
-            casual={balance.casual}
-            casualTotal={balance.casualTotal}
-          />
-        ) : null}
 
-        {error && (
-          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 mb-4">
-            <span className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500">
-              <FiXCircle className="text-white h-5 w-5" />
-            </span>
-            <span className="text-base text-slate-900">{error}</span>
-          </div>
-        )}
-
-        {/* Tab Navigation for Admin and Manager */}
-        {isAdmin && (
-          <div className="flex gap-2 mb-4">
-            <button
-              className={`px-4 py-2 rounded-t ${
-                activeTab === "manager"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setActiveTab("manager")}
-            >
-              Manager Leaves
-            </button>
-            <button
-              className={`px-4 py-2 rounded-t ${
-                activeTab === "employee"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setActiveTab("employee")}
-            >
-              Employee Leaves
-            </button>
-          </div>
-        )}
-        {isManager && (
-          <div className="flex gap-2 mb-4">
-            <button
-              className={`px-4 py-2 rounded-t ${
-                managerTab === "all"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setManagerTab("all")}
-            >
-              All Leaves
-            </button>
-            <button
-              className={`px-4 py-2 rounded-t ${
-                managerTab === "my"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setManagerTab("my")}
-            >
-              My Leaves
-            </button>
-          </div>
-        )}
-
-        {/* Conditional Rendering */}
-        {isAdmin ? (
-          activeTab === "manager" ? (
-            // Manager Leaves: show leaves from managers (approved by admin), with actions
-            <AllLeavesTable
-              leaves={managerLeaves}
-              showActions={true}
-              onApprove={handleApprove}
-              onReject={handleReject}
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Total Leaves"
+              value={leaves.length}
+              icon={<FiCalendar />}
+              color=""
+              featured
+              subtitle="All leave requests"
             />
+            <StatCard
+              label="Approved"
+              value={leaves.filter((l) => l.status === "approved").length}
+              icon={<FiCheckCircle />}
+              color="bg-emerald-100 text-emerald-600"
+              subtitle="Leaves approved"
+            />
+            <StatCard
+              label="Pending"
+              value={leaves.filter((l) => l.status === "pending").length}
+              icon={<FiClock />}
+              color="bg-amber-100 text-amber-600"
+              subtitle="Awaiting approval"
+            />
+            <StatCard
+              label="Rejected"
+              value={leaves.filter((l) => l.status === "rejected").length}
+              icon={<FiSlash />}
+              color="bg-red-100 text-red-500"
+              subtitle="Leaves declined"
+            />
+          </div>
+
+          {/* Leave Balance Cards UI */}
+          {balanceLoading ? (
+            <div className="mb-6">Loading leave balance...</div>
+          ) : balanceError ? (
+            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 mb-6">
+              <span className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500">
+                <FiXCircle className="text-white h-5 w-5" />
+              </span>
+              <span className="text-base text-slate-900">{balanceError}</span>
+            </div>
+          ) : balance ? (
+            <LeaveBalanceCards
+              annual={balance.annual}
+              annualTotal={balance.annualTotal}
+              sick={balance.sick}
+              sickTotal={balance.sickTotal}
+              casual={balance.casual}
+              casualTotal={balance.casualTotal}
+            />
+          ) : null}
+
+          {error && (
+            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 mb-4">
+              <span className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500">
+                <FiXCircle className="text-white h-5 w-5" />
+              </span>
+              <span className="text-base text-slate-900">{error}</span>
+            </div>
+          )}
+
+          {/* Tab Navigation for Admin and Manager */}
+          {isAdmin && (
+            <div className="flex gap-2 mb-4">
+              <button
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+                  activeTab === "manager"
+                    ? "bg-[#1e3a5f] text-white shadow"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+                onClick={() => setActiveTab("manager")}
+              >
+                Manager Leaves
+              </button>
+              <button
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+                  activeTab === "employee"
+                    ? "bg-[#1e3a5f] text-white shadow"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+                onClick={() => setActiveTab("employee")}
+              >
+                Employee Leaves
+              </button>
+            </div>
+          )}
+          {isManager && (
+            <div className="flex gap-2 mb-4">
+              <button
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+                  managerTab === "all"
+                    ? "bg-[#1e3a5f] text-white shadow"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+                onClick={() => setManagerTab("all")}
+              >
+                All Leaves
+              </button>
+              <button
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
+                  managerTab === "my"
+                    ? "bg-[#1e3a5f] text-white shadow"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+                onClick={() => setManagerTab("my")}
+              >
+                My Leaves
+              </button>
+            </div>
+          )}
+
+          {/* Conditional Rendering */}
+          {isAdmin ? (
+            activeTab === "manager" ? (
+              // Manager Leaves: show leaves from managers (approved by admin), with actions
+              <AllLeavesTable
+                leaves={managerLeaves}
+                showActions={true}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            ) : (
+              // All Leaves: show employee leaves approved by manager, no actions
+              <AllLeavesTable leaves={employeeLeaves} />
+            )
+          ) : isManager ? (
+            managerTab === "all" ? (
+              <LeavesTable
+                leaves={leaves}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                emptyMessage={
+                  loading ? "Loading leaves..." : "No leaves found."
+                }
+                onAdd={() => setShowModal(true)}
+                onCancel={handleCancel}
+              />
+            ) : (
+              <LeavesTable
+                leaves={leaves.filter(
+                  (l) => l.employeeName === localStorage.getItem("user-name"),
+                )}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                emptyMessage={
+                  loading ? "Loading leaves..." : "No leaves found."
+                }
+                onAdd={() => setShowModal(true)}
+                onCancel={handleCancel}
+              />
+            )
           ) : (
-            // All Leaves: show employee leaves approved by manager, no actions
-            <AllLeavesTable leaves={employeeLeaves} />
-          )
-        ) : isManager ? (
-          managerTab === "all" ? (
             <LeavesTable
-              leaves={leaves}
+              leaves={filteredLeaves}
               onApprove={handleApprove}
               onReject={handleReject}
               emptyMessage={loading ? "Loading leaves..." : "No leaves found."}
               onAdd={() => setShowModal(true)}
               onCancel={handleCancel}
             />
-          ) : (
-            <LeavesTable
-              leaves={leaves.filter(
-                (l) => l.employeeName === localStorage.getItem("user-name"),
-              )}
-              onApprove={handleApprove}
-              onReject={handleReject}
-              emptyMessage={loading ? "Loading leaves..." : "No leaves found."}
-              onAdd={() => setShowModal(true)}
-              onCancel={handleCancel}
-            />
-          )
-        ) : (
-          <LeavesTable
-            leaves={filteredLeaves}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            emptyMessage={loading ? "Loading leaves..." : "No leaves found."}
-            onAdd={() => setShowModal(true)}
-            onCancel={handleCancel}
-          />
-        )}
+          )}
 
-        <AddLeaveModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          onSave={handleApply}
-          isSaving={isSaving}
-        />
+          <AddLeaveModal
+            isOpen={showModal}
+            onClose={() => setShowModal(false)}
+            onSave={handleApply}
+            isSaving={isSaving}
+          />
+        </div>
       </main>
     </div>
   );

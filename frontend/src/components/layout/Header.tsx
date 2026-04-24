@@ -1,4 +1,25 @@
-import { FiBell, FiSearch } from "react-icons/fi";
+import { useState } from "react";
+import { FiBell, FiSearch, FiX, FiChevronDown } from "react-icons/fi";
+
+const NAVY = "#1e3a5f";
+const ROLE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  admin: { bg: "bg-violet-100", text: "text-violet-700", dot: "bg-violet-500" },
+  manager: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
+  employee: {
+    bg: "bg-emerald-100",
+    text: "text-emerald-700",
+    dot: "bg-emerald-500",
+  },
+};
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 function Header({
   searchTerm,
@@ -10,48 +31,123 @@ function Header({
   const userName = localStorage.getItem("user-name") ?? "User";
   const userRole = localStorage.getItem("user-role") ?? "";
   const userEmail = localStorage.getItem("user-email") ?? "";
-  const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
+
+  const [focused, setFocused] = useState(false);
+
+  const roleStyle = ROLE_COLORS[userRole] ?? ROLE_COLORS.employee;
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const dateStr = now.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
     day: "numeric",
   });
 
+  const greeting = (() => {
+    const h = now.getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  })();
+
   return (
-    <header className="mb-6 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm md:px-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="relative w-full lg:max-w-md">
-          <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search employees, tasks, reports..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm outline-none ring-blue-500 transition focus:ring-2"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
+    <header
+      className="sticky top-0 z-30 w-full"
+      style={{
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid #e2e8f0",
+      }}
+    >
+      {/* thin accent bar */}
+      <div
+        className="h-0.5 w-full"
+        style={{
+          background: `linear-gradient(90deg, ${NAVY} 0%, #2563eb 50%, #7c3aed 100%)`,
+        }}
+      />
+
+      <div className="flex items-center gap-4 px-5 py-3 md:px-7">
+        {/* ── Greeting ──────────────────────────────────── */}
+        <div className="hidden lg:flex flex-col min-w-max">
+          <span className="text-[11px] font-medium text-slate-400 leading-none">
+            {greeting},
+          </span>
+          <span
+            className="text-sm font-bold leading-tight"
+            style={{ color: NAVY }}
+          >
+            {userName.split(" ")[0]}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between gap-3 md:justify-end">
-          <button
-            type="button"
-            className="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:bg-slate-100"
-          >
-            <FiBell className="h-5 w-5" />
-            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blue-600" />
-          </button>
+        {/* divider */}
+        <div className="hidden lg:block h-8 w-px bg-slate-200 mx-1" />
 
-          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-            <div className="h-9 w-9 rounded-full bg-linear-to-tr from-slate-800 to-blue-600" />
-            <div>
-              <p className="text-sm font-semibold leading-none capitalize">
-                {userRole}
-              </p>
-              <p className="text-xs text-slate-500">{userEmail}</p>
-            </div>
+        {/* ── Right controls ────────────────────────────── */}
+        <div className="flex items-center gap-2.5 ml-auto">
+          {/* Date / time pill */}
+          <div className="hidden xl:flex flex-col items-end">
+            <span className="text-[11px] font-semibold text-slate-700 leading-none">
+              {timeStr}
+            </span>
+            <span className="text-[10px] text-slate-400 mt-0.5">{dateStr}</span>
           </div>
 
-          <div>
-            <p className="text-xs text-slate-400 hidden lg:block">{today}</p>
+          {/* divider */}
+          <div className="hidden xl:block h-8 w-px bg-slate-200" />
+
+          {/* Notification bell */}
+          <button
+            type="button"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-slate-100"
+            style={{ border: "1.5px solid #e2e8f0" }}
+          >
+            <FiBell className="h-4.5 w-4.5 text-slate-500" />
+            {/* pulse badge */}
+            <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
+            </span>
+          </button>
+
+          {/* User card */}
+          <div
+            className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 cursor-pointer transition-all"
+            style={{ border: "1.5px solid #e2e8f0", background: "#f8fafc" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f5f9")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#f8fafc")}
+          >
+            {/* Avatar */}
+            <div
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white shadow-sm"
+              style={{
+                background: `linear-gradient(135deg, ${NAVY} 0%, #2563eb 100%)`,
+              }}
+            >
+              {getInitials(userName)}
+            </div>
+
+            {/* Info */}
+            <div className="hidden sm:flex flex-col">
+              <span className="text-xs font-bold leading-none text-slate-800 capitalize">
+                {userName.split(" ")[0]}
+              </span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className={`h-1.5 w-1.5 rounded-full ${roleStyle.dot}`} />
+                <span
+                  className={`text-[10px] font-semibold capitalize ${roleStyle.text}`}
+                >
+                  {userRole}
+                </span>
+              </div>
+            </div>
+
+            <FiChevronDown className="hidden sm:block h-3.5 w-3.5 text-slate-400" />
           </div>
         </div>
       </div>

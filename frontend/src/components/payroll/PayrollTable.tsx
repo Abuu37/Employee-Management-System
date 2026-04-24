@@ -1,5 +1,8 @@
-import { FiPlus } from "react-icons/fi";
+import { useState } from "react";
+import { FiPlus, FiEye } from "react-icons/fi";
 import { approvePayroll, markAsPaid } from "../../services/payrollService";
+
+const PAGE_SIZE = 8;
 
 interface PayrollRecord {
   id: number;
@@ -42,10 +45,12 @@ export default function PayrollTable({
   data,
   onRefresh,
   onAdd,
+  onView,
 }: {
   data: PayrollRecord[];
   onRefresh: () => void;
   onAdd: () => void;
+  onView?: (record: PayrollRecord) => void;
 }) {
   const handleApprove = async (id: number) => {
     await approvePayroll(id);
@@ -56,6 +61,10 @@ export default function PayrollTable({
     await markAsPaid(id);
     onRefresh();
   };
+
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -96,17 +105,19 @@ export default function PayrollTable({
 
           <tbody>
             {data.length > 0 ? (
-              data.map((item, idx) => (
+              paginated.map((item, idx) => (
                 <tr key={item.id} className="border-t border-slate-100">
                   <td className="px-5 py-4 font-semibold text-slate-900">
-                    {idx + 1}
+                    {(page - 1) * PAGE_SIZE + idx + 1}
                   </td>
                   <td className="px-5 py-4 text-slate-600">
                     <div>
                       <span className="font-medium text-slate-900">
                         {item.user?.name ?? `User #${item.user_id}`}
                       </span>
-                      <p className="text-xs text-slate-400">ID: {item.user_id}</p>
+                      <p className="text-xs text-slate-400">
+                        ID: {item.user_id}
+                      </p>
                     </div>
                   </td>
                   <td className="px-5 py-4 text-slate-600">
@@ -157,6 +168,16 @@ export default function PayrollTable({
                           Mark Paid
                         </button>
                       )}
+                      {item.status === "paid" && onView && (
+                        <button
+                          type="button"
+                          onClick={() => onView(item)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-500 hover:text-white"
+                        >
+                          <FiEye className="h-3.5 w-3.5" />
+                          View
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -173,6 +194,23 @@ export default function PayrollTable({
             )}
           </tbody>
         </table>
+      </div>
+      {/* Pagination */}
+      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Next
+        </button>
       </div>
     </section>
   );

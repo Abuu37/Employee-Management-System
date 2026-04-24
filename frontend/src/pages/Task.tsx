@@ -219,36 +219,38 @@ function Tasks() {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 flex flex-col overflow-auto">
         <Header searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
-        {error ? (
-          <p className="mb-4 rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-600">
-            {error}
-          </p>
-        ) : null}
+        <div className="p-6">
+          {error ? (
+            <p className="mb-4 rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-600">
+              {error}
+            </p>
+          ) : null}
 
-        <TaskTable
-          title="My Assigned Tasks"
-          tasks={displayedTasks}
-          loading={loading}
-          updatingId={updatingId}
-          emptyMessage="No assigned tasks found."
-          onStatusChange={handleStatusChange}
-          onViewTask={handleCommentTask}
-        />
+          <TaskTable
+            title="My Assigned Tasks"
+            tasks={displayedTasks}
+            loading={loading}
+            updatingId={updatingId}
+            emptyMessage="No assigned tasks found."
+            onStatusChange={handleStatusChange}
+            onViewTask={handleCommentTask}
+          />
 
-        {selectedTask && (
-          <CommentModal
-            isOpen={detailsOpen}
-            onClose={() => {
-              setDetailsOpen(false);
-              setSelectedTask(null);
-            }}
-          >
-            <TaskCommentPage modalMode taskId={selectedTask.id} />
-          </CommentModal>
-        )}
+          {selectedTask && (
+            <CommentModal
+              isOpen={detailsOpen}
+              onClose={() => {
+                setDetailsOpen(false);
+                setSelectedTask(null);
+              }}
+            >
+              <TaskCommentPage modalMode taskId={selectedTask.id} />
+            </CommentModal>
+          )}
+        </div>
       </main>
     </div>
   );

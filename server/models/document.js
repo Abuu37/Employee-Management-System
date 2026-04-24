@@ -49,7 +49,7 @@ Document.init(
     },
 
     visibility: {
-      type: DataTypes.ENUM("private", "team", "admin"),
+      type: DataTypes.ENUM("private", "team", "company"),
       defaultValue: "private",
       field: "visibility",
     },

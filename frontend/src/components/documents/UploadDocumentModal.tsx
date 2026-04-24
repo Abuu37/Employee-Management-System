@@ -53,6 +53,7 @@ export default function UploadDocumentModal({
   const [fileType, setFileType] = useState("");
   const [visibility, setVisibility] = useState("private");
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [managerScope, setManagerScope] = useState<"" | "private" | "team">("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allowedTypes = FILE_TYPES_BY_ROLE[role] || FILE_TYPES_BY_ROLE.employee;
@@ -63,17 +64,19 @@ export default function UploadDocumentModal({
     // Reset form
     setFile(null);
     setFileType("");
-    setVisibility("private");
+    setUserId(0);
+    setManagerScope("");
 
     if (role === "employee") {
       setUserId(currentUserId);
+      setVisibility("private");
       return;
     }
 
-    // Admin/Manager: fetch users for dropdown
-    const token = localStorage.getItem("token");
-
-    if (role === "admin") {
+    if (role === "manager") {
+      setVisibility("private");
+      // Pre-fetch team members for the private-scope employee dropdown
+      const token = localStorage.getItem("token");
       axios
         .get("http://localhost:5000/api/user/view-users", {
           headers: { Authorization: `Bearer ${token}` },
@@ -82,36 +85,54 @@ export default function UploadDocumentModal({
           const list = Array.isArray(res.data)
             ? res.data
             : (res.data.users ?? []);
-          setUsers(list.map((u: any) => ({ id: u.id, name: u.name })));
-        })
-        .catch(console.error);
-      setUserId(0);
-    } else if (role === "manager") {
-      // Manager: fetch team members
-      axios
-        .get("http://localhost:5000/api/user/view-users", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => {
-          const list = Array.isArray(res.data)
-            ? res.data
-            : (res.data.users ?? []);
-          // Filter to team members (manager_id matches current user) + self
           const teamList = list.filter(
-            (u: any) =>
-              u.manager_id === currentUserId || u.id === currentUserId,
+            (u: any) => u.manager_id === currentUserId,
           );
           setUsers(teamList.map((u: any) => ({ id: u.id, name: u.name })));
         })
         .catch(console.error);
+      return;
+    }
+
+    // Admin: fetch all users for dropdown
+    setVisibility("private");
+    const token = localStorage.getItem("token");
+    axios
+      .get("http://localhost:5000/api/user/view-users", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const list = Array.isArray(res.data)
+          ? res.data
+          : (res.data.users ?? []);
+        setUsers(list.map((u: any) => ({ id: u.id, name: u.name })));
+      })
+      .catch(console.error);
+  }, [isOpen]);
+
+  // Keep visibility in sync with manager scope
+  useEffect(() => {
+    if (role !== "manager") return;
+    if (managerScope === "team") {
+      setVisibility("team");
+      setUserId(currentUserId);
+    } else if (managerScope === "private") {
+      setVisibility("private");
       setUserId(0);
     }
-  }, [isOpen]);
+  }, [managerScope]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!file || !userId || !fileType) return;
-    await onSave({ file, user_id: userId, file_type: fileType, visibility });
+    const effectiveUserId =
+      role === "manager" && managerScope === "team" ? currentUserId : userId;
+    if (!file || !effectiveUserId || !fileType) return;
+    await onSave({
+      file,
+      user_id: effectiveUserId,
+      file_type: fileType,
+      visibility,
+    });
   };
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -128,8 +149,48 @@ export default function UploadDocumentModal({
       maxWidth="max-w-2xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
-        {/* Employee select — hidden for employees */}
-        {role !== "employee" && (
+        {/* ── MANAGER: Scope picker (Step 1) ── */}
+        {role === "manager" && (
+          <div>
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              Who is this document for?
+            </span>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setManagerScope("private")}
+                className={`rounded-2xl border-2 px-4 py-3 text-left transition ${
+                  managerScope === "private"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-slate-200 bg-slate-50 hover:border-blue-300"
+                }`}
+              >
+                <p className="text-sm font-semibold text-slate-800">
+                  🔒 Private
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">Single employee</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setManagerScope("team")}
+                className={`rounded-2xl border-2 px-4 py-3 text-left transition ${
+                  managerScope === "team"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-slate-200 bg-slate-50 hover:border-blue-300"
+                }`}
+              >
+                <p className="text-sm font-semibold text-slate-800">👥 Team</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  All my employees
+                </p>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Employee select (admin always / manager private only) ── */}
+        {(role === "admin" ||
+          (role === "manager" && managerScope === "private")) && (
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
               Select Employee
@@ -175,24 +236,34 @@ export default function UploadDocumentModal({
             </select>
           </label>
 
-          {/* Visibility */}
-          <label className="block">
+          {/*=========================== Visibility ============================== */}
+          <div className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
               Visibility
             </span>
-            <select
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-            >
-              <option value="private">Private</option>
-              <option value="team">Team</option>
-              {role === "admin" && <option value="admin">Admin Only</option>}
-            </select>
-          </label>
+            {role === "manager" ? (
+              <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                {managerScope === "team"
+                  ? "Team — all employees under you"
+                  : managerScope === "private"
+                    ? "Private — selected employee only"
+                    : "—"}
+              </div>
+            ) : (
+              <select
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              >
+                <option value="private">Private</option>
+                <option value="team">Team</option>
+                <option value="company">Company</option>
+              </select>
+            )}
+          </div>
         </div>
 
-        {/* File drop zone */}
+        {/*========================== File drop zone ============================== */}
         <div
           className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 transition hover:border-blue-400 hover:bg-blue-50/30"
           onClick={() => fileInputRef.current?.click()}
@@ -233,7 +304,9 @@ export default function UploadDocumentModal({
           </button>
           <button
             type="submit"
-            disabled={isSaving || !file}
+            disabled={
+              isSaving || !file || (role === "manager" && !managerScope)
+            }
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
             {isSaving ? "Uploading..." : "Upload Document"}

@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { FiMessageCircle } from "react-icons/fi";
+
+const PAGE_SIZE = 8;
 
 export interface TaskItem {
   id: number;
@@ -19,6 +22,7 @@ interface TaskTableProps {
   updatingId?: number | null;
   onStatusChange: (id: number, status: TaskItem["status"]) => void;
   onViewTask: (task: TaskItem) => void; // callback to open task details modal
+  isadmin?: boolean;
 }
 
 const formatDate = (value: string) => {
@@ -48,7 +52,12 @@ function TaskTable({
   updatingId = null,
   onStatusChange,
   onViewTask,
+  isadmin = false,
 }: TaskTableProps) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(tasks.length / PAGE_SIZE));
+  const paginated = tasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -84,7 +93,7 @@ function TaskTable({
                 </td>
               </tr>
             ) : tasks.length > 0 ? (
-              tasks.map((task) => {
+              paginated.map((task) => {
                 const isUpdating = updatingId === task.id;
                 return (
                   <tr key={task.id} className="border-t border-slate-100">
@@ -129,6 +138,8 @@ function TaskTable({
                         <option value="completed">🟢 Completed</option>
                       </select>
                     </td>
+
+                    { !isadmin && (
                     <td className="px-5 py-4">
                       <button
                         type="button"
@@ -139,6 +150,9 @@ function TaskTable({
                         Comment
                       </button>
                     </td>
+              )}
+
+
                   </tr>
                 );
               })
@@ -154,6 +168,23 @@ function TaskTable({
             )}
           </tbody>
         </table>
+      </div>
+      {/* Pagination */}
+      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Next
+        </button>
       </div>
     </section>
   );

@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import type { SalaryRecord } from "../../services/salaryService";
+
+const PAGE_SIZE = 8;
 
 interface SalaryTableProps {
   data: SalaryRecord[];
@@ -23,6 +26,10 @@ export default function SalaryTable({
   onEdit,
   onDelete,
 }: SalaryTableProps) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -60,10 +67,10 @@ export default function SalaryTable({
 
           <tbody>
             {data.length > 0 ? (
-              data.map((item, idx) => (
+              paginated.map((item, idx) => (
                 <tr key={item.id} className="border-t border-slate-100">
                   <td className="px-5 py-4 font-semibold text-slate-900">
-                    {idx + 1}
+                    {(page - 1) * PAGE_SIZE + idx + 1}
                   </td>
                   <td className="px-5 py-4 text-slate-600">
                     <div>
@@ -129,6 +136,23 @@ export default function SalaryTable({
             )}
           </tbody>
         </table>
+      </div>
+      {/* Pagination */}
+      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          Next
+        </button>
       </div>
     </section>
   );

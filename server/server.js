@@ -10,6 +10,8 @@ import LeaveRoute from "./Routes/LeaveRoute.js";
 import PayrollRoute from "./Routes/payrollRoutes.js";
 import SalaryRoute from "./Routes/salaryRoutes.js";
 import DocumentRoute from "./Routes/documentRoutes.js";
+import { DashboardRoute } from "./Routes/dashboardRoutes.js";
+import AttendanceRoute from "./Routes/Attendances.js";
 import "./models/index.js";
 
 const app = express();
@@ -37,6 +39,12 @@ app.use("/api/salary", SalaryRoute);
 
 // Document routes
 app.use("/api/documents", DocumentRoute);
+
+// Dashboard routes
+app.use("/api/dashboard", DashboardRoute);
+
+// Attendance routes
+app.use("/api/attendance", AttendanceRoute);
 
 // Start the server after syncing the database
 

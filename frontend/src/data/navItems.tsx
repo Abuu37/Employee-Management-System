@@ -8,6 +8,7 @@ export type AppRole = "admin" | "manager" | "employee";
 
 const adminNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
+  { name: "Attendance", key: "attendance", path: "/attendance" },
   { name: "Employees", key: "employee", path: "/employee" },
   { name: "Managers", key: "managers", path: "/manager" },
   { name: "Documents", key: "documents", path: "/documents" },
@@ -22,6 +23,7 @@ const adminNavItems: NavItem[] = [
 
 const managerNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
+  { name: "Attendance", key: "attendance", path: "/attendance" },
   { name: "My Team", key: "employee", path: "/employee" },
   { name: "Team-Documents", key: "documents", path: "/documents" },
   { name: "Projects", key: "projects", path: "/projects" },
@@ -35,6 +37,7 @@ const managerNavItems: NavItem[] = [
 
 const employeeNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
+  {name: "My Attendance", key: "my-attendance", path: "/my-attendance" },
   { name: "Tasks", key: "tasks", path: "/tasks" },
   { name: "My-Documents", key: "documents", path: "/documents" },
   { name: "Leaves", key: "leaves", path: "/leaves" },
