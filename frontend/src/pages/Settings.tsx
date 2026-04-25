@@ -11,8 +11,8 @@ import {
   MdSecurity,
   MdArrowForward,
 } from "react-icons/md";
-import Header from "../components/layout/Header";
-import Sidebar from "../components/layout/Sidebar";
+import Header from "@/layouts/Header";
+import Sidebar from "@/layouts/Sidebar";
 
 function PasswordField({
   label,

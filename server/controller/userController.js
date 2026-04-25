@@ -1,7 +1,11 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { sendCredentialsEmail } from "../utils/sendEmail.js";
+import crypto from "crypto";
+import {
+  sendCredentialsEmail,
+  sendPasswordResetEmail,
+} from "../utils/sendEmail.js";
 import { LeaveBalance } from "../models/index.js";
 
 // ================= REGISTER =================
@@ -67,9 +71,7 @@ export const createUserByAdmin = async (req, res) => {
     if (req.user.role === "manager") {
       // Manager creates → auto assign to himself
       assignedManagerId = req.user.id;
-    } 
-    
-    else if (req.user.role === "admin") {
+    } else if (req.user.role === "admin") {
       // Admin creates employee → must assign manager (optional but recommended)
       if (role === "employee") {
         assignedManagerId = manager_id || null;
@@ -205,10 +207,7 @@ export const deleteUser = async (req, res) => {
     }
 
     // Optional: restrict manager delete
-    if (
-      req.user.role === "manager" &&
-      user.manager_id !== req.user.id
-    ) {
+    if (req.user.role === "manager" && user.manager_id !== req.user.id) {
       return res.status(403).json({
         message: "You can only delete your own employees",
       });
@@ -223,6 +222,19 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// ================= GET ME =================
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ["id", "name", "email", "role"],
+    });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ================= LOGIN =================
 export const login = async (req, res) => {
   try {
@@ -230,19 +242,23 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        field: "email",
+        message: "User not found",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid password" });
+      return res.status(400).json({
+        field: "password",
+        message: "Invalid password",
+      });
     }
 
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      "secretkey",
-      { expiresIn: "1d" }
-    );
+    const token = jwt.sign({ id: user.id, role: user.role }, "secretkey", {
+      expiresIn: "1d",
+    });
 
     res.json({
       message: "Login successful",
@@ -288,6 +304,80 @@ export const changePassword = async (req, res) => {
     await user.save();
 
     res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= FORGOT PASSWORD =================
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      // Return success anyway to avoid email enumeration
+      return res.json({
+        message: "If that email exists, a reset link has been sent.",
+      });
+    }
+
+    // Generate a secure random token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = expires;
+    await user.save();
+
+    const resetUrl = `http://localhost:5173/reset-password?token=${token}`;
+    await sendPasswordResetEmail(user.name, user.email, resetUrl);
+
+    res.json({ message: "If that email exists, a reset link has been sent." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= RESET PASSWORD =================
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match." });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters." });
+    }
+
+    const user = await User.findOne({ where: { resetPasswordToken: token } });
+
+    if (
+      !user ||
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires < new Date()
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Reset link is invalid or has expired." });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.json({ message: "Password reset successfully. You can now log in." });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

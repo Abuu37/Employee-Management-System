@@ -57,7 +57,7 @@ export const checkIn = async (req, res) => {
   }
 };
 
-//check out
+//========================== check out ==================
 export const checkOut = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -100,7 +100,7 @@ export const checkOut = async (req, res) => {
   }
 };
 
-// Get my attendance
+//================= Get my attendance =================
 
 export const getMyAttendance = async (req, res) => {
   try {
@@ -121,7 +121,7 @@ export const getMyAttendance = async (req, res) => {
   }
 };
 
-//Get ALL Attendace by ADMIN
+//================= get ALL Attendace by ADMIN =================
 export const getAllAttendance = async (req, res) => {
   try {
     const data = await Attendance.findAll({
@@ -138,7 +138,7 @@ export const getAllAttendance = async (req, res) => {
   }
 };
 
-//get attendance by Team (for manager)
+//================= get attendance by Team (for manager) =================
 export const getTeamAttendance = async (req, res) => {
   try {
     const managerId = req.user.id;
@@ -164,7 +164,7 @@ export const getTeamAttendance = async (req, res) => {
   }
 };
 
-//get attendance by status (for admin and manager)
+//================= get attendance by status (for admin and manager) =================
 export const getAttendanceByStatus = async (req, res) => {
   try {
     const { status } = req.params;

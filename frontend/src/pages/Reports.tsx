@@ -1,6 +1,6 @@
 import { useState } from "react";
-import Header from "../components/layout/Header";
-import Sidebar from "../components/layout/Sidebar";
+import Header from "@/layouts/Header";
+import Sidebar from "@/layouts/Sidebar";
 
 function Reports() {
   const [searchTerm, setSearchTerm] = useState("");

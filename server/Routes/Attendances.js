@@ -43,7 +43,7 @@ router.get(
     getTeamAttendance
 );
 
-// employee and manager
+// ========== employee and manager =================
 router.get(
     "/my",
     verifyToken,
@@ -51,7 +51,7 @@ router.get(
     getMyAttendance
 );
 
-//get attendance by status
+//================= get attendance by status (for admin and manager) =================
 router.get(
     "/status/:status",
     verifyToken,

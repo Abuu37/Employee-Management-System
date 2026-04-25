@@ -26,9 +26,18 @@ User.init(
       allowNull: false,
     },
 
-    // ✅ NEW FIELD
     manager_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    resetPasswordExpires: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
   },
