@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { FiEdit2, FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiEye, FiPlus, FiTrash2, FiUsers } from "react-icons/fi";
 import type { User } from "./types";
+import { useUser } from "@/context/UserContext";
 
 const PAGE_SIZE = 8;
 
@@ -13,6 +14,7 @@ interface UserTableProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   hideTitle?: boolean;
+  hideAddButton?: boolean;
 }
 
 function UserTable({
@@ -24,11 +26,11 @@ function UserTable({
   onEdit,
   onDelete,
   hideTitle = false,
+  hideAddButton = false,
 }: UserTableProps) {
   // Only show Add User button for admin
-  const isAdmin =
-    typeof window !== "undefined" &&
-    localStorage.getItem("user-role") === "admin";
+  const { user } = useUser();
+  const isAdmin = user?.role === "admin";
 
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
@@ -37,16 +39,12 @@ function UserTable({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        {!hideTitle && (
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        )}
-        <div
-          className={`flex items-center gap-3 ${hideTitle ? "ml-auto" : ""}`}
-        >
+        <h3 className="text-base font-semibold text-slate-800">{title}</h3>
+        <div className="flex items-center gap-3">
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             {users.length} records
           </div>
-          {isAdmin && (
+          {isAdmin && !hideAddButton && (
             <button
               type="button"
               onClick={onAdd}
@@ -119,11 +117,11 @@ function UserTable({
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-10 text-center text-sm text-slate-500"
-                >
-                  {emptyMessage}
+                <td colSpan={6} className="px-5 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <FiUsers className="h-12 w-12 mb-3 opacity-30" />
+                    <p className="text-sm">{emptyMessage}</p>
+                  </div>
                 </td>
               </tr>
             )}

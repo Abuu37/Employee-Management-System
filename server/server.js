@@ -12,6 +12,7 @@ import SalaryRoute from "./Routes/salaryRoutes.js";
 import DocumentRoute from "./Routes/documentRoutes.js";
 import { DashboardRoute } from "./Routes/dashboardRoutes.js";
 import AttendanceRoute from "./Routes/Attendances.js";
+import DepartmentRoute from "./Routes/departmentRoutes.js";
 import "./models/index.js";
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", AuthRoute);
 app.use("/api/user", UserRoute);
+
 // Use only /api/task for all task operations
 app.use("/api/task", TaskRoute);
 app.use("/api/project", ProjectRoute);
@@ -46,12 +48,15 @@ app.use("/api/dashboard", DashboardRoute);
 // Attendance routes
 app.use("/api/attendance", AttendanceRoute);
 
+// Department routes
+app.use("/api/departments", DepartmentRoute);
+
 // Start the server after syncing the database
 
 const startServer = async () => {
   try {
     await connectDB();
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     console.log("Database synced");
 
     app.listen(5000, () => {

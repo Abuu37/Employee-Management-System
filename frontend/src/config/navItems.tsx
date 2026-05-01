@@ -9,11 +9,12 @@ export type AppRole = "admin" | "manager" | "employee";
 const adminNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
   { name: "Attendance", key: "attendance", path: "/attendance" },
-  { name: "Employees", key: "employee", path: "/employee" },
+  { name: "Departments", key: "departments", path: "/departments" },
   { name: "Managers", key: "managers", path: "/manager" },
+  { name: "Employees", key: "employee", path: "/employee" },
   { name: "Documents", key: "documents", path: "/documents" },
   { name: "Projects", key: "projects", path: "/projects" },
-  { name: "Leaves", key: "leaves", path: "/leaves"},
+  { name: "Leaves", key: "leaves", path: "/leaves" },
   { name: "Salary", key: "salary", path: "/salary" },
   { name: "Payroll", key: "payroll", path: "/payroll" },
   { name: "Reports", key: "reports", path: "/reports" },
@@ -37,11 +38,11 @@ const managerNavItems: NavItem[] = [
 
 const employeeNavItems: NavItem[] = [
   { name: "Dashboard", key: "dashboard", path: "/dashboard" },
-  {name: "My Attendance", key: "my-attendance", path: "/my-attendance" },
+  { name: "My Attendance", key: "my-attendance", path: "/my-attendance" },
   { name: "Tasks", key: "tasks", path: "/tasks" },
   { name: "My-Documents", key: "documents", path: "/documents" },
   { name: "Leaves", key: "leaves", path: "/leaves" },
-  { name : "My Payslip", key: "pay slips", path: "/pay-slips" },
+  { name: "My Payslip", key: "pay slips", path: "/pay-slips" },
   { name: "Reports", key: "reports", path: "/reports" },
   { name: "Settings", key: "settings", path: "/settings" },
   { name: "Logout", key: "logout", path: "/logout" },

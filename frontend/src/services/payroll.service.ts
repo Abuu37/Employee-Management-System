@@ -12,6 +12,12 @@ export const getAllPayroll = async () => {
   return res.data.payrolls;
 };
 
+// Manager: get payroll records of team members
+export const getTeamPayroll = async () => {
+  const res = await axios.get("/api/payroll/team", authHeaders());
+  return res.data.payrolls;
+};
+
 // Employee/Manager: get own payroll records (payslip)
 export const getMyPayslips = async () => {
   const res = await axios.get("/api/payroll/me", authHeaders());

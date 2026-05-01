@@ -5,7 +5,7 @@ import SalaryTable from "@/features/salary/components/SalaryTable";
 import SetSalaryModal from "@/features/salary/components/SetSalaryModal";
 import DeleteSalaryModal from "@/features/salary/components/DeleteSalaryModal";
 import type { SalaryFormValues } from "@/features/salary/components/SetSalaryModal";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiPlus } from "react-icons/fi";
 import {
   getAllSalaries,
   setSalary,
@@ -84,7 +84,7 @@ export default function SalaryPage() {
         <div className="p-6">
           <div className="space-y-6">
             {/* Page header */}
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">
                   Salary Management
@@ -93,6 +93,14 @@ export default function SalaryPage() {
                   Manage all employee salary records
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={handleAdd}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              >
+                <FiPlus className="h-4 w-4" />
+                Set Salary
+              </button>
             </div>
 
             {/* Search bar */}

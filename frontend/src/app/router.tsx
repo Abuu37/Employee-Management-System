@@ -17,6 +17,7 @@ import PayrollPage from "@/features/payroll/PayrollPage";
 import SalaryPage from "@/features/salary/SalaryPage";
 import DocumentPage from "@/features/documents/DocumentPage";
 import AttendancePage from "@/features/attendance/AttendancePage";
+import DepartmentsPage from "@/features/departments/DepartmentsPage";
 
 export default function AppRouter() {
   return (
@@ -45,6 +46,7 @@ export default function AppRouter() {
       <Route path="/settings" element={<Settings />} />
       <Route path="/attendance" element={<AttendancePage />} />
       <Route path="/my-attendance" element={<AttendancePage />} />
+      <Route path="/departments" element={<DepartmentsPage />} />
     </Routes>
   );
 }

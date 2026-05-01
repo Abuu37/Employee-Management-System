@@ -1,4 +1,4 @@
-import { FiBriefcase, FiHash, FiMail, FiUser } from "react-icons/fi";
+import { FiBriefcase, FiHash, FiMail, FiUser, FiGrid } from "react-icons/fi";
 import type { IconType } from "react-icons";
 import ModalShell from "./ModalShell";
 import type { User } from "./types";
@@ -10,7 +10,7 @@ interface ViewUserModalProps {
 }
 
 interface DetailItem {
-  key: keyof Pick<User, "id" | "name" | "email" | "role">;
+  key: keyof Pick<User, "id" | "name" | "email" | "role" | "department">;
   label: string;
   icon: IconType;
 }
@@ -20,6 +20,7 @@ const detailItems: DetailItem[] = [
   { key: "name", label: "Full Name", icon: FiUser },
   { key: "email", label: "Email Address", icon: FiMail },
   { key: "role", label: "Role", icon: FiBriefcase },
+  { key: "department", label: "Department", icon: FiGrid },
 ];
 
 function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
@@ -51,6 +52,9 @@ function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
             {detailItems.map((item) => {
               const Icon = item.icon;
 
+              const value = user[item.key];
+              if (item.key === "department" && !value) return null;
+
               return (
                 <div
                   key={item.key}
@@ -65,7 +69,7 @@ function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
                         {item.label}
                       </p>
                       <p className="mt-1 text-sm font-semibold capitalize text-slate-900">
-                        {String(user[item.key])}
+                        {String(value)}
                       </p>
                     </div>
                   </div>

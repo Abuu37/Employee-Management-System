@@ -26,6 +26,21 @@ User.init(
       allowNull: false,
     },
 
+    department: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    department_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    position: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
     manager_id: {
       type: DataTypes.INTEGER,
       allowNull: true,

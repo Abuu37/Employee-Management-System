@@ -1,3 +1,49 @@
+// Centralized leave mapping
+function mapLeave(leave) {
+  return {
+    id: leave.id,
+    userId: leave.userId,
+    department_id: leave.user?.department_id,
+    employeeName: leave.user?.name,
+    type: leave.type,
+    startDate: leave.startDate,
+    endDate: leave.endDate,
+    days: leave.days,
+    reason: leave.reason,
+    status: leave.status,
+    approvedBy: leave.approver?.name,
+    approvedAt: leave.approvedAt,
+    userRole: leave.user?.role,
+    createdAt: leave.createdAt,
+    updatedAt: leave.updatedAt,
+  };
+}
+
+// ...existing code...
+
+// ...existing code...
+
+// GET /api/leaves/manager-leaves (for admin to approve manager leaves)
+export const getManagerLeaves = async (req, res) => {
+  if (req.user.role !== "admin")
+    return res.status(403).json({ message: "Forbidden" });
+  const managers = await User.findAll({
+    where: { role: "manager" },
+    attributes: ["id"],
+  });
+  const managerIds = managers.map((m) => m.id);
+  const leaves = await Leave.findAll({
+    where: { userId: { [Op.in]: managerIds } },
+    include: [
+      { model: User, as: "user", attributes: ["id", "name", "role"] },
+      { model: User, as: "approver", attributes: ["id", "name"] },
+    ],
+    order: [["createdAt", "DESC"]],
+  });
+  res.json(leaves.map(mapLeave));
+};
+
+// ...existing code...
 import { Leave, User, LeaveBalance } from "../models/index.js";
 import { Op } from "sequelize";
 import Holiday from "../models/Holiday.js";
@@ -213,14 +259,72 @@ export const rejectLeave = async (req, res) => {
     }
 
     leave.status = "rejected";
-    leave.approvedBy = req.user.id;   // who rejected
-    leave.approvedAt = new Date();    // when rejected
+    leave.approvedBy = req.user.id; // who rejected
+    leave.approvedAt = new Date(); // when rejected
     await leave.save();
 
     res.status(200).json({ message: "Leave rejected successfully", leave });
   } catch (error) {
     console.error("Error rejecting leave:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+//================= GET TEAM LEAVES (MANAGER) =================
+// ================= GET TEAM LEAVES (MANAGER) =================
+export const getTeamLeaves = async (req, res) => {
+  try {
+    const manager = await User.findByPk(req.user.id);
+
+    if (!manager) {
+      return res.status(404).json({
+        message: "Manager not found",
+      });
+    }
+
+    // get employees in same department
+    const employees = await User.findAll({
+      where: {
+        department_id: manager.department_id,
+        role: "employee", // directly filter here
+      },
+      attributes: ["id"],
+    });
+
+    const employeeIds = employees.map((emp) => emp.id);
+
+    // if no employees
+    if (!employeeIds.length) {
+      return res.json([]);
+    }
+
+    const leaves = await Leave.findAll({
+      where: {
+        userId: {
+          [Op.in]: employeeIds,
+        },
+      },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "role", "department_id"],
+        },
+        {
+          model: User,
+          as: "approver",
+          attributes: ["id", "name"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.status(200).json(leaves.map(mapLeave));
+  } catch (error) {
+    console.error("Error fetching team leaves:", error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
@@ -238,22 +342,7 @@ export const getMyLeaves = async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
-    const result = leaves.map((leave) => ({
-      id: leave.id,
-      type: leave.type,
-      startDate: leave.startDate,
-      endDate: leave.endDate,
-      days: leave.days,
-      reason: leave.reason,
-      status: leave.status,
-      employeeName: leave.user?.name || null,
-      approvedBy: leave.approver?.name || null,
-      userRole: leave.user?.role || null,
-      approvedAt: leave.approvedAt || null,
-      createdAt: leave.createdAt,
-      updatedAt: leave.updatedAt,
-    }));
-    res.status(200).json(result);
+    res.status(200).json(leaves.map(mapLeave));
   } catch (error) {
     console.error("Error fetching my leaves:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -292,7 +381,7 @@ export const getLeavesByUser = async (req, res) => {
     if (!userId) {
       return res
         .status(400)
-        .json({ message: "userId is required as a query parameter." });
+        .json({ message: "User ID not found" });
     }
     const leaves = await Leave.findAll({
       where: { userId },
@@ -316,7 +405,7 @@ export const getLeavesByStatus = async (req, res) => {
     if (!status) {
       return res
         .status(400)
-        .json({ message: "Status is required as a query parameter." });
+        .json({ message: "Status not found" });
     }
     const leaves = await Leave.findAll({
       where: { status },
@@ -338,7 +427,7 @@ export const getLeavesByDateRange = async (req, res) => {
     const { start, end } = req.query;
     if (!start || !end) {
       return res.status(400).json({
-        message: "Start and end dates are required as query parameters.",
+        message: "Start and end dates are required.",
       });
     }
     const leaves = await Leave.findAll({

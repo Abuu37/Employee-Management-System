@@ -1,7 +1,5 @@
-
-//This is used by AMIN to view all leaves in the system, with pagination and actions for pending leaves
-
-import { FiEye } from "react-icons/fi";
+//This is used by ADMIN to view all leaves in the system, with pagination and actions for pending leaves
+import { FiEye, FiCalendar } from "react-icons/fi";
 import React, { useState } from "react";
 import ViewLeaveModal from "./ViewLeaveModal";
 
@@ -46,7 +44,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <h3 className="text-lg font-semibold text-slate-900">All Leaves</h3>
+        <h3 className="text-base font-semibold text-slate-800">All Leaves</h3>
         <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
           {leaves.length} records
         </div>
@@ -76,7 +74,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                   <td className="px-5 py-4 font-medium text-slate-600">
                     {(currentPage - 1) * pageSize + idx + 1}
                   </td>
-                 
+
                   <td className="px-5 py-4 text-slate-600">
                     {leave.employeeName || "-"}
                   </td>
@@ -147,11 +145,11 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={10}
-                  className="px-5 py-10 text-center text-sm text-slate-500"
-                >
-                  No leaves found.
+                <td colSpan={10} className="px-5 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <FiCalendar className="h-12 w-12 mb-3 opacity-30" />
+                    <p className="text-sm">No leaves found</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -180,7 +178,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
           </button>
         </div>
       </div>
-  
+
       <ViewLeaveModal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}

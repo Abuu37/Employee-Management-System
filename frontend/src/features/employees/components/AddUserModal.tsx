@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ModalShell from "./ModalShell";
 import type { UserRole } from "./types";
+import { useUser } from "@/context/UserContext";
 
 // ✅ FIXED: Proper interface
 interface AddUserFormValues {
@@ -9,6 +10,9 @@ interface AddUserFormValues {
   email: string;
   role: UserRole;
   manager_id?: number;
+  department?: string;
+  department_id?: number;
+  position?: string;
 }
 
 interface AddUserModalProps {
@@ -27,16 +31,25 @@ const AddUserModal = ({
   roleOptions,
   isSaving,
 }: AddUserModalProps) => {
-  // Get current user role from localStorage
-  const currentUserRole = typeof window !== 'undefined' ? localStorage.getItem("user-role") : null;
+  // Get current user role from context
+  const { user: currentUser } = useUser();
+  const currentUserRole = currentUser?.role ?? null;
   const [formValues, setFormValues] = useState<AddUserFormValues>({
     name: "",
     email: "",
     role: roleOptions[0] ?? "employee",
     manager_id: undefined,
+    department: "",
+    department_id: undefined,
+    position: "",
   });
 
-  const [managers, setManagers] = useState<{ id: number; name: string }[]>([]);
+  const [managers, setManagers] = useState<
+    { id: number; name: string; department?: string }[]
+  >([]);
+  const [departments, setDepartments] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [loadingManagers, setLoadingManagers] = useState(false);
   const [managerError, setManagerError] = useState("");
 
@@ -61,7 +74,8 @@ const AddUserModal = ({
             managersList.map((m: any) => ({
               id: m.id,
               name: m.name,
-            }))
+              department: m.department ?? undefined,
+            })),
           );
         })
         .catch(() => {
@@ -69,10 +83,30 @@ const AddUserModal = ({
         })
         .finally(() => setLoadingManagers(false));
     }
+    if (
+      isOpen &&
+      formValues.role === "manager" &&
+      currentUserRole === "admin"
+    ) {
+      const token = localStorage.getItem("token");
+      axios
+        .get("http://localhost:5000/api/departments", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          setDepartments(
+            (Array.isArray(res.data) ? res.data : []).map((d: any) => ({
+              id: d.id,
+              name: d.name,
+            })),
+          );
+        })
+        .catch(() => {});
+    }
   }, [isOpen, formValues.role, currentUserRole]);
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
 
@@ -82,6 +116,9 @@ const AddUserModal = ({
           ...currentValues,
           role: value as UserRole,
           manager_id: undefined,
+          department: "",
+          department_id: undefined,
+          position: "",
         };
       }
 
@@ -89,6 +126,16 @@ const AddUserModal = ({
         return {
           ...currentValues,
           manager_id: value ? Number(value) : undefined,
+        };
+      }
+
+      if (name === "department_id") {
+        // find dept name for the text field
+        const dept = departments.find((d) => d.id === Number(value));
+        return {
+          ...currentValues,
+          department_id: value ? Number(value) : undefined,
+          department: dept?.name ?? "",
         };
       }
 
@@ -108,6 +155,12 @@ const AddUserModal = ({
       delete payload.manager_id;
     }
 
+    if (payload.role !== "manager") {
+      delete payload.department;
+      delete payload.department_id;
+      delete payload.position;
+    }
+
     await onSave(payload);
   };
 
@@ -115,7 +168,7 @@ const AddUserModal = ({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Add User"
+      title={`Add ${roleOptions[0] ? roleOptions[0].charAt(0).toUpperCase() + roleOptions[0].slice(1) : "User"}`}
       maxWidth="max-w-xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
@@ -183,7 +236,9 @@ const AddUserModal = ({
                 Manager
               </span>
               {loadingManagers ? (
-                <div className="text-xs text-slate-500">Loading managers...</div>
+                <div className="text-xs text-slate-500">
+                  Loading managers...
+                </div>
               ) : managerError ? (
                 <div className="text-xs text-red-500">{managerError}</div>
               ) : (
@@ -198,11 +253,52 @@ const AddUserModal = ({
                   {managers.map((manager) => (
                     <option key={manager.id} value={manager.id}>
                       {manager.name}
+                      {manager.department ? ` (${manager.department})` : ""}
                     </option>
                   ))}
                 </select>
               )}
             </label>
+          )}
+
+          {/* Department + Position - only for manager */}
+          {formValues.role === "manager" && (
+            <>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Department
+                </span>
+                <select
+                  name="department_id"
+                  value={formValues.department_id ?? ""}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+                   text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
+                >
+                  <option value="">— No department —</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Position
+                </span>
+                <input
+                  type="text"
+                  name="position"
+                  value={formValues.position ?? ""}
+                  onChange={handleChange}
+                  placeholder="e.g. IT Manager, HR Manager"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+                   text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
+                />
+              </label>
+            </>
           )}
         </div>
 
@@ -223,7 +319,9 @@ const AddUserModal = ({
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white
              hover:bg-blue-700 disabled:bg-blue-300"
           >
-            {isSaving ? "Creating..." : "Create User"}
+            {isSaving
+              ? "Creating..."
+              : `Create ${roleOptions[0] ? roleOptions[0].charAt(0).toUpperCase() + roleOptions[0].slice(1) : "User"}`}
           </button>
         </div>
       </form>

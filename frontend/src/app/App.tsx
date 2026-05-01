@@ -1,8 +1,20 @@
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import AppRouter from "./router";
-import { UserProvider } from "@/context/UserContext";
+import { UserProvider, useUser } from "@/context/UserContext";
 import "./App.css";
+
+function AppWithGate() {
+  const { loading } = useUser();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      </div>
+    );
+  }
+  return <AppRouter />;
+}
 
 function App() {
   return (
@@ -29,7 +41,7 @@ function App() {
             },
           }}
         />
-        <AppRouter />
+        <AppWithGate />
       </UserProvider>
     </BrowserRouter>
   );

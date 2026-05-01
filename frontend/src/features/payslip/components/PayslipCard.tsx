@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { FiDownload } from "react-icons/fi";
 import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
+import { useUser } from "@/context/UserContext";
 
 interface PayslipRecord {
   id: number;
@@ -49,10 +50,11 @@ export default function PayslipCard({
   data: PayslipRecord;
   onBack: () => void;
 }) {
-  const userName = localStorage.getItem("user-name") ?? "-";
-  const userRole = localStorage.getItem("user-role") ?? "-";
-  const userId = localStorage.getItem("user-id") ?? "-";
-  const userEmail = localStorage.getItem("user-email") ?? "-";
+  const { user } = useUser();
+  const userName = user?.name ?? "-";
+  const userRole = user?.role ?? "-";
+  const userId = String(user?.id ?? "-");
+  const userEmail = user?.email ?? "-";
 
   const base = Number(data.base_salary);
   const bonus = Number(data.bonus);

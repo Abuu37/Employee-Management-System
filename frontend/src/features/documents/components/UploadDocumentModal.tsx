@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import ModalShell from "@/features/employees/components/ModalShell";
 import { FiUploadCloud } from "react-icons/fi";
+import { useUser } from "@/context/UserContext";
 
 interface UserOption {
   id: number;
@@ -45,8 +46,9 @@ export default function UploadDocumentModal({
   onSave,
   isSaving,
 }: UploadDocumentModalProps) {
-  const role = localStorage.getItem("user-role") || "employee";
-  const currentUserId = Number(localStorage.getItem("user-id"));
+  const { user } = useUser();
+  const role = user?.role ?? "employee";
+  const currentUserId = user?.id ?? 0;
 
   const [file, setFile] = useState<File | null>(null);
   const [userId, setUserId] = useState<number>(0);

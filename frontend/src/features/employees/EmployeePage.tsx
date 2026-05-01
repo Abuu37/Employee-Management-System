@@ -2,35 +2,16 @@ import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
 import UserManagementSection from "@/features/employees/components/UserManagementSection";
 import { useState } from "react";
-import { FiSearch, FiDownload } from "react-icons/fi";
+import { FiSearch, FiPlus } from "react-icons/fi";
 import type { User } from "@/features/employees/components/types";
+import { useUser } from "@/context/UserContext";
 
 function Employees() {
   const [search, setSearch] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-
-  function handleExportCSV() {
-    const headers = ["S/N", "Name", "Email", "Role", "Status"];
-    const rows = filteredUsers.map((u, i) => [
-      i + 1,
-      u.name,
-      u.email,
-      u.role,
-      u.status,
-    ]);
-    const csvContent = [headers, ...rows]
-      .map((row) =>
-        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `employees_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
+  const [addTrigger, setAddTrigger] = useState(0);
+  const { user } = useUser();
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -50,25 +31,16 @@ function Employees() {
                 Manage all employee accounts and information
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-95"
-              style={{
-                background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)";
-              }}
-            >
-              <FiDownload className="h-4 w-4" />
-              Export CSV
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setAddTrigger((c) => c + 1)}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              >
+                <FiPlus className="h-4 w-4" />
+                Add Employee
+              </button>
+            )}
           </div>
 
           {/* Search bar */}
@@ -85,13 +57,15 @@ function Employees() {
 
           {/* Employee table */}
           <UserManagementSection
-            title="Employees Management"
+            title="All Employees"
             filterRole="employee"
             emptyMessage="No employees found."
             roleOptions={["employee"]}
             searchTerm={search}
             onFilteredUsers={setFilteredUsers}
             hideTitle
+            triggerAddCount={addTrigger}
+            hideTableAddButton
           />
         </div>
       </main>

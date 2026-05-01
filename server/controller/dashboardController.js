@@ -103,17 +103,18 @@ export const getDashboardSummary = async (req, res) => {
       Leave.count({ where: { status: "rejected", ...leaveWhere } }),
     ]);
 
+    //================= Monthly trends for tasks, projects, leaves =================
     const monthlyTasks = await Task.findAll({
       attributes: [
-        [sequelize.literal("YEAR(createdAt)"), "year"],
-        [sequelize.literal("MONTH(createdAt)"), "month"],
+        [sequelize.literal('EXTRACT(YEAR FROM "createdAt")'), "year"],
+        [sequelize.literal('EXTRACT(MONTH FROM "createdAt")'), "month"],
         "status",
         [sequelize.fn("COUNT", sequelize.col("id")), "count"],
       ],
       where: { createdAt: { [Op.gte]: sixMonthsAgo }, ...taskWhere },
       group: [
-        sequelize.literal("YEAR(createdAt)"),
-        sequelize.literal("MONTH(createdAt)"),
+        sequelize.literal('EXTRACT(YEAR FROM "createdAt")'),
+        sequelize.literal('EXTRACT(MONTH FROM "createdAt")'),
         "status",
       ],
       raw: true,
@@ -139,27 +140,27 @@ export const getDashboardSummary = async (req, res) => {
     const [monthlyProjects, monthlyLeaves] = await Promise.all([
       Project.findAll({
         attributes: [
-          [sequelize.literal("YEAR(createdAt)"), "year"],
-          [sequelize.literal("MONTH(createdAt)"), "month"],
+          [sequelize.literal('EXTRACT(YEAR FROM "createdAt")'), "year"],
+          [sequelize.literal('EXTRACT(MONTH FROM "createdAt")'), "month"],
           [sequelize.fn("COUNT", sequelize.col("id")), "count"],
         ],
         where: { createdAt: { [Op.gte]: sixMonthsAgo }, ...projectWhere },
         group: [
-          sequelize.literal("YEAR(createdAt)"),
-          sequelize.literal("MONTH(createdAt)"),
+          sequelize.literal('EXTRACT(YEAR FROM "createdAt")'),
+          sequelize.literal('EXTRACT(MONTH FROM "createdAt")'),
         ],
         raw: true,
       }),
       Leave.findAll({
         attributes: [
-          [sequelize.literal("YEAR(created_at)"), "year"],
-          [sequelize.literal("MONTH(created_at)"), "month"],
+          [sequelize.literal('EXTRACT(YEAR FROM "created_at")'), "year"],
+          [sequelize.literal('EXTRACT(MONTH FROM "created_at")'), "month"],
           [sequelize.fn("COUNT", sequelize.col("id")), "count"],
         ],
         where: { createdAt: { [Op.gte]: sixMonthsAgo }, ...leaveWhere },
         group: [
-          sequelize.literal("YEAR(created_at)"),
-          sequelize.literal("MONTH(created_at)"),
+          sequelize.literal('EXTRACT(YEAR FROM "created_at")'),
+          sequelize.literal('EXTRACT(MONTH FROM "created_at")'),
         ],
         raw: true,
       }),
@@ -227,22 +228,59 @@ export const getDashboardSummary = async (req, res) => {
     });
     const payrollTrend = Object.values(payrollMap);
 
-    const docWhere = isManager
-      ? { user_id: { [Op.in]: teamIdList } }
-      : isEmployee
-        ? { user_id: userId }
-        : {};
-    const docs = await Document.findAll({
-      where: docWhere,
-      include: [
-        { model: User, as: "owner", attributes: ["name"] },
-        { model: User, as: "uploader", attributes: ["name"] },
-      ],
-      order: [["createdAt", "DESC"]],
-      limit: 3,
-      raw: true,
-      nest: true,
-    });
+    // ========= Team-based document logic for manager/employee =============
+    let teamMemberIdsForDocs = [userId];
+    if (isManager) {
+      teamMemberIdsForDocs = teamIdList.concat(userId);
+    } else if (isEmployee) {
+      // Find user's manager and their team
+      const user = await User.findByPk(userId);
+      if (user && user.manager_id) {
+        const teamMembers = await User.findAll({
+          where: { manager_id: user.manager_id },
+          attributes: ["id"],
+          raw: true,
+        });
+        teamMemberIdsForDocs = teamMembers
+          .map((u) => u.id)
+          .concat(user.manager_id);
+      }
+      teamMemberIdsForDocs.push(userId);
+    }
+    let docs;
+    if (req.user.role === "admin") {
+      // Admin sees the most recent documents from the entire system
+      docs = await Document.findAll({
+        include: [
+          { model: User, as: "owner", attributes: ["name"] },
+          { model: User, as: "uploader", attributes: ["name"] },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: 3,
+        raw: true,
+        nest: true,
+      });
+    } else {
+      docs = await Document.findAll({
+        where: {
+          [Op.or]: [
+            { user_id: userId },
+            {
+              visibility: "team",
+              uploaded_by: { [Op.in]: teamMemberIdsForDocs },
+            },
+          ],
+        },
+        include: [
+          { model: User, as: "owner", attributes: ["name"] },
+          { model: User, as: "uploader", attributes: ["name"] },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: 3,
+        raw: true,
+        nest: true,
+      });
+    }
 
     const recentDocuments = docs.map((d) => ({
       id: d.id,

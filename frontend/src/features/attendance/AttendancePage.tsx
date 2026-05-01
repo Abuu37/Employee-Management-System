@@ -2,12 +2,12 @@
 import axios from "axios";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
+import { useUser } from "@/context/UserContext";
 import {
   FiUsers,
   FiCheckCircle,
   FiClock,
   FiXCircle,
-  FiDownload,
   FiLogIn,
   FiLogOut,
   FiSearch,
@@ -32,19 +32,22 @@ export default function AttendancePage() {
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [leavesToday, setLeavesToday] = useState(0);
 
-  const role = localStorage.getItem("user-role") ?? "";
+  const { user } = useUser();
+  const role = user?.role ?? "";
   const token = localStorage.getItem("token") ?? "";
-  const userName = localStorage.getItem("user-name") ?? "Employee";
+  const userName = user?.name ?? "Employee";
 
   const fetchRecords = () => {
-    const endpoint = role === "admin" ? "/api/attendance/all"
+    const endpoint =
+      role === "admin"
+        ? "/api/attendance/all"
         : role === "manager"
           ? "/api/attendance/team"
           : "/api/attendance/my";
 
     axios
-      .get(endpoint, { 
-        headers: { Authorization: `Bearer ${token}` } 
+      .get(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setRecords(res.data))
       .catch(() => setError("Failed to load attendance data."))
@@ -60,8 +63,8 @@ export default function AttendancePage() {
 
     const todayStr = new Date().toISOString().split("T")[0];
     axios
-      .get("/api/leaves", { 
-        headers: { Authorization: `Bearer ${token}` } 
+      .get("/api/leaves", {
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         const count = (res.data as any[]).filter(
@@ -79,52 +82,13 @@ export default function AttendancePage() {
 
   const filtered = records.filter((r) => {
     const name = r.user?.name?.toLowerCase() ?? `user #${r.user_id}`;
-    const matchSearch = name.includes(search.toLowerCase()) || r.date.includes(search);
+    const matchSearch =
+      name.includes(search.toLowerCase()) || r.date.includes(search);
     const matchStatus = statusFilter === "all" || r.status === statusFilter;
     const matchFrom = !dateFrom || r.date >= dateFrom;
     const matchTo = !dateTo || r.date <= dateTo;
     return matchSearch && matchStatus && matchFrom && matchTo;
   });
-
-  //export csv file download function
-  const handleExportCSV = () => {
-    const headers = [
-      "S/N",
-      "Employee",
-      "User ID",
-      "Date",
-      "Check In",
-      "Check Out",
-      "Hours",
-      "Status",
-    ];
-    const rows = filtered.map((r, i) => [
-      i + 1,
-      r.user?.name ?? `User #${r.user_id}`,
-      r.user_id,
-      r.date,
-      r.check_in ? r.check_in.slice(0, 5) : "—",
-      r.check_out ? r.check_out.slice(0, 5) : "—",
-      r.total_hours != null
-        ? parseFloat(String(r.total_hours)).toFixed(1)
-        : "0.0",
-      r.status,
-    ]);
-
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `attendance_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const todayRecords = records.filter((r) => r.date === today);
   const totalEmployees = new Set(records.map((r) => r.user_id)).size;
@@ -378,26 +342,6 @@ export default function AttendancePage() {
                   : "Monitor your team members' attendance"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold
-              text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-95"
-              style={{
-                background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background =
-                  "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background =
-                  "linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)")
-              }
-            >
-              <FiDownload className="h-4 w-4" />
-              Export CSV
-            </button>
           </div>
 
           <section className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">

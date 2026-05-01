@@ -8,29 +8,55 @@ import GeneratePayrollModal from "@/features/payroll/components/GeneratePayrollM
 import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
 import StatCard from "@/features/attendance/components/StatCard";
 import type { PayrollFormValues } from "@/features/payroll/components/GeneratePayrollModal";
-import { getAllPayroll, generatePayroll } from "@/services/payroll.service";
+import { useUser } from "@/context/UserContext";
+import { 
+  getAllPayroll, 
+  generatePayroll,
+  getTeamPayroll,
+  getMyPayslips,
+} from "@/services/payroll.service";
+
 import {
   FiDollarSign,
   FiCheckCircle,
   FiClock,
   FiSearch,
   FiAward,
+  FiPlus,
 } from "react-icons/fi";
 
 export default function PayrollPage() {
+  const { user } = useUser();
   const [data, setData] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [viewSlip, setViewSlip] = useState<any | null>(null);
 
-  const fetchPayroll = () => {
-    getAllPayroll().then(setData).catch(console.error);
+  const fetchPayroll = async () => {
+    try{
+      let payroll = [];
+
+      if (user?.role === "admin") {
+        payroll = await getAllPayroll();
+      } else if (user?.role === "manager") {
+        payroll = await getTeamPayroll();
+      } else {
+        payroll = await getMyPayslips();
+      }
+
+      setData(payroll);
+    }catch(err){
+      console.error(err);
+    }
+
   };
 
   useEffect(() => {
-    fetchPayroll();
-  }, []);
+    if (user) {
+      fetchPayroll();
+    }
+  }, [user]);
 
   const handleGenerate = async (values: PayrollFormValues) => {
     setGenerating(true);
@@ -58,11 +84,27 @@ export default function PayrollPage() {
 
         <div className="p-6 space-y-5">
           {/* Page header */}
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Payroll</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage and process employee payroll records
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Payroll</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Manage and process employee payroll records
+              </p>
+            </div>
+
+            {user?.role === "admin" && (
+            <button
+              type="button"
+              onClick={() => setFormOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium
+              text-white transition hover:bg-blue-700"
+            >
+              <FiPlus className="h-4 w-4" />
+              Generate Payroll
+            </button>
+          )}
+
+
           </div>
 
           {/* Stat cards */}
@@ -103,10 +145,16 @@ export default function PayrollPage() {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by employee or period..."
+              placeholder={
+                user?.role === "employee"
+                  ? "Search by month, year..."
+                  : "Search by employee, month, year..."
+              }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm
+              text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2
+              focus:ring-blue-100"
             />
           </div>
 

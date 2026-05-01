@@ -39,8 +39,8 @@ Task.init(
     },
 
     priority: {
-      type: DataTypes.ENUM("Low", "Medium", "High"),
-      defaultValue: "Medium",
+      type: DataTypes.ENUM("low", "medium", "high"),
+      defaultValue: "medium",
     },
 
     deadline: {

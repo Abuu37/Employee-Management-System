@@ -8,6 +8,7 @@ import ProjectForm from "@/features/projects/components/ProjectForm";
 import ProjectDetails from "@/features/projects/components/ProjectDetails";
 import DeleteProjectModal from "@/features/projects/components/DeleteProjectModal";
 import StatCard from "@/features/attendance/components/StatCard";
+import { useUser } from "@/context/UserContext";
 import type { TaskFormValues } from "@/features/tasks/components/TaskFormModal";
 import type {
   ManagerOption,
@@ -21,6 +22,7 @@ import {
   FiCheckCircle,
   FiSearch,
   FiList,
+  FiPlus,
 } from "react-icons/fi";
 
 const PROJECT_API = "http://localhost:5000/api/project";
@@ -71,6 +73,7 @@ const normalizeUsers = (payload: unknown): RawUser[] => {
 };
 
 function Projects() {
+  const { user } = useUser();
   // Handler to update project status
   const handleUpdateStatus = async (project: ProjectItem, status: string) => {
     const token = localStorage.getItem("token");
@@ -314,27 +317,21 @@ function Projects() {
 
   const handleCreateTask = async (values: TaskFormValues) => {
     if (!activeProject) {
-      throw new Error("No active project selected");
+      return;
     }
 
     const token = localStorage.getItem("token");
-
     if (!token) {
       navigate("/login");
-      throw new Error("Missing token");
+      return;
     }
 
     try {
       setFeedback(null);
-
       await axios.post(
         `${TASK_API}/create`,
         {
-          title: values.title,
-          description: values.description,
-          assignedTo: values.assignedTo,
-          priority: values.priority,
-          deadline: values.deadline || null,
+          ...values,
           projectId: activeProject.id,
         },
         {
@@ -343,23 +340,18 @@ function Projects() {
           },
         },
       );
-
       await fetchTasks(activeProject.id);
-      setFeedback({
-        type: "success",
-        message: "Task created successfully.",
-      });
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
+      setFeedback({ type: "success", message: "Task created successfully." });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
         setFeedback({
           type: "error",
-          message: err.response?.data?.message || "Failed to create task.",
+          message: error.response?.data?.message || "Failed to create task.",
         });
       } else {
         setFeedback({ type: "error", message: "Failed to create task." });
       }
-
-      throw err;
+      throw error;
     }
   };
 
@@ -527,11 +519,24 @@ function Projects() {
 
         <div className="p-6 space-y-5">
           {/* Page header */}
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage and track all ongoing projects
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Manage and track all ongoing projects
+              </p>
+            </div>
+            {user?.role === "admin" && (
+              <button
+                type="button"
+                onClick={handleCreateOpen}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium
+                 text-white transition hover:bg-blue-700"
+              >
+                <FiPlus className="h-4 w-4" />
+                Create Project
+              </button>
+            )}
           </div>
 
           {/* Stat cards */}
@@ -601,7 +606,7 @@ function Projects() {
           ) : null}
 
           <ProjectTable
-            title="Projects"
+            title="All Projects"
             projects={displayedProjects}
             emptyMessage="No projects found."
             onAdd={handleCreateOpen}

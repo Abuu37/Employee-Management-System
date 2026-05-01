@@ -2,6 +2,7 @@ import express from "express";
 import {
   generatePayroll,
   getPayrollDetails,
+  getTeamPayroll,
   getMyPayroll,
   approvePayroll,
   markAsPaid,
@@ -18,9 +19,24 @@ router.post(
   generatePayroll,
 );
 
-router.get("/", verifyToken, getPayrollDetails);
+router.get(
+  "/", 
+  verifyToken, 
+  getPayrollDetails
+);
 
-router.get("/me", verifyToken, getMyPayroll);
+router.get(
+  "/team",
+  verifyToken,
+  checkRole("manager"),
+  getTeamPayroll
+);
+
+router.get(
+  "/me", 
+  verifyToken, 
+  getMyPayroll
+);
 
 router.put(
   "/:id/approve",
@@ -29,6 +45,11 @@ router.put(
   approvePayroll,
 );
 
-router.put("/:id/pay", verifyToken, checkRole("admin"), markAsPaid);
+router.put(
+  "/:id/pay",
+  verifyToken,
+  checkRole("admin"),
+  markAsPaid
+);
 
 export default router;

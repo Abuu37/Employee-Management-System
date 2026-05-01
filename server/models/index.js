@@ -12,6 +12,15 @@ import Document from "./document.js";
 import Leave from "./Leave.js";
 import LeaveBalance from "./LeaveBalance.js";
 import Attendance from "./Attendance.js";
+import Department from "./Department.js";
+
+// Department <-> User (manager) relationship
+Department.belongsTo(User, { foreignKey: "manager_id", as: "manager" });
+User.hasOne(Department, { foreignKey: "manager_id", as: "managedDepartment" });
+
+// Department <-> User (employees) relationship
+Department.hasMany(User, { foreignKey: "department_id", as: "employees" });
+User.belongsTo(Department, { foreignKey: "department_id", as: "dept" });
 
 // User <-> Attendance relationship
 User.hasMany(Attendance, { foreignKey: "user_id", as: "attendances" });

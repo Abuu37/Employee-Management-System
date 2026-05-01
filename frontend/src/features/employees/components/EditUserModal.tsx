@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import ModalShell from "./ModalShell";
+import { useUser } from "@/context/UserContext";
 import type { User, UserRole } from "./types";
 
 interface EditUserFormValues {
   name: string;
   email: string;
   role: UserRole;
+  department?: string;
+  manager_id?: number;
 }
 
 interface EditUserModalProps {
@@ -25,11 +29,42 @@ function EditUserModal({
   roleOptions,
   isSaving,
 }: EditUserModalProps) {
+  const { user: currentUser } = useUser();
+  const currentUserRole = currentUser?.role ?? null;
+
   const [formValues, setFormValues] = useState<EditUserFormValues>({
     name: user?.name ?? "",
     email: user?.email ?? "",
     role: user?.role ?? "employee",
+    department: user?.department ?? "",
+    manager_id: user?.manager_id,
   });
+
+  const [managers, setManagers] = useState<{ id: number; name: string }[]>([]);
+  const [loadingManagers, setLoadingManagers] = useState(false);
+
+  useEffect(() => {
+    if (
+      isOpen &&
+      formValues.role === "employee" &&
+      currentUserRole === "admin"
+    ) {
+      setLoadingManagers(true);
+      const token = localStorage.getItem("token");
+      axios
+        .get("http://localhost:5000/api/user/view-users", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          const list = Array.isArray(res.data)
+            ? res.data.filter((u: any) => u.role === "manager")
+            : [];
+          setManagers(list.map((m: any) => ({ id: m.id, name: m.name })));
+        })
+        .catch(() => {})
+        .finally(() => setLoadingManagers(false));
+    }
+  }, [isOpen, formValues.role, currentUserRole]);
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -41,6 +76,14 @@ function EditUserModal({
         return {
           ...currentValues,
           role: value as UserRole,
+          manager_id: undefined,
+        };
+      }
+
+      if (name === "manager_id") {
+        return {
+          ...currentValues,
+          manager_id: value ? Number(value) : undefined,
         };
       }
 
@@ -114,6 +157,49 @@ function EditUserModal({
               ))}
             </select>
           </label>
+
+          {formValues.role === "employee" && currentUserRole === "admin" && (
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Assign Manager
+              </span>
+              {loadingManagers ? (
+                <div className="text-xs text-slate-500">
+                  Loading managers...
+                </div>
+              ) : (
+                <select
+                  name="manager_id"
+                  value={formValues.manager_id ?? ""}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                >
+                  <option value="">— No manager —</option>
+                  {managers.map((manager) => (
+                    <option key={manager.id} value={manager.id}>
+                      {manager.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </label>
+          )}
+
+          {formValues.role === "manager" && (
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Department
+              </span>
+              <input
+                type="text"
+                name="department"
+                value={formValues.department ?? ""}
+                onChange={handleChange}
+                placeholder="e.g. Engineering, HR, Finance"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              />
+            </label>
+          )}
         </div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

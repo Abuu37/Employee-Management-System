@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiClock } from "react-icons/fi";
+import { FiClock, FiCalendar } from "react-icons/fi";
 import { AttendanceRecord, statusConfig, fmt, fmtHours } from "./types";
 
 const PAGE_SIZE = 8;
@@ -123,11 +123,11 @@ export default function AdminAttendanceTable({
                 })
               ) : (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-5 py-16 text-center text-sm text-slate-400"
-                  >
-                    No attendance records found
+                  <td colSpan={7} className="px-5 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center text-slate-400">
+                      <FiCalendar className="h-12 w-12 mb-3 opacity-30" />
+                      <p className="text-sm">No attendance records found</p>
+                    </div>
                   </td>
                 </tr>
               )}

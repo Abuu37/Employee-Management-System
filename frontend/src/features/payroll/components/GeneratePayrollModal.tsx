@@ -96,7 +96,8 @@ export default function GeneratePayrollModal({
               name="user_id"
               value={formValues.user_id || ""}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+              text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               required
             >
               <option value="" disabled>
@@ -118,7 +119,8 @@ export default function GeneratePayrollModal({
               name="month"
               value={formValues.month || ""}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+              text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               required
             >
               <option value="" disabled>
@@ -141,7 +143,8 @@ export default function GeneratePayrollModal({
               name="year"
               value={formValues.year || ""}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
+              text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               placeholder="e.g. 2026"
               required
             />
@@ -152,14 +155,16 @@ export default function GeneratePayrollModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium
+             text-slate-700 transition hover:bg-slate-100"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSaving}
-            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition
+             hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
             {isSaving ? "Generating..." : "Generate Payroll"}
           </button>

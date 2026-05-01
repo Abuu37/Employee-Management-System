@@ -86,11 +86,13 @@ export const generatePayroll = async (req, res) => {
   }
 };
 
-// ================= GET ALL PAYROLL  =================
+// ================= GET ALL PAYROLL (ADMIN)  =================
 export const getPayrollDetails = async (req, res) => {
   try {
     const payrolls = await Payroll.findAll({
-      include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }],
+      include: [
+        { model: User, as: "user", attributes: ["id", "name", "email"] },
+      ],
       order: [["created_at", "DESC"]],
     });
     res.status(200).json({
@@ -99,6 +101,45 @@ export const getPayrollDetails = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching payroll details:", error);
+    res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+};
+
+//================== GET PAYROLL (MANAGER)  =================
+export const getTeamPayroll = async (req, res) => {
+  try {
+    const manager = await User.findByPk(req.user.id);
+    // Only employees in the manager's department (exclude manager)
+    const users = await User.findAll({
+      where: {
+        department_id: manager.department_id,
+        role: "employee",
+      },
+      attributes: ["id"],
+    });
+
+    const employeeIds = users.map((u) => u.id);
+    const payrolls = await Payroll.findAll({
+      where: {
+        user_id: employeeIds,
+      },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+    });
+
+    res.status(200).json({
+      message: "Team payroll fetched successfully",
+      payrolls,
+    });
+  } catch (error) {
     res.status(500).json({
       error: "Internal server error",
     });
@@ -133,7 +174,34 @@ export const approvePayroll = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const payroll = await Payroll.findByPk(id);
+    const manager = await User.findByPk(req.user.id);
+
+    const payroll = await Payroll.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "department_id"],
+        },
+      ],
+    });
+
+    if (
+      req.user.role === "manager" &&
+      payroll.user.department_id !== manager.department_id
+    ) {
+      return res.status(403).json({
+        message:
+          "Managers can only approve payroll for employees in their department",
+      });
+    }
+
+    // Only managers and admins can approve payroll
+    if (!["manager", "admin"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Only managers and admins can approve payroll",
+      });
+    }
 
     if (!payroll) {
       return res.status(404).json({
@@ -147,8 +215,15 @@ export const approvePayroll = async (req, res) => {
       });
     }
 
+    // for status flow control: pending -> approved -> paid
     payroll.status = "approved";
+    payroll.approved_by = req.user.id;
     payroll.approvedAt = new Date();
+
+    payroll.status = "paid";
+    payroll.paidBy = req.user.id;
+    payroll.paidAt = new Date();
+
     await payroll.save();
 
     res.status(200).json({
@@ -183,6 +258,7 @@ export const markAsPaid = async (req, res) => {
       });
     }
 
+    //status flow: pending -> approved -> paid
     payroll.status = "paid";
     payroll.paidAt = new Date();
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FiCalendar } from "react-icons/fi";
 import { AttendanceRecord, statusConfig, fmt, fmtHours } from "./types";
 
 const PAGE_SIZE = 8;
@@ -47,11 +48,11 @@ export default function AttendanceHistoryTable({ records, loading }: Props) {
               </tr>
             ) : records.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-12 text-center text-sm text-slate-400"
-                >
-                  No attendance records found
+                <td colSpan={6} className="px-5 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <FiCalendar className="h-12 w-12 mb-3 opacity-30" />
+                    <p className="text-sm">No attendance records found</p>
+                  </div>
                 </td>
               </tr>
             ) : (

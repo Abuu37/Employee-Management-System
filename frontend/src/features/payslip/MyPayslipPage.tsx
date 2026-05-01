@@ -3,8 +3,7 @@ import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
 import { getMyPayslips } from "@/services/payroll.service";
-import { FiFileText } from "react-icons/fi";
-import { FiEye } from "react-icons/fi";
+import { FiFileText, FiEye, FiSearch } from "react-icons/fi";
 
 const monthNames = [
   "",
@@ -35,6 +34,7 @@ export default function MyPayslipPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any | null>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     getMyPayslips()
@@ -57,12 +57,44 @@ export default function MyPayslipPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <h1 className="text-2xl font-bold text-slate-900">My Payslips</h1>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900">
+                    My Payslips
+                  </h1>
+                  <p className="mt-1 text-sm text-slate-500">
+                    View your payroll history
+                  </p>
+                </div>
+              </div>
+
+              {/* Search bar */}
+              <div className="relative w-full max-w-sm">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search by period or status..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
 
               {data.length === 0 ? (
                 <p className="text-sm text-slate-500">No payslips found</p>
               ) : (
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                    <h3 className="text-base font-semibold text-slate-800">
+                      All Payslips
+                    </h3>
+                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                      {data.length} records
+                    </div>
+                  </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-left text-sm">
                       <thead className="bg-slate-50 text-slate-500">
@@ -78,6 +110,16 @@ export default function MyPayslipPage() {
                       </thead>
                       <tbody>
                         {data
+                          .filter((slip) => {
+                            const q = search.toLowerCase();
+                            return (
+                              !q ||
+                              `${monthNames[slip.month]} ${slip.year}`
+                                .toLowerCase()
+                                .includes(q) ||
+                              slip.status.toLowerCase().includes(q)
+                            );
+                          })
                           .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
                           .map((slip, idx) => {
                             const gross =

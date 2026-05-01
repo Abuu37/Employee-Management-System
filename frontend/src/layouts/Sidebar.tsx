@@ -1,7 +1,9 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { getNavItemsByRole } from "@/config/navItems";
 import { useState } from "react";
+import LogoutConfirmModal from "@/components/ui/LogoutConfirmModal";
 import { useUser } from "@/context/UserContext";
+import toast from "react-hot-toast";
 import {
   FiHome,
   FiUsers,
@@ -21,6 +23,7 @@ import {
   FiCreditCard,
   FiPieChart,
   FiWatch,
+  FiGrid,
 } from "react-icons/fi";
 // Map nav item keys to icons
 const navIcons = {
@@ -28,6 +31,7 @@ const navIcons = {
   employee: <FiUsers className="h-5 w-5" />,
   employees: <FiUsers className="h-5 w-5" />,
   managers: <FiUserCheck className="h-5 w-5" />,
+  departments: <FiGrid className="h-5 w-5" />,
   projects: <FiFolder className="h-5 w-5" />,
   leaves: <FiCalendar className="h-5 w-5" />,
   attendance: <FiWatch className="h-5 w-5" />,
@@ -44,11 +48,13 @@ const navIcons = {
 
 function Sidebar() {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, logout } = useUser();
   // Use context role when loaded, fall back to localStorage so nav renders correctly immediately
   const role = user?.role ?? localStorage.getItem("user-role");
   const navItems = getNavItemsByRole(role);
   const [reportsHovered, setReportsHovered] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const reportSubItems = [
     {
@@ -74,12 +80,19 @@ function Sidebar() {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user-role");
-    localStorage.removeItem("user-id");
-    localStorage.removeItem("user-name");
-    localStorage.removeItem("user-email");
-    navigate("/login");
+    setLogoutModalOpen(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      navigate("/login");
+    } finally {
+      setIsLoggingOut(false);
+      setLogoutModalOpen(false);
+    }
   };
 
   const panelTitle = role
@@ -173,6 +186,13 @@ function Sidebar() {
           ),
         )}
       </nav>
+
+           <LogoutConfirmModal
+              isOpen={logoutModalOpen}
+              onClose={() => setLogoutModalOpen(false)}
+              onConfirm={handleLogoutConfirm}
+              isLoading={isLoggingOut}
+            />
 
       <div className="mt-6 rounded-2xl bg-white/10 p-4 text-white border border-white/10">
         <p className="text-sm font-semibold">Workforce Report</p>

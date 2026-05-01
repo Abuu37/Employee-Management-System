@@ -4,8 +4,10 @@ import "./Login.css";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate, Link } from "react-router-dom";
+import { useUser } from "@/context/UserContext";
 
 const Login = () => {
+  const { refetch } = useUser();
   const [values, setValues] = useState({
     email: "",
     password: "",
@@ -66,16 +68,11 @@ const Login = () => {
 
       if (result.data.message === "Login successful") {
         localStorage.setItem("token", result.data.token);
-        localStorage.setItem("user-role", result.data["user-role"]);
-        localStorage.setItem("user-name", result.data["user-name"]);
-        localStorage.setItem("user-email", result.data["user-email"]);
-        localStorage.setItem("user-id", result.data["user-id"]);
+        // Re-fetch user from backend so context is populated before navigation
+        await refetch();
 
         toast.success("Login successful! Welcome back");
-
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
+        navigate("/dashboard");
       }
     } catch (error: any) {
       const field = error.response?.data?.field;

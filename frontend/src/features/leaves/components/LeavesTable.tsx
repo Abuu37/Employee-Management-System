@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { FiCheck, FiX, FiEye } from "react-icons/fi";
 import ViewLeaveModal from "./ViewLeaveModal";
+import { useUser } from "@/context/UserContext";
 
 export interface Leave {
   id: number;
@@ -44,41 +45,23 @@ function LeavesTable({
     currentPage * pageSize,
   );
 
-  // Get user role and name from localStorage
-  const role =
-    typeof window !== "undefined"
-      ? localStorage.getItem("user-role")
-      : undefined;
-  const userName =
-    typeof window !== "undefined"
-      ? localStorage.getItem("user-name")
-      : undefined;
+  // Get user role and name from context
+  const { user } = useUser();
+  const role = user?.role ?? undefined;
+  const userName = user?.name ?? undefined;
 
-
-      // View Leave Modal state
-  const[selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
+  // View Leave Modal state
+  const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-
-
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <h3 className="text-lg font-semibold text-slate-900">
-          Leaves Management
-        </h3>
+        <h3 className="text-base font-semibold text-slate-800">All Leaves</h3>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             {leaves.length} records
           </div>
-          <button
-            type="button"
-            onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-xl
-             bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            + Apply Leave
-          </button>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -94,7 +77,7 @@ function LeavesTable({
               <th className="px-5 py-3 font-medium">Start Date</th>
               <th className="px-5 py-3 font-medium">End Date</th>
               <th className="px-5 py-3 font-medium">Days</th>
-              
+
               <th className="px-5 py-3 font-medium">Status</th>
 
               {/* Show Processed By column for admin */}
@@ -111,7 +94,7 @@ function LeavesTable({
                   <td className="px-5 py-4 font-medium text-slate-600">
                     {(currentPage - 1) * pageSize + idx + 1}
                   </td>
-                 
+
                   {/* Show Employee cell for manager/admin */}
                   {(role === "manager" || role === "admin") && (
                     <td className="px-5 py-4 text-slate-600">
@@ -129,7 +112,7 @@ function LeavesTable({
 
                   <td className="px-5 py-4 text-slate-600">{leave.endDate}</td>
                   <td className="px-5 py-4 text-slate-600">{leave.days}</td>
-                
+
                   <td className="px-5 py-4">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -259,7 +242,6 @@ function LeavesTable({
         onClose={() => setIsViewModalOpen(false)}
         leave={selectedLeave}
       />
-
     </section>
   );
 }

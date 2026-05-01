@@ -11,39 +11,42 @@ export type CurrentUser = {
 type UserContextValue = {
   user: CurrentUser | null;
   loading: boolean;
-  refetch: () => void;
+  refetch: () => Promise<void>;
+  logout: () => void;
 };
 
 const UserContext = createContext<UserContextValue>({
   user: null,
   loading: true,
-  refetch: () => {},
+  refetch: () => Promise.resolve(),
+  logout: () => {},
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = () => {
+  const fetchUser = (): Promise<void> => {
     const token = localStorage.getItem("token");
     if (!token) {
       setUser(null);
       setLoading(false);
-      return;
+      return Promise.resolve();
     }
-    axios
+    return axios
       .get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => {
-        const u = res.data;
-        setUser(u);
-        // keep localStorage in sync so legacy code across the app works
-        localStorage.setItem("user-role", u.role);
-        localStorage.setItem("user-name", u.name);
-        localStorage.setItem("user-email", u.email);
-        localStorage.setItem("user-id", String(u.id));
+      .then((res) => setUser(res.data))
+      .catch(() => {
+        // Token invalid/expired — clear it
+        localStorage.removeItem("token");
+        setUser(null);
       })
-      .catch(() => setUser(null))
       .finally(() => setLoading(false));
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
   };
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, refetch: fetchUser }}>
+    <UserContext.Provider value={{ user, loading, refetch: fetchUser, logout }}>
       {children}
     </UserContext.Provider>
   );

@@ -3,10 +3,13 @@ import DeleteTaskModal from "@/features/tasks/components/DeleteTaskModal";
 import { FiPlus } from "react-icons/fi";
 import { FiMessageCircle } from "react-icons/fi";
 import ModalShell from "@/features/employees/components/ModalShell";
-import TaskFormModal, { type TaskFormValues } from "@/features/tasks/components/TaskFormModal";
+import TaskFormModal, {
+  type TaskFormValues,
+} from "@/features/tasks/components/TaskFormModal";
 import TaskCommentPage from "@/features/tasks/TaskCommentPage";
 import type { ProjectItem, ProjectTask } from "./types";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@/context/UserContext";
 
 const PAGE_SIZE = 8;
 
@@ -63,24 +66,27 @@ function ProjectDetails({
   assignees,
   onCreateTask,
   onDeleteTask,
-  isAdmin,
 }: ProjectDetailsProps) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ProjectTask | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const role = localStorage.getItem("user-role");
+  const { user } = useUser();
+  const role = user?.role ?? null;
   const navigate = useNavigate();
 
-  // Managers can always create tasks
-  const canCreateTask = role === "manager";
+  const canCreateTask = role === "manager" && project?.status === "in_progress";
 
   // constant that only MANAGER and project is IN_PROGRESS and onDeleteTask exists
   const canDeleteTask =
     role === "manager" && project?.status === "in_progress" && !!onDeleteTask;
 
+  // Only admins can delete a project
+  const canDeleteProject = role === "admin";
+
   const handleTaskFormSubmit = async (values: TaskFormValues) => {
-    await onCreateTask(values);
+    if (!project) return;
+    await onCreateTask({ ...values, projectId: project.id });
   };
 
   const handleDeleteClick = (task: ProjectTask) => {
@@ -131,9 +137,7 @@ function ProjectDetails({
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {/* Only show Manager card for admin, otherwise show Description */}
                 {(() => {
-                  const isAdmin =
-                    typeof window !== "undefined" &&
-                    localStorage.getItem("user-role") === "admin";
+                  const isAdmin = role === "admin";
                   if (isAdmin) {
                     return (
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -213,7 +217,6 @@ function ProjectDetails({
                     <th className="px-5 py-3 font-medium">Deadline</th>
                     <th className="px-5 py-3 font-medium">Comment</th>
                     <th className="px-5 py-3 font-medium">Delete</th>
-                    
                   </tr>
                 </thead>
                 <tbody>
@@ -255,7 +258,6 @@ function ProjectDetails({
                             Comment
                           </button>
                         </td>
-                          
 
                         <td className="px-5 py-4 text-right">
                           {canDeleteTask && (

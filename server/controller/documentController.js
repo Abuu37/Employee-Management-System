@@ -116,8 +116,36 @@ export const getAllDocuments = async (req, res) => {
 export const getMyDocuments = async (req, res) => {
   try {
     const userId = req.user.id;
+    const user = await User.findByPk(userId); // Get the user's team members (including self)
+    let teamMemberIds = [userId];
+    if (user && user.manager_id) {
+    
+      const teamMembers = await User.findAll({
+        where: { manager_id: user.manager_id },
+        attributes: ["id"],
+      });
+      teamMemberIds = teamMembers.map(u => u.id);
+      teamMemberIds.push(user.manager_id); // include manager as part of team
+    } else {
+      // If user is a manager, get their team
+      const teamMembers = await User.findAll({
+        where: { manager_id: userId },
+        attributes: ["id"],
+      });
+      teamMemberIds = teamMembers.map(u => u.id);
+      teamMemberIds.push(userId);
+    }
+
     const docs = await Document.findAll({
-      where: { user_id: userId },
+      where: {
+        [Op.or]: [
+          { user_id: userId },
+          {
+            visibility: "team",
+            uploaded_by: { [Op.in]: teamMemberIds },
+          },
+        ],
+      },
       include: [
         {
           model: User,
@@ -212,8 +240,8 @@ export const deleteDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    // Admin can delete anything
-    // Others can only delete their own uploads
+  
+    //=============== Others can only delete their own uploads / Admin can delete anything ===============
     if (userRole !== "admin" && doc.uploaded_by !== userId) {
       return res.status(403).json({
         message: "You can only delete documents you uploaded",

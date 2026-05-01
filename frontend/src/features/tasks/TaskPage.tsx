@@ -8,6 +8,7 @@ import { TaskComment } from "@/features/tasks/components/types";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@/context/UserContext";
 import CommentModal from "@/features/tasks/components/CommentModal";
 import TaskCommentPage from "./TaskCommentPage";
 
@@ -47,6 +48,7 @@ const normalizePriority = (priority?: string): TaskItem["priority"] => {
 
 function Tasks() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -54,8 +56,8 @@ function Tasks() {
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [comments, setComments] = useState<TaskComment[]>([]);
-  const currentUserId = Number(localStorage.getItem("user-id")); // or get from auth context
-  const [users, setUsers] = useState<any[]>([]); // for user name/role lookup
+  const currentUserId = user?.id ?? 0;
+  const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   const getUserNameById = (id: number) =>
@@ -65,7 +67,7 @@ function Tasks() {
 
   const fetchMyTasks = async () => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("user-role");
+    const role = user?.role ?? null;
 
     if (!token) {
       navigate("/login");

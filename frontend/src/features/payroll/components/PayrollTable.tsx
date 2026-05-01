@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { FiPlus, FiEye } from "react-icons/fi";
+import { FiPlus, FiEye, FiCreditCard } from "react-icons/fi";
 import { approvePayroll, markAsPaid } from "@/services/payroll.service";
+import { useUser } from "@/context/UserContext";
 
 const PAGE_SIZE = 8;
 
@@ -62,6 +63,7 @@ export default function PayrollTable({
     onRefresh();
   };
 
+  const { user } = useUser();
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
   const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -69,19 +71,13 @@ export default function PayrollTable({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <h3 className="text-lg font-semibold text-slate-900">Payroll</h3>
+        <h3 className="text-base font-semibold text-slate-800">
+          All Payroll Records
+        </h3>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             {data.length} records
           </div>
-          <button
-            type="button"
-            onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            <FiPlus className="h-4 w-4" />
-            Generate Payroll
-          </button>
         </div>
       </div>
 
@@ -149,30 +145,39 @@ export default function PayrollTable({
                     </span>
                   </td>
                   <td className="px-5 py-4">
+
                     <div className="flex items-center gap-2">
                       {item.status === "pending" && (
+                        (user?.role === "manager" || user?.role === "admin") && (
                         <button
                           type="button"
                           onClick={() => handleApprove(item.id)}
-                          className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-500 hover:text-white"
+                          className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium
+                           text-blue-700 transition hover:bg-blue-500 hover:text-white"
                         >
                           Approve
                         </button>
-                      )}
+                      ))}
+
                       {item.status === "approved" && (
+                         (user?.role === "admin") && (
                         <button
                           type="button"
                           onClick={() => handlePay(item.id)}
-                          className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-500 hover:text-white"
+                          className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium
+                           text-emerald-700 transition hover:bg-emerald-500 hover:text-white"
                         >
                           Mark Paid
                         </button>
-                      )}
+                      ))}
+
                       {item.status === "paid" && onView && (
                         <button
                           type="button"
                           onClick={() => onView(item)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-500 hover:text-white"
+                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200
+                           bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition
+                           hover:bg-blue-500 hover:text-white"
                         >
                           <FiEye className="h-3.5 w-3.5" />
                           View
@@ -184,11 +189,11 @@ export default function PayrollTable({
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={11}
-                  className="px-5 py-10 text-center text-sm text-slate-500"
-                >
-                  No payroll records found
+                <td colSpan={11} className="px-5 py-16 text-center">
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <FiCreditCard className="h-12 w-12 mb-3 opacity-30" />
+                    <p className="text-sm">No payroll records found</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -200,14 +205,16 @@ export default function PayrollTable({
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700
+           hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
           Previous
         </button>
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700
+           hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
           Next
         </button>

@@ -55,7 +55,15 @@ export const register = async (req, res) => {
 // ================= ADMIN / MANAGER CREATE USER =================
 export const createUserByAdmin = async (req, res) => {
   try {
-    const { name, email, role, manager_id } = req.body;
+    const {
+      name,
+      email,
+      role,
+      manager_id,
+      department,
+      department_id,
+      position,
+    } = req.body;
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -67,14 +75,29 @@ export const createUserByAdmin = async (req, res) => {
 
     // ✅ Manager assignment logic
     let assignedManagerId = null;
+    let assignedDepartmentId = null;
+    let assignedDepartmentName = null;
 
     if (req.user.role === "manager") {
       // Manager creates → auto assign to himself
       assignedManagerId = req.user.id;
+      // Inherit manager's department
+      const managerUser = await User.findByPk(req.user.id);
+      if (managerUser) {
+        assignedDepartmentId = managerUser.department_id || null;
+        assignedDepartmentName = managerUser.department || null;
+      }
     } else if (req.user.role === "admin") {
       // Admin creates employee → must assign manager (optional but recommended)
       if (role === "employee") {
         assignedManagerId = manager_id || null;
+        if (assignedManagerId) {
+          const managerUser = await User.findByPk(assignedManagerId);
+          if (managerUser) {
+            assignedDepartmentId = managerUser.department_id || null;
+            assignedDepartmentName = managerUser.department || null;
+          }
+        }
       }
     }
 
@@ -83,6 +106,15 @@ export const createUserByAdmin = async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      department:
+        role === "employee"
+          ? assignedDepartmentName || department || null
+          : department || null,
+      department_id:
+        role === "employee"
+          ? assignedDepartmentId || department_id || null
+          : department_id || null,
+      position: position || null,
       manager_id: assignedManagerId,
     });
 
@@ -142,7 +174,15 @@ export const getAllUsers = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role, manager_id } = req.body;
+    const {
+      name,
+      email,
+      role,
+      manager_id,
+      department,
+      department_id,
+      position,
+    } = req.body;
 
     const user = await User.findByPk(id);
     if (!user) {
@@ -153,10 +193,25 @@ export const updateUser = async (req, res) => {
       user.name = name || user.name;
       user.email = email || user.email;
       user.role = role || user.role;
+      user.department = department !== undefined ? department : user.department;
+      user.department_id =
+        department_id !== undefined
+          ? department_id || null
+          : user.department_id;
+      user.position = position !== undefined ? position : user.position;
 
       // ✅ Admin can reassign manager
       if (manager_id !== undefined) {
-        user.manager_id = manager_id;
+        user.manager_id = manager_id || null;
+        // Auto-update department from new manager
+        if (user.manager_id && user.role === "employee") {
+          const managerUser = await User.findByPk(user.manager_id);
+          if (managerUser) {
+            user.department_id =
+              managerUser.department_id || user.department_id;
+            user.department = managerUser.department || user.department;
+          }
+        }
       }
 
       await user.save();

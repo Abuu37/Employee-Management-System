@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
+import { useUser } from "@/context/UserContext";
 import DocumentTable from "@/features/documents/components/DocumentTable";
 import UploadDocumentModal from "@/features/documents/components/UploadDocumentModal";
 import DeleteDocumentModal from "@/features/documents/components/DeleteDocumentModal";
@@ -21,10 +22,12 @@ import {
   FiClock,
   FiAlertCircle,
   FiSearch,
+  FiPlus,
 } from "react-icons/fi";
 
 export default function DocumentPage() {
-  const role = localStorage.getItem("user-role") || "employee";
+  const { user } = useUser();
+  const role = user?.role ?? "employee";
 
   const [data, setData] = useState<DocumentRecord[]>([]);
   const [search, setSearch] = useState("");
@@ -111,11 +114,24 @@ export default function DocumentPage() {
 
         <div className="p-6 space-y-5">
           {/* Page header */}
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage and track all submitted documents
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Manage and track all submitted documents
+              </p>
+            </div>
+            {role !== "admin" && (
+              <button
+                type="button"
+                onClick={() => setUploadOpen(true)}
+                disabled={data.length >= 20}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FiPlus className="h-4 w-4" />
+                Upload Document
+              </button>
+            )}
           </div>
 
           {/* Stat cards */}
@@ -143,22 +159,20 @@ export default function DocumentPage() {
               subtitle="Awaiting verification"
             />
             {/* Suggestion card */}
-            <article className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Suggestion
-                </p>
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-                  <FiAlertCircle className="h-4 w-4" />
+            <article className="rounded-2xl border border-violet-100 bg-white px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl p-2.5 shrink-0 flex items-center justify-center bg-violet-100 text-violet-600">
+                  <FiAlertCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Suggestion
+                  </p>
+                  <p className="text-sm font-semibold text-slate-700 leading-snug mt-0.5">
+                    Keep documents up to date
+                  </p>
                 </div>
               </div>
-              <p className="text-sm font-semibold text-slate-700 leading-snug">
-                Keep documents up to date
-              </p>
-              <p className="text-xs text-slate-400 mt-2">
-                Upload contracts, IDs &amp; certificates regularly to ensure
-                faster verification and HR compliance.
-              </p>
             </article>
           </div>
 

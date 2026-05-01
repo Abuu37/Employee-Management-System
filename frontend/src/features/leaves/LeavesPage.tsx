@@ -5,6 +5,8 @@ import {
   FiCheckCircle,
   FiClock,
   FiSlash,
+  FiPlus,
+  FiSearch,
 } from "react-icons/fi";
 import axios from "axios";
 import StatCard from "@/features/attendance/components/StatCard";
@@ -16,6 +18,7 @@ import AllLeavesTable from "@/features/leaves/components/AllLeavesTable";
 import AddLeaveModal from "@/features/leaves/components/AddLeaveModal";
 import LeaveBalanceCards from "@/features/leaves/components/LeaveBalanceCards";
 import useLeaveBalance from "@/features/leaves/hooks/useLeaveBalance";
+import { useUser } from "@/context/UserContext";
 
 // Define the Leave type
 interface Leave {
@@ -32,6 +35,7 @@ interface Leave {
 }
 
 const Leaves: React.FC = () => {
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,23 +50,26 @@ const Leaves: React.FC = () => {
     error: balanceError,
   } = useLeaveBalance();
 
-  // Fetch leaves based on user role
+  // Fetch leaves based on user role and tab
   const fetchLeaves = async () => {
     setLoading(true);
     setError("");
     try {
-      const role = localStorage.getItem("user-role");
-      let url = "/api/leaves/";
-      if (role === "employee") {
+      let url = "/api/leaves/my-leaves";
+      if (user?.role === "manager" && managerTab === "all")
+        url = "/api/leaves/team-leaves";
+      if (user?.role === "manager" && managerTab === "my")
         url = "/api/leaves/my-leaves";
-      }
+      if (user?.role === "admin" && activeTab === "manager")
+        url = "/api/leaves/manager-leaves";
+      if (user?.role === "admin" && activeTab === "employee")
+        url = "/api/leaves/";
       const res = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      const data = Array.isArray(res.data) ? res.data : res.data.leaves;
-      setLeaves(data || []);
+      setLeaves(Array.isArray(res.data) ? res.data : res.data.leaves || []);
     } catch (error: any) {
       setError(error.response?.data?.message || "Failed to fetch leaves");
       console.error("Error fetching leaves:", error);
@@ -72,7 +79,8 @@ const Leaves: React.FC = () => {
 
   useEffect(() => {
     fetchLeaves();
-  }, []);
+    // eslint-disable-next-line
+  }, [user, activeTab, managerTab]);
 
   // Handle leave application (modal form)
   const handleApply = async (form: {
@@ -155,19 +163,17 @@ const Leaves: React.FC = () => {
   };
 
   // Filter leaves by search term (type, reason, or status)
+  const role = typeof window !== "undefined" ? user?.role : undefined;
+  const isAdmin = role === "admin";
+  const isManager = role === "manager";
+
+  // Search filter (client-side, only for display)
   const filteredLeaves = leaves.filter((leave) =>
     [leave.type, leave.reason, leave.status]
       .join(" ")
       .toLowerCase()
       .includes(searchTerm.toLowerCase()),
   );
-
-  const role =
-    typeof window !== "undefined"
-      ? localStorage.getItem("user-role")
-      : undefined;
-  const isAdmin = role === "admin";
-  const isManager = role === "manager";
 
   // Admin tab filtering
   // Manager Leaves: leaves submitted by managers (approved by admin)
@@ -179,17 +185,29 @@ const Leaves: React.FC = () => {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-auto">
-        <Header searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+        <Header searchTerm="" onSearchChange={() => {}} />
 
         <div className="p-6 space-y-5">
           {/* Page header */}
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Leave Management
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Track and manage all leave requests
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                Leave Management
+              </h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Track and manage all leave requests
+              </p>
+            </div>
+            {!isAdmin && (
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              >
+                <FiPlus className="h-4 w-4" />
+                Apply Leave
+              </button>
+            )}
           </div>
 
           {/* Stat cards */}
@@ -255,6 +273,18 @@ const Leaves: React.FC = () => {
             </div>
           )}
 
+          {/* Search bar */}
+          <div className="relative w-full max-w-sm">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search leaves..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
           {/* Tab Navigation for Admin and Manager */}
           {isAdmin && (
             <div className="flex gap-2 mb-4">
@@ -290,7 +320,7 @@ const Leaves: React.FC = () => {
                 }`}
                 onClick={() => setManagerTab("all")}
               >
-                All Leaves
+                Team Leaves
               </button>
               <button
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
@@ -308,43 +338,24 @@ const Leaves: React.FC = () => {
           {/* Conditional Rendering */}
           {isAdmin ? (
             activeTab === "manager" ? (
-              // Manager Leaves: show leaves from managers (approved by admin), with actions
               <AllLeavesTable
-                leaves={managerLeaves}
+                leaves={filteredLeaves}
                 showActions={true}
                 onApprove={handleApprove}
                 onReject={handleReject}
               />
             ) : (
-              // All Leaves: show employee leaves approved by manager, no actions
-              <AllLeavesTable leaves={employeeLeaves} />
+              <AllLeavesTable leaves={filteredLeaves} />
             )
           ) : isManager ? (
-            managerTab === "all" ? (
-              <LeavesTable
-                leaves={leaves}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                emptyMessage={
-                  loading ? "Loading leaves..." : "No leaves found."
-                }
-                onAdd={() => setShowModal(true)}
-                onCancel={handleCancel}
-              />
-            ) : (
-              <LeavesTable
-                leaves={leaves.filter(
-                  (l) => l.employeeName === localStorage.getItem("user-name"),
-                )}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                emptyMessage={
-                  loading ? "Loading leaves..." : "No leaves found."
-                }
-                onAdd={() => setShowModal(true)}
-                onCancel={handleCancel}
-              />
-            )
+            <LeavesTable
+              leaves={filteredLeaves}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              emptyMessage={loading ? "Loading leaves..." : "No leaves found."}
+              onAdd={() => setShowModal(true)}
+              onCancel={handleCancel}
+            />
           ) : (
             <LeavesTable
               leaves={filteredLeaves}

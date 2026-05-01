@@ -20,6 +20,8 @@ interface UserManagementSectionProps {
   searchTerm?: string;
   onFilteredUsers?: (users: User[]) => void;
   hideTitle?: boolean;
+  triggerAddCount?: number;
+  hideTableAddButton?: boolean;
 }
 
 type RawUser = {
@@ -27,6 +29,7 @@ type RawUser = {
   name: string;
   email: string;
   role: UserRole;
+  manager_id?: number;
 };
 
 function normalizeUsers(usersData: unknown): User[] {
@@ -42,6 +45,7 @@ function normalizeUsers(usersData: unknown): User[] {
     email: user.email,
     role: user.role,
     status: "Active",
+    manager_id: user.manager_id,
   }));
 }
 
@@ -53,6 +57,8 @@ function UserManagementSection({
   searchTerm = "",
   onFilteredUsers,
   hideTitle = false,
+  triggerAddCount = 0,
+  hideTableAddButton = false,
 }: UserManagementSectionProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
@@ -144,6 +150,11 @@ function UserManagementSection({
   const handleAddUser = () => {
     setAddOpen(true);
   };
+
+  useEffect(() => {
+    if (triggerAddCount > 0) setAddOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerAddCount]);
 
   // Action handlers for create, update, delete operations
   const handleCreateUser = async (formValues: AddUserFormValues) => {
@@ -326,6 +337,7 @@ function UserManagementSection({
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
         hideTitle={hideTitle}
+        hideAddButton={hideTableAddButton}
       />
 
       <AddUserModal

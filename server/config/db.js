@@ -1,24 +1,22 @@
 import { Sequelize } from "sequelize";
 
-const sequelize = new Sequelize(
-  "Emplyeems", // Make sure this database exists in MySQL
-  "root",      // MySQL username
-  "",          // MySQL password
+export const sequelize = new Sequelize(
+  "ems",
+  "postgres",
+  "abuu@2001",
   {
     host: "localhost",
-    dialect: "mysql",
-    logging: false, // optional: remove SQL logs
+    port: 5432,
+    dialect: "postgres",
+    logging: false,
   }
 );
 
-// Test the connection
-const connectDB = async () => {
+export const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log("Database connected successfully.");
+    console.log("PostgreSQL connected successfully");
   } catch (error) {
-    console.error("Unable to connect to the database:", error);
+    console.error("DB connection failed:", error);
   }
 };
-
-export { sequelize, connectDB };

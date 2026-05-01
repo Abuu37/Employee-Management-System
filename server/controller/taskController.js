@@ -126,6 +126,7 @@ export const createTask = async (req, res) => {
 
     return res.status(201).json(normalizeTask(task));
   } catch (error) {
+    console.error("Error creating task:", error);
     return res.status(500).json({ message: "Failed to create task" });
   }
 };

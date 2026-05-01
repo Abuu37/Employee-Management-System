@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
+import { useUser } from "@/context/UserContext";
 import {
   FiUsers,
   FiUserCheck,
@@ -63,7 +64,7 @@ type RecentTask = {
   deadline: string | null;
 };
 
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
+// ================== Custom Tooltip ======================
 function ChartTip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -83,7 +84,7 @@ function ChartTip({ active, payload, label }: any) {
   );
 }
 
-// ─── Mini Calendar ────────────────────────────────────────────────────────────
+// ================ Mini Calendar =======================
 function MiniCalendar() {
   const today = new Date();
   const year = today.getFullYear();
@@ -146,12 +147,12 @@ function MiniCalendar() {
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// ================== Skeleton ======================
 function Sk({ cls }: { cls: string }) {
   return <div className={`animate-pulse rounded-2xl bg-slate-200 ${cls}`} />;
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+// ================== Dashboard ======================
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [taskTrend, setTaskTrend] = useState<TaskTrendRow[]>([]);
@@ -160,13 +161,14 @@ export default function Dashboard() {
   const [recentDocs, setRecentDocs] = useState<DocRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { user } = useUser();
   const token = localStorage.getItem("token") ?? "";
-  const userName = localStorage.getItem("user-name") ?? "User";
-  const userRole = localStorage.getItem("user-role") ?? "";
+  const userName = user?.name ?? "User";
+  const userRole = user?.role ?? "";
   const isManager = userRole === "manager";
   const isEmployee = userRole === "employee";
 
-  // ── Today's attendance (manager + employee check-in/out card) ──────────
+  // ================== Today's attendance (manager + employee check-in/out card) ======================
   const [todayRecord, setTodayRecord] = useState<{
     check_in?: string;
     check_out?: string;
@@ -267,7 +269,7 @@ export default function Dashboard() {
         <Header searchTerm="" onSearchChange={() => {}} />
 
         <div className="p-6 space-y-5">
-          {/* ── KPI Cards ───────────────────────────────────────────────── */}
+          {/* ================== KPI Cards ====================== */}
           {loading ? (
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -520,7 +522,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ── Row 2: Grouped Bar + Donut ──────────────────────────────── */}
+          {/* ================== Row 2: Grouped Bar + Donut ====================== */}
           {loading ? (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
               <Sk cls="h-80 xl:col-span-2" />
