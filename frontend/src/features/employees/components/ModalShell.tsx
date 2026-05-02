@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { FiX } from "react-icons/fi";
 
@@ -21,16 +22,15 @@ function ModalShell({
   panelClassName,
   children,
 }: ModalShellProps) {
-
   useEffect(() => {
     if (!isOpen) {
       return undefined;
     }
 
-      // Prevent background scrolling when modal is open
+    // Prevent background scrolling when modal is open
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
- 
+
     // Close modal on Escape key press
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -50,9 +50,9 @@ function ModalShell({
     return null;
   }
 
-  return (
+  return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm ${overlayClassName ?? ""}`}
+      className={`fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm ${overlayClassName ?? ""}`}
       onClick={onClose}
     >
       <div
@@ -74,7 +74,8 @@ function ModalShell({
 
         <div className="px-6 py-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

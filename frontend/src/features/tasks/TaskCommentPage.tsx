@@ -4,16 +4,15 @@ import axios from "axios";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import { FiArrowLeft, FiPlus, FiSend } from "react-icons/fi";
+import { useUser } from "@/context/UserContext";
 
 const TASK_API = "http://localhost:5000/api/task";
 const COMMENT_API = "http://localhost:5000/api/tasks_comments";
 
-const TaskCommentPage: React.FC<{ 
+const TaskCommentPage: React.FC<{
   modalMode?: boolean;
   taskId?: number;
 }> = ({ modalMode = false, taskId: propTaskId }) => {
-
-
   const navigate = useNavigate();
 
   const [task, setTask] = useState<any>(null);
@@ -23,8 +22,9 @@ const TaskCommentPage: React.FC<{
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
-  const currentUserId = Number(localStorage.getItem("user-id") || 0);
-  const userName = localStorage.getItem("user-name") ?? "You";
+  const { user: currentUser } = useUser();
+  const currentUserId = currentUser?.id ?? 0;
+  const userName = currentUser?.name ?? "You";
 
   const chatRef = useRef<HTMLDivElement>(null);
 
@@ -39,12 +39,11 @@ const TaskCommentPage: React.FC<{
     scrollToBottom();
   }, [comments]);
 
-
   const { id } = useParams();
   const taskId = propTaskId ?? id;
 
   useEffect(() => {
-    // Basic validation to ensure we have a task ID to work with before making API calls 
+    // Basic validation to ensure we have a task ID to work with before making API calls
     if (!taskId) {
       console.log("No task ID provided");
       setError("No task ID provided");
@@ -52,17 +51,16 @@ const TaskCommentPage: React.FC<{
       return;
     }
 
-
     // Fetch task details
     const fetchTask = async () => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(`${TASK_API}/${taskId}`, {
-          headers: { 
-            Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         setTask(res.data);
-
       } catch {
         console.log("Failed to load task");
         setError("Failed to load task");
@@ -88,7 +86,6 @@ const TaskCommentPage: React.FC<{
             createdAt: new Date(c.createdAt).toLocaleTimeString(),
           })),
         );
-
       } catch {
         console.log("Failed to load comments");
         setError("Failed to load comments");
@@ -219,8 +216,10 @@ const TaskCommentPage: React.FC<{
                           {c.createdAt}
                         </span>
                       </div>
-                      <div className="text-base whitespace-pre-line wrap-break-word
-                           max-w-xs md:max-w-sm lg:max-w-md overflow-x-auto">
+                      <div
+                        className="text-base whitespace-pre-line wrap-break-word
+                           max-w-xs md:max-w-sm lg:max-w-md overflow-x-auto"
+                      >
                         {c.content}
                       </div>
                     </div>
@@ -268,7 +267,6 @@ const TaskCommentPage: React.FC<{
             <div className="bg-white border-b px-6 py-4 space-y-3">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-               
                 <span>/</span>
                 <span>{task?.projectName || "Project"}</span>
                 <span>/</span>

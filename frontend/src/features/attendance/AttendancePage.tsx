@@ -62,16 +62,18 @@ export default function AttendancePage() {
     if (role !== "admin" && role !== "manager") return;
 
     const todayStr = new Date().toISOString().split("T")[0];
+    const leavesUrl =
+      role === "admin" ? "/api/leaves/" : "/api/leaves/team-leaves";
     axios
-      .get("/api/leaves", {
+      .get(leavesUrl, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         const count = (res.data as any[]).filter(
           (l) =>
-            l.status === "approved" &&
-            l.start_date <= todayStr &&
-            l.end_date >= todayStr,
+            l.overallStatus === "approved" &&
+            l.startDate <= todayStr &&
+            l.endDate >= todayStr,
         ).length;
         setLeavesToday(count);
       })

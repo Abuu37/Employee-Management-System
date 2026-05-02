@@ -1,12 +1,19 @@
 import { useState } from "react";
 import ModalShell from "@/features/employees/components/ModalShell";
-import type { Leave } from "./LeavesTable";
+import { useUser } from "@/context/UserContext";
+
+interface Colleague {
+  id: number;
+  name: string;
+}
 
 interface AddLeaveFormValues {
   type: string;
   startDate: string;
   endDate: string;
   reason: string;
+  backupEmployeeId: string;
+  handoverNote: string;
 }
 
 interface AddLeaveModalProps {
@@ -14,6 +21,7 @@ interface AddLeaveModalProps {
   onClose: () => void;
   onSave: (formValues: AddLeaveFormValues) => Promise<void>;
   isSaving: boolean;
+  colleagues: Colleague[];
 }
 
 function AddLeaveModal({
@@ -21,12 +29,17 @@ function AddLeaveModal({
   onClose,
   onSave,
   isSaving,
+  colleagues,
 }: AddLeaveModalProps) {
+  const { user } = useUser();
+  const isManager = user?.role === "manager";
   const [formValues, setFormValues] = useState<AddLeaveFormValues>({
     type: "",
     startDate: "",
     endDate: "",
     reason: "",
+    backupEmployeeId: "",
+    handoverNote: "",
   });
 
   const handleChange = (
@@ -35,7 +48,7 @@ function AddLeaveModal({
     >,
   ) => {
     const { name, value } = event.target;
-    setFormValues((currentValues) => ({ ...currentValues, [name]: value }));
+    setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -52,9 +65,10 @@ function AddLeaveModal({
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-4">
+          {/* Leave Type */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Leave Type
+              Leave Type <span className="text-red-500">*</span>
             </span>
             <select
               name="type"
@@ -67,51 +81,96 @@ function AddLeaveModal({
               <option value="annual">Annual</option>
               <option value="sick">Sick</option>
               <option value="casual">Casual</option>
+              <option value="emergency">Emergency</option>
+              <option value="unpaid">Unpaid</option>
             </select>
           </label>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              Start Date
-            </span>
-            <input
-              type="date"
-              name="startDate"
-              value={formValues.startDate}
-              onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-              required
-            />
-          </label>
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Start Date <span className="text-red-500">*</span>
+              </span>
+              <input
+                type="date"
+                name="startDate"
+                value={formValues.startDate}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                required
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                End Date <span className="text-red-500">*</span>
+              </span>
+              <input
+                type="date"
+                name="endDate"
+                value={formValues.endDate}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                required
+              />
+            </label>
+          </div>
 
+          {/* Reason */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              End Date
-            </span>
-            <input
-              type="date"
-              name="endDate"
-              value={formValues.endDate}
-              onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-              required
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              Reason
+              Reason <span className="text-red-500">*</span>
             </span>
             <textarea
               name="reason"
               value={formValues.reason}
               onChange={handleChange}
+              rows={2}
               placeholder="Reason for leave"
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               required
             />
           </label>
+
+          {/* Backup / Handover fields — hidden for managers */}
+          {!isManager && (
+            <>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Work Handover / Backup Person
+                </span>
+                <select
+                  name="backupEmployeeId"
+                  value={formValues.backupEmployeeId}
+                  onChange={handleChange}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                >
+                  <option value="">Select colleague (optional)</option>
+                  {colleagues.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Handover Notes
+                </span>
+                <textarea
+                  name="handoverNote"
+                  value={formValues.handoverNote}
+                  onChange={handleChange}
+                  rows={2}
+                  placeholder="Instructions or notes for backup person"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                />
+              </label>
+            </>
+          )}
         </div>
+
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             type="button"
@@ -123,8 +182,7 @@ function AddLeaveModal({
           <button
             type="submit"
             disabled={isSaving}
-            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium
-            text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
             {isSaving ? "Applying..." : "Apply"}
           </button>

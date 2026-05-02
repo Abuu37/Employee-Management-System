@@ -30,7 +30,6 @@ const managerNavItems: NavItem[] = [
   { name: "Projects", key: "projects", path: "/projects" },
   { name: "Leaves", key: "leaves", path: "/leaves" },
   { name: "My Payslip", key: "pay slips", path: "/pay-slips" },
-  { name: "Team Payroll", key: "payroll", path: "/payroll" },
   { name: "Reports", key: "reports", path: "/reports" },
   { name: "Settings", key: "settings", path: "/settings" },
   { name: "Logout", key: "logout", path: "/logout" },

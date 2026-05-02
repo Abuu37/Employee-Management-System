@@ -1,0 +1,85 @@
+import React, { useState, useEffect } from "react";
+import ModalShell from "@/features/employees/components/ModalShell";
+import { FiAlertCircle } from "react-icons/fi";
+
+interface RejectLeaveModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (comment: string) => void;
+}
+
+const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+}) => {
+  const [comment, setComment] = useState("");
+
+  // Reset comment when modal opens
+  useEffect(() => {
+    if (isOpen) setComment("");
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!comment.trim()) return;
+    onConfirm(comment.trim());
+    setComment("");
+  };
+
+  return (
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Reject Leave Request"
+      maxWidth="max-w-md"
+    >
+      <div className="space-y-5">
+        <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-4">
+          <span className="mt-0.5 flex items-center justify-center shrink-0">
+            <span className="relative flex h-9 w-9 items-center justify-center">
+              <span className="absolute inset-0 rounded-full bg-red-500 border-4 border-white" />
+              <FiAlertCircle className="relative h-5 w-5 text-white" />
+            </span>
+          </span>
+          <p className="text-sm font-medium text-red-700">
+            Please provide a reason for rejecting this leave request. The employee will be notified.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-slate-700">
+            Rejection Reason <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            autoFocus
+            rows={3}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Enter the reason for rejection..."
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-red-400 focus:bg-white resize-none"
+          />
+        </div>
+
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!comment.trim()}
+            className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+          >
+            Confirm Rejection
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+};
+
+export default RejectLeaveModal;

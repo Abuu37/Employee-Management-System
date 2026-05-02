@@ -11,6 +11,7 @@ import Payroll from "./payroll.js";
 import Document from "./document.js";
 import Leave from "./Leave.js";
 import LeaveBalance from "./LeaveBalance.js";
+import Notification from "./Notification.js";
 import Attendance from "./Attendance.js";
 import Department from "./Department.js";
 
@@ -30,8 +31,8 @@ Attendance.belongsTo(User, { foreignKey: "user_id", as: "user" });
 Leave.belongsTo(User, { foreignKey: "userId", as: "user" });
 User.hasMany(Leave, { foreignKey: "userId", as: "leaves" });
 
-// Leave <-> User relationship (manager who approved leave)
-Leave.belongsTo(User, { foreignKey: "approvedBy", as: "approver" });
+// Leave <-> User relationship (backup / handover person)
+Leave.belongsTo(User, { foreignKey: "backupEmployeeId", as: "backupEmployee" });
 
 // User <-> Salary relationship
 User.hasOne(Salary, { foreignKey: "user_id", as: "salary" });
@@ -77,6 +78,10 @@ Task.hasMany(TaskComment, { foreignKey: "taskId", as: "comments" });
 
 // Attendance <-> User relationships
 User.hasMany(Attendance, { foreignKey: "user_id" });
+// Notification <-> User
+User.hasMany(Notification, { foreignKey: "user_id", as: "notifications" });
+Notification.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
 Attendance.belongsTo(User, { foreignKey: "user_id" });
 
 export {
@@ -90,4 +95,5 @@ export {
   Document,
   TaskComment,
   Attendance,
+  Notification,
 };

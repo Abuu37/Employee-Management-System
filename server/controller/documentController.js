@@ -1,8 +1,10 @@
 import Document from "../models/document.js";
 import User from "../models/user.js";
+import Notification from "../models/Notification.js";
 import { Op } from "sequelize";
 import path from "path";
 import fs from "fs";
+import { createNotification } from "./notificationController.js";
 
 // Allowed file types per role
 const ALLOWED_TYPES = {
@@ -78,6 +80,178 @@ export const uploadDocument = async (req, res) => {
       is_verified: uploaderRole === "admin",
     });
 
+    // Notify the document owner if someone else uploaded for them
+    if (Number(user_id) !== uploaderId) {
+      try {
+        await createNotification({
+          userId: Number(user_id),
+          title: "New Document Uploaded",
+          message: `A new ${file_type} document has been uploaded to your profile.`,
+          type: "document",
+          refId: doc.id,
+        });
+      } catch (err) {
+        console.error("Notification error (owner):", err.message);
+      }
+    }
+
+    // Notify admins, manager, and teammates when an employee uploads their own document
+    if (uploaderRole === "employee") {
+      try {
+        const uploader = await User.findByPk(uploaderId, {
+          attributes: ["id", "name", "manager_id"],
+        });
+        const uploaderName = uploader?.name ?? "An employee";
+        const notifiedIds = new Set([uploaderId]); // never notify the uploader themselves
+
+        // Notify all admins
+        const admins = await User.findAll({
+          where: { role: "admin" },
+          attributes: ["id"],
+        });
+        for (const admin of admins) {
+          if (notifiedIds.has(admin.id)) continue;
+          notifiedIds.add(admin.id);
+          await createNotification({
+            userId: admin.id,
+            title: "New Document Uploaded",
+            message: `${uploaderName} uploaded a new ${file_type} document.`,
+            type: "document",
+            refId: doc.id,
+          });
+        }
+
+        // Notify the employee's manager
+        if (uploader?.manager_id && !notifiedIds.has(uploader.manager_id)) {
+          notifiedIds.add(uploader.manager_id);
+          await createNotification({
+            userId: uploader.manager_id,
+            title: "New Document Uploaded",
+            message: `${uploaderName} uploaded a new ${file_type} document.`,
+            type: "document",
+            refId: doc.id,
+          });
+        }
+
+        // Notify teammates (employees sharing the same manager)
+        if (uploader?.manager_id) {
+          const teammates = await User.findAll({
+            where: { manager_id: uploader.manager_id, role: "employee" },
+            attributes: ["id"],
+          });
+          for (const teammate of teammates) {
+            if (notifiedIds.has(teammate.id)) continue;
+            notifiedIds.add(teammate.id);
+            await createNotification({
+              userId: teammate.id,
+              title: "New Team Document",
+              message: `${uploaderName} uploaded a new ${file_type} document.`,
+              type: "document",
+              refId: doc.id,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Notification error (employee upload):", err.message);
+      }
+    }
+
+    // Notify team when a manager uploads a document for an employee
+    if (uploaderRole === "manager" && Number(user_id) !== uploaderId) {
+      try {
+        const manager = await User.findByPk(uploaderId, {
+          attributes: ["id", "name"],
+        });
+        const managerName = manager?.name ?? "Your manager";
+        const notifiedIds = new Set([uploaderId, Number(user_id)]); // owner already notified above
+
+        // Notify teammates of the document owner
+        const teammates = await User.findAll({
+          where: { manager_id: uploaderId, role: "employee" },
+          attributes: ["id"],
+        });
+        for (const teammate of teammates) {
+          if (notifiedIds.has(teammate.id)) continue;
+          notifiedIds.add(teammate.id);
+          await createNotification({
+            userId: teammate.id,
+            title: "New Team Document",
+            message: `${managerName} uploaded a new ${file_type} document for your team.`,
+            type: "document",
+            refId: doc.id,
+          });
+        }
+
+        // Notify admins
+        const admins = await User.findAll({
+          where: { role: "admin" },
+          attributes: ["id"],
+        });
+        for (const admin of admins) {
+          if (notifiedIds.has(admin.id)) continue;
+          notifiedIds.add(admin.id);
+          await createNotification({
+            userId: admin.id,
+            title: "New Document Uploaded",
+            message: `${managerName} uploaded a new ${file_type} document for an employee.`,
+            type: "document",
+            refId: doc.id,
+          });
+        }
+      } catch (err) {
+        console.error("Notification error (manager upload):", err.message);
+      }
+    }
+
+    // Notify admins (and team members if team-visibility) when a manager uploads for themselves
+    if (uploaderRole === "manager" && Number(user_id) === uploaderId) {
+      try {
+        const manager = await User.findByPk(uploaderId, {
+          attributes: ["id", "name"],
+        });
+        const managerName = manager?.name ?? "A manager";
+        const notifiedIds = new Set([uploaderId]);
+
+        // If it's a team document, notify every team member
+        if (visibility === "team") {
+          const teamMembers = await User.findAll({
+            where: { manager_id: uploaderId, role: "employee" },
+            attributes: ["id"],
+          });
+          for (const member of teamMembers) {
+            if (notifiedIds.has(member.id)) continue;
+            notifiedIds.add(member.id);
+            await createNotification({
+              userId: member.id,
+              title: "New Team Document",
+              message: `${managerName} uploaded a new ${file_type} document for the team.`,
+              type: "document",
+              refId: doc.id,
+            });
+          }
+        }
+
+        // Always notify admins
+        const admins = await User.findAll({
+          where: { role: "admin" },
+          attributes: ["id"],
+        });
+        for (const admin of admins) {
+          if (notifiedIds.has(admin.id)) continue;
+          notifiedIds.add(admin.id);
+          await createNotification({
+            userId: admin.id,
+            title: "New Document Uploaded",
+            message: `${managerName} uploaded a new ${file_type} document.`,
+            type: "document",
+            refId: doc.id,
+          });
+        }
+      } catch (err) {
+        console.error("Notification error (manager self-upload):", err.message);
+      }
+    }
+
     res
       .status(201)
       .json({ message: "Document uploaded successfully", document: doc });
@@ -119,12 +293,11 @@ export const getMyDocuments = async (req, res) => {
     const user = await User.findByPk(userId); // Get the user's team members (including self)
     let teamMemberIds = [userId];
     if (user && user.manager_id) {
-    
       const teamMembers = await User.findAll({
         where: { manager_id: user.manager_id },
         attributes: ["id"],
       });
-      teamMemberIds = teamMembers.map(u => u.id);
+      teamMemberIds = teamMembers.map((u) => u.id);
       teamMemberIds.push(user.manager_id); // include manager as part of team
     } else {
       // If user is a manager, get their team
@@ -132,7 +305,7 @@ export const getMyDocuments = async (req, res) => {
         where: { manager_id: userId },
         attributes: ["id"],
       });
-      teamMemberIds = teamMembers.map(u => u.id);
+      teamMemberIds = teamMembers.map((u) => u.id);
       teamMemberIds.push(userId);
     }
 
@@ -240,7 +413,6 @@ export const deleteDocument = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-  
     //=============== Others can only delete their own uploads / Admin can delete anything ===============
     if (userRole !== "admin" && doc.uploaded_by !== userId) {
       return res.status(403).json({
@@ -252,6 +424,9 @@ export const deleteDocument = async (req, res) => {
     if (fs.existsSync(doc.file_path)) {
       fs.unlinkSync(doc.file_path);
     }
+
+    // Delete all notifications tied to this document
+    await Notification.destroy({ where: { type: "document", refId: doc.id } });
 
     await doc.destroy();
     res.status(200).json({ message: "Document deleted successfully" });

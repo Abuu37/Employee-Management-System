@@ -101,7 +101,7 @@ function Sidebar() {
 
   return (
     <aside
-      className="hidden md:flex md:w-64 md:flex-col px-4 py-7"
+      className="hidden md:flex md:w-64 md:flex-col px-4 py-7 h-screen sticky top-0 overflow-visible shrink-0"
       style={{ background: "#1e3a5f" }}
     >
       {/* Logo */}
@@ -150,7 +150,7 @@ function Sidebar() {
               </NavLink>
 
               {reportsHovered && (
-                <div className="absolute left-full top-0 z-50 ml-2 w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
+                <div className="absolute left-full top-0 z-[9999] ml-2 w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
                   <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                     Report Types
                   </p>
@@ -187,12 +187,12 @@ function Sidebar() {
         )}
       </nav>
 
-           <LogoutConfirmModal
-              isOpen={logoutModalOpen}
-              onClose={() => setLogoutModalOpen(false)}
-              onConfirm={handleLogoutConfirm}
-              isLoading={isLoggingOut}
-            />
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogoutConfirm}
+        isLoading={isLoggingOut}
+      />
 
       <div className="mt-6 rounded-2xl bg-white/10 p-4 text-white border border-white/10">
         <p className="text-sm font-semibold">Workforce Report</p>

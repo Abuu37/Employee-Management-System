@@ -13,6 +13,7 @@ import DocumentRoute from "./Routes/documentRoutes.js";
 import { DashboardRoute } from "./Routes/dashboardRoutes.js";
 import AttendanceRoute from "./Routes/Attendances.js";
 import DepartmentRoute from "./Routes/departmentRoutes.js";
+import NotificationRoute from "./Routes/notificationRoutes.js";
 import "./models/index.js";
 
 const app = express();
@@ -44,6 +45,9 @@ app.use("/api/documents", DocumentRoute);
 
 // Dashboard routes
 app.use("/api/dashboard", DashboardRoute);
+
+// Notification routes
+app.use("/api/notifications", NotificationRoute);
 
 // Attendance routes
 app.use("/api/attendance", AttendanceRoute);

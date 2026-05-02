@@ -81,6 +81,8 @@ export default function DocumentPage() {
       await deleteDocumentApi(deleteTarget.id);
       setDeleteTarget(null);
       fetchDocuments();
+      // Tell the notification bell to refresh immediately
+      window.dispatchEvent(new CustomEvent("notifications:refresh"));
     } catch (err) {
       console.error(err);
     } finally {

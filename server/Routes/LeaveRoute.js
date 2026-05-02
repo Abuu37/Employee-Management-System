@@ -4,8 +4,11 @@ import { checkRole } from "../Middlewares/roleMiddleware.js";
 import {
   applyForLeave,
   getLeaveApplications,
-  approveLeave,
-  rejectLeave,
+  managerApproveLeave,
+  managerRejectLeave,
+  hrApproveLeave,
+  hrRejectLeave,
+  getHrPendingLeaves,
   getMyLeaves,
   getLeaveBalance,
   cancelLeave,
@@ -18,33 +21,20 @@ import {
 
 const router = express.Router();
 
-router.post(
-  "/apply",
-  verifyToken,
-  checkRole("employee", "manager"),
-  applyForLeave,
-);
+// Employee / Manager applies for leave
+router.post("/apply", verifyToken, checkRole("employee", "manager"), applyForLeave);
 
-router.get(
-  "/",
-  verifyToken,
-  checkRole("manager", "admin"),
-  getLeaveApplications,
-);
+// Admin: all leaves
+router.get("/", verifyToken, checkRole("admin"), getLeaveApplications);
 
-router.post(
-  "/approve/:id",
-  verifyToken,
-  checkRole("manager", "admin"),
-  approveLeave,
-);
+// Manager stage-1 approval
+router.post("/manager-approve/:id", verifyToken, checkRole("manager", "admin"), managerApproveLeave);
+router.post("/manager-reject/:id", verifyToken, checkRole("manager", "admin"), managerRejectLeave);
 
-router.post(
-  "/reject/:id",
-  verifyToken,
-  checkRole("manager", "admin"),
-  rejectLeave,
-);
+// HR / Admin stage-2 approval
+router.get("/hr-pending", verifyToken, checkRole("admin"), getHrPendingLeaves);
+router.post("/hr-approve/:id", verifyToken, checkRole("admin"), hrApproveLeave);
+router.post("/hr-reject/:id", verifyToken, checkRole("admin"), hrRejectLeave);
 
 router.get(
   "/my-leaves",

@@ -1,6 +1,7 @@
 import Task from "../models/task.js";
 import Project from "../models/project.js";
 import User from "../models/user.js";
+import { createNotification } from "./notificationController.js";
 
 const toDbStatus = (status) => {
   if (!status) return null;
@@ -45,7 +46,7 @@ const normalizeTask = (task) => {
   };
 };
 
-// Create task (manager only)
+//=============== Create task (manager only) ================
 export const createTask = async (req, res) => {
   try {
     const { title, description, assignedTo, priority, deadline, projectId } =
@@ -123,6 +124,17 @@ export const createTask = async (req, res) => {
       deadline: deadline ?? null,
       status: statusValue,
     });
+
+    // Notify assigned employee
+    try {
+      await createNotification({
+        userId: assignedToId,
+        title: "New Task Assigned",
+        message: `You have been assigned a new task: "${title.trim()}".`,
+        type: "task",
+        refId: task.id,
+      });
+    } catch (_) {}
 
     return res.status(201).json(normalizeTask(task));
   } catch (error) {
@@ -345,6 +357,19 @@ export const updateTaskStatus = async (req, res) => {
 
     console.log("Saved status in DB:", task.status); // Debug log
 
+    // Notify the manager who created the task about the status update
+    if (status !== undefined) {
+      try {
+        await createNotification({
+          userId: task.assignedBy,
+          title: "Task Status Updated",
+          message: `Task "${task.title}" status changed to ${toApiStatus(task.status)}.`,
+          type: "task",
+          refId: task.id,
+        });
+      } catch (_) {}
+    }
+
     return res.status(200).json({
       message: "Task updated successfully",
       task: normalizeTask(task),
@@ -403,13 +428,18 @@ export const getTaskByIdForUser = async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
     // Allow if the user is assigned to this task (employee) or is the project manager (manager)
-    const isEmployee = req.user.role === "employee" &&  Number(task.assignedTo) === Number(req.user.id);
-    const isManager =  req.user.role === "manager" && task.project && Number(task.project.managerId) === Number(req.user.id);
+    const isEmployee =
+      req.user.role === "employee" &&
+      Number(task.assignedTo) === Number(req.user.id);
+    const isManager =
+      req.user.role === "manager" &&
+      task.project &&
+      Number(task.project.managerId) === Number(req.user.id);
 
     if (!isEmployee && !isManager) {
       return res.status(403).json({ message: "Not allowed" });
     }
-    
+
     return res.json({
       id: task.id,
       title: task.title,

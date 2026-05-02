@@ -61,9 +61,9 @@ export const getDashboardSummary = async (req, res) => {
         ? { assigned_to: userId }
         : {};
     const leaveWhere = isManager
-      ? { user_id: { [Op.in]: teamIdList } }
+      ? { userId: { [Op.in]: teamIdList } }
       : isEmployee
-        ? { user_id: userId }
+        ? { userId: userId }
         : {};
     const projectWhere = isManager ? { manager_id: userId } : {};
 
@@ -98,9 +98,9 @@ export const getDashboardSummary = async (req, res) => {
       Task.count({ where: { status: "pending", ...taskWhere } }),
       Task.count({ where: { status: "in_progress", ...taskWhere } }),
       Task.count({ where: { status: "completed", ...taskWhere } }),
-      Leave.count({ where: { status: "pending", ...leaveWhere } }),
-      Leave.count({ where: { status: "approved", ...leaveWhere } }),
-      Leave.count({ where: { status: "rejected", ...leaveWhere } }),
+      Leave.count({ where: { overall_status: { [Op.in]: ["pending_manager", "pending_hr"] }, ...leaveWhere } }),
+      Leave.count({ where: { overall_status: "approved", ...leaveWhere } }),
+      Leave.count({ where: { overall_status: { [Op.in]: ["rejected_by_manager", "rejected_by_hr"] }, ...leaveWhere } }),
     ]);
 
     //================= Monthly trends for tasks, projects, leaves =================

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { FiBell, FiSearch, FiX, FiChevronDown } from "react-icons/fi";
+import { FiSearch, FiX, FiChevronDown } from "react-icons/fi";
 import { useUser } from "@/context/UserContext";
+import NotificationDropdown from "@/components/ui/NotificationDropdown";
 
 const NAVY = "#1e3a5f";
 const ROLE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
@@ -103,19 +104,8 @@ function Header({
           {/* divider */}
           <div className="hidden xl:block h-8 w-px bg-slate-200" />
 
-          {/* Notification bell */}
-          <button
-            type="button"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-slate-100"
-            style={{ border: "1.5px solid #e2e8f0" }}
-          >
-            <FiBell className="h-4.5 w-4.5 text-slate-500" />
-            {/* pulse badge */}
-            <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
-            </span>
-          </button>
+          {/*============== Notification bell =================== */}
+          <NotificationDropdown />
 
           {/* User card */}
           <div
