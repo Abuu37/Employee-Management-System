@@ -1,27 +1,11 @@
 import { useState } from "react";
-import { FiSearch, FiX, FiChevronDown } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
+import { FiSearch, FiX } from "react-icons/fi";
 import { useUser } from "@/context/UserContext";
 import NotificationDropdown from "@/components/ui/NotificationDropdown";
+import ProfileDropdown from "@/components/ui/ProfileDropdown";
 
 const NAVY = "#1e3a5f";
-const ROLE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  admin: { bg: "bg-violet-100", text: "text-violet-700", dot: "bg-violet-500" },
-  manager: { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
-  employee: {
-    bg: "bg-emerald-100",
-    text: "text-emerald-700",
-    dot: "bg-emerald-500",
-  },
-};
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
 
 function Header({
   searchTerm,
@@ -31,13 +15,10 @@ function Header({
   onSearchChange: (value: string) => void;
 }) {
   const { user: currentUser } = useUser();
-  const userName =
-    currentUser?.name ?? localStorage.getItem("user-name") ?? "User";
-  const userRole = currentUser?.role ?? localStorage.getItem("user-role") ?? "";
+  const userName = currentUser?.name ?? "User";
+  const { t } = useTranslation();
 
   const [focused, setFocused] = useState(false);
-
-  const roleStyle = ROLE_COLORS[userRole] ?? ROLE_COLORS.employee;
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString("en-US", {
@@ -52,9 +33,9 @@ function Header({
 
   const greeting = (() => {
     const h = now.getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
+    if (h < 12) return t("header.goodMorning");
+    if (h < 17) return t("header.goodAfternoon");
+    return t("header.goodEvening");
   })();
 
   return (
@@ -75,7 +56,7 @@ function Header({
       />
 
       <div className="flex items-center gap-4 px-5 py-3 md:px-7">
-        {/* ── Greeting ──────────────────────────────────── */}
+        {/* ====================== Greeting ======================*/}
         <div className="hidden lg:flex flex-col min-w-max">
           <span className="text-[11px] font-medium text-slate-400 leading-none">
             {greeting},
@@ -91,7 +72,7 @@ function Header({
         {/* divider */}
         <div className="hidden lg:block h-8 w-px bg-slate-200 mx-1" />
 
-        {/* ── Right controls ────────────────────────────── */}
+        {/* ===================== Right controls ===================== */}
         <div className="flex items-center gap-2.5 ml-auto">
           {/* Date / time pill */}
           <div className="hidden xl:flex flex-col items-end">
@@ -107,40 +88,8 @@ function Header({
           {/*============== Notification bell =================== */}
           <NotificationDropdown />
 
-          {/* User card */}
-          <div
-            className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 cursor-pointer transition-all"
-            style={{ border: "1.5px solid #e2e8f0", background: "#f8fafc" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f5f9")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#f8fafc")}
-          >
-            {/* Avatar */}
-            <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white shadow-sm"
-              style={{
-                background: `linear-gradient(135deg, ${NAVY} 0%, #2563eb 100%)`,
-              }}
-            >
-              {getInitials(userName)}
-            </div>
-
-            {/* Info */}
-            <div className="hidden sm:flex flex-col">
-              <span className="text-xs font-bold leading-none text-slate-800 capitalize">
-                {userName.split(" ")[0]}
-              </span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${roleStyle.dot}`} />
-                <span
-                  className={`text-[10px] font-semibold capitalize ${roleStyle.text}`}
-                >
-                  {userRole}
-                </span>
-              </div>
-            </div>
-
-            <FiChevronDown className="hidden sm:block h-3.5 w-3.5 text-slate-400" />
-          </div>
+          {/* ========== Profile (trigger + dropdown) ========== */}
+          <ProfileDropdown />
         </div>
       </div>
     </header>

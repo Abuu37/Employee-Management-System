@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ModalShell from "./ModalShell";
+import { useTranslation } from "react-i18next";
 import { useUser } from "@/context/UserContext";
 import type { User, UserRole } from "./types";
 
@@ -31,6 +32,7 @@ function EditUserModal({
 }: EditUserModalProps) {
   const { user: currentUser } = useUser();
   const currentUserRole = currentUser?.role ?? null;
+  const { t } = useTranslation();
 
   const [formValues, setFormValues] = useState<EditUserFormValues>({
     name: user?.name ?? "",
@@ -103,14 +105,14 @@ function EditUserModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Edit User"
+      title={t("employees.editUser")}
       maxWidth="max-w-xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Full Name
+              {t("employees.fullName")}
             </span>
             <input
               type="text"
@@ -124,7 +126,7 @@ function EditUserModal({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Email Address
+              {t("employees.emailAddress")}
             </span>
             <input
               type="email"
@@ -138,7 +140,7 @@ function EditUserModal({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Role
+              {t("employees.role")}
             </span>
             <select
               name="role"
@@ -161,11 +163,11 @@ function EditUserModal({
           {formValues.role === "employee" && currentUserRole === "admin" && (
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Assign Manager
+                {t("employees.assignManager")}
               </span>
               {loadingManagers ? (
                 <div className="text-xs text-slate-500">
-                  Loading managers...
+                  {t("employees.loadingManagers")}
                 </div>
               ) : (
                 <select
@@ -174,7 +176,7 @@ function EditUserModal({
                   onChange={handleChange}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
                 >
-                  <option value="">— No manager —</option>
+                  <option value="">{t("employees.noManager")}</option>
                   {managers.map((manager) => (
                     <option key={manager.id} value={manager.id}>
                       {manager.name}
@@ -188,7 +190,7 @@ function EditUserModal({
           {formValues.role === "manager" && (
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Department
+                {t("employees.department")}
               </span>
               <input
                 type="text"

@@ -1,6 +1,7 @@
 import ModalShell from "@/features/employees/components/ModalShell";
 import React from "react";
 import { FiXCircle } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 interface LogoutConfirmModalProps {
   isOpen: boolean;
@@ -15,11 +16,12 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
   onConfirm,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Confirm Logout"
+      title={t("logout.title")}
       maxWidth="max-w-md"
     >
       <div className="space-y-5">
@@ -31,7 +33,7 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
             </span>
           </span>
           <p className="text-sm font-medium text-red-700">
-            Are you sure you want to logout?
+            {t("logout.message")}
           </p>
         </div>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -40,7 +42,7 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -48,7 +50,7 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
             disabled={isLoading}
             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
           >
-            {isLoading ? "Logging out..." : "Logout"}
+            {isLoading ? t("logout.loggingOut") : t("logout.confirm")}
           </button>
         </div>
       </div>

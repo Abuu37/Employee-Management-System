@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ModalShell from "@/features/employees/components/ModalShell";
+import { useTranslation } from "react-i18next";
 import type { SalaryRecord } from "@/services/salary.service";
 
 export interface SalaryFormValues {
@@ -31,6 +32,7 @@ export default function SetSalaryModal({
   isSaving,
   salary,
 }: SetSalaryModalProps) {
+  const { t } = useTranslation();
   const [formValues, setFormValues] = useState<SalaryFormValues>({
     user_id: 0,
     base_salary: 0,
@@ -96,14 +98,14 @@ export default function SetSalaryModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={salary ? "Edit Salary" : "Set Salary"}
+      title={salary ? t("salary.editSalary") : t("salary.setSalary")}
       maxWidth="max-w-2xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Select Staff
+              {t("salary.selectStaff")}
             </span>
             <select
               name="user_id"
@@ -114,7 +116,7 @@ export default function SetSalaryModal({
               required
             >
               <option value="" disabled>
-                Select Staff
+                {t("salary.selectStaff")}
               </option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
@@ -126,7 +128,7 @@ export default function SetSalaryModal({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Base Salary
+              {t("salary.baseSalary")}
             </span>
             <input
               type="number"
@@ -143,7 +145,7 @@ export default function SetSalaryModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Bonus
+                {t("salary.bonus")}
               </span>
               <input
                 type="number"
@@ -158,7 +160,7 @@ export default function SetSalaryModal({
 
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Allowance
+                {t("salary.allowance")}
               </span>
               <input
                 type="number"
@@ -174,7 +176,7 @@ export default function SetSalaryModal({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Tax Percentage (%)
+              {t("salary.taxPercent")}
             </span>
             <input
               type="number"
@@ -194,14 +196,18 @@ export default function SetSalaryModal({
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             disabled={isSaving}
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
-            {isSaving ? "Saving..." : salary ? "Save Changes" : "Set Salary"}
+            {isSaving
+              ? t("salary.saving")
+              : salary
+                ? t("salary.saveChanges")
+                : t("salary.setSalary")}
           </button>
         </div>
       </form>

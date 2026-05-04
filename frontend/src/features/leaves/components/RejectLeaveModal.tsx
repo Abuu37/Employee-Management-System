@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ModalShell from "@/features/employees/components/ModalShell";
+import { useTranslation } from "react-i18next";
 import { FiAlertCircle } from "react-icons/fi";
 
 interface RejectLeaveModalProps {
@@ -14,6 +15,7 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
   onConfirm,
 }) => {
   const [comment, setComment] = useState("");
+  const { t } = useTranslation();
 
   // Reset comment when modal opens
   useEffect(() => {
@@ -30,7 +32,7 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Reject Leave Request"
+      title={t("leaves.rejectTitle")}
       maxWidth="max-w-md"
     >
       <div className="space-y-5">
@@ -42,20 +44,20 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
             </span>
           </span>
           <p className="text-sm font-medium text-red-700">
-            Please provide a reason for rejecting this leave request. The employee will be notified.
+            {t("leaves.rejectWarning")}
           </p>
         </div>
 
         <div className="space-y-1.5">
           <label className="block text-sm font-medium text-slate-700">
-            Rejection Reason <span className="text-red-500">*</span>
+            {t("leaves.rejectReason")} <span className="text-red-500">*</span>
           </label>
           <textarea
             autoFocus
             rows={3}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Enter the reason for rejection..."
+            placeholder={t("leaves.rejectPlaceholder")}
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-red-400 focus:bg-white resize-none"
           />
         </div>
@@ -66,7 +68,7 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -74,7 +76,7 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
             disabled={!comment.trim()}
             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
           >
-            Confirm Rejection
+            {t("common.confirm")}
           </button>
         </div>
       </div>

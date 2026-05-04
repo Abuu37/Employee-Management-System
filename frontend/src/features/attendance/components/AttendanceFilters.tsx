@@ -1,4 +1,5 @@
 import { FiSearch } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   search: string;
@@ -23,6 +24,7 @@ export default function AttendanceFilters({
   onDateToChange,
   onClear,
 }: Props) {
+  const { t } = useTranslation();
   const isDirty =
     search !== "" || statusFilter !== "all" || dateFrom !== "" || dateTo !== "";
 
@@ -32,7 +34,7 @@ export default function AttendanceFilters({
         <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
         <input
           type="text"
-          placeholder="Search employee or date…"
+          placeholder={t("attendance.searchPlaceholder")}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
@@ -44,11 +46,11 @@ export default function AttendanceFilters({
         onChange={(e) => onStatusChange(e.target.value)}
         className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition"
       >
-        <option value="all">All Status</option>
-        <option value="present">Present</option>
-        <option value="late">Late</option>
-        <option value="absent">Absent</option>
-        <option value="half_day">Half Day</option>
+        <option value="all">{t("attendance.allStatus")}</option>
+        <option value="present">{t("attendance.present")}</option>
+        <option value="late">{t("attendance.late")}</option>
+        <option value="absent">{t("attendance.absent")}</option>
+        <option value="half_day">{t("attendance.halfDay")}</option>
       </select>
 
       <div className="relative">
@@ -65,8 +67,10 @@ export default function AttendanceFilters({
       </div>
 
       <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold
-         text-slate-400 select-none">
+        <span
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold
+         text-slate-400 select-none"
+        >
           To
         </span>
         <input

@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   FiXCircle,
   FiCalendar,
@@ -53,6 +54,7 @@ const authHeader = () => ({
 
 const Leaves: React.FC = () => {
   const { user } = useUser();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [loading, setLoading] = useState(false);
@@ -252,10 +254,10 @@ const Leaves: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                Leave Management
+                {t("leaves.title")}
               </h1>
               <p className="mt-1 text-sm text-slate-500">
-                Track and manage all leave requests
+                {t("leaves.allLeaveRequests")}
               </p>
             </div>
             {!isAdmin && (
@@ -265,7 +267,7 @@ const Leaves: React.FC = () => {
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 <FiPlus className="h-4 w-4" />
-                Apply Leave
+                {t("leaves.applyLeave")}
               </button>
             )}
           </div>
@@ -273,24 +275,24 @@ const Leaves: React.FC = () => {
           {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              label="Total Leaves"
+              label={t("leaves.totalLeaves")}
               value={leaves.length}
               icon={<FiCalendar />}
               color=""
               featured
-              subtitle="All leave requests"
+              subtitle={t("leaves.allLeaveRequests")}
             />
             <StatCard
-              label="Approved"
+              label={t("leaves.approved")}
               value={
                 leaves.filter((l) => l.overallStatus === "approved").length
               }
               icon={<FiCheckCircle />}
               color="bg-emerald-100 text-emerald-600"
-              subtitle="Leaves approved"
+              subtitle={t("leaves.leavesApproved")}
             />
             <StatCard
-              label="Pending"
+              label={t("leaves.pending")}
               value={
                 leaves.filter(
                   (l) =>
@@ -300,10 +302,10 @@ const Leaves: React.FC = () => {
               }
               icon={<FiClock />}
               color="bg-amber-100 text-amber-600"
-              subtitle="Awaiting approval"
+              subtitle={t("leaves.awaitingApproval")}
             />
             <StatCard
-              label="Rejected"
+              label={t("leaves.rejected")}
               value={
                 leaves.filter(
                   (l) =>
@@ -313,14 +315,14 @@ const Leaves: React.FC = () => {
               }
               icon={<FiSlash />}
               color="bg-red-100 text-red-500"
-              subtitle="Leaves declined"
+              subtitle={t("leaves.leavesDeclined")}
             />
           </div>
 
           {/* Leave Balance */}
           {!isAdmin &&
             (balanceLoading ? (
-              <div className="mb-6">Loading leave balance...</div>
+              <div className="mb-6">{t("leaves.loadingBalance")}</div>
             ) : balanceError ? (
               <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 mb-6">
                 <span className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500">
@@ -353,7 +355,7 @@ const Leaves: React.FC = () => {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search leaves..."
+              placeholder={t("leaves.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -365,8 +367,8 @@ const Leaves: React.FC = () => {
             <div className="flex gap-2 mb-4">
               {(
                 [
-                  { key: "hr_pending", label: "Pending HR Approval" },
-                  { key: "manager", label: "Manager Leaves" },
+                  { key: "hr_pending", label: t("leaves.pendingHRApproval") },
+                  { key: "manager", label: t("leaves.managerLeaves") },
                 ] as const
               ).map(({ key, label }) => (
                 <button
@@ -389,8 +391,8 @@ const Leaves: React.FC = () => {
             <div className="flex gap-2 mb-4">
               {(
                 [
-                  { key: "team", label: "Team Leaves" },
-                  { key: "my", label: "My Leaves" },
+                  { key: "team", label: t("leaves.teamLeaves") },
+                  { key: "my", label: t("leaves.myLeaves") },
                 ] as const
               ).map(({ key, label }) => (
                 <button
@@ -424,7 +426,9 @@ const Leaves: React.FC = () => {
               onManagerApprove={handleManagerApprove}
               onManagerReject={handleManagerReject}
               onCancel={handleCancel}
-              emptyMessage={loading ? "Loading leaves..." : "No leaves found."}
+              emptyMessage={
+                loading ? t("leaves.loadingLeaves") : t("leaves.noLeaves")
+              }
             />
           )}
 

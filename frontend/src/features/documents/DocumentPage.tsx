@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
+import { useTranslation } from "react-i18next";
 import { useUser } from "@/context/UserContext";
 import DocumentTable from "@/features/documents/components/DocumentTable";
 import UploadDocumentModal from "@/features/documents/components/UploadDocumentModal";
@@ -28,6 +29,7 @@ import {
 export default function DocumentPage() {
   const { user } = useUser();
   const role = user?.role ?? "employee";
+  const { t } = useTranslation();
 
   const [data, setData] = useState<DocumentRecord[]>([]);
   const [search, setSearch] = useState("");
@@ -118,9 +120,11 @@ export default function DocumentPage() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {t("documents.title")}
+              </h1>
               <p className="mt-1 text-sm text-slate-500">
-                Manage and track all submitted documents
+                {t("documents.subtitle")}
               </p>
             </div>
             {role !== "admin" && (
@@ -131,7 +135,7 @@ export default function DocumentPage() {
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FiPlus className="h-4 w-4" />
-                Upload Document
+                {t("documents.uploadDocument")}
               </button>
             )}
           </div>
@@ -139,26 +143,26 @@ export default function DocumentPage() {
           {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              label="Total Submitted"
+              label={t("documents.totalSubmitted")}
               value={data.length}
               icon={<FiFileText />}
               color=""
               featured
-              subtitle="All documents on record"
+              subtitle={t("documents.allOnRecord")}
             />
             <StatCard
-              label="Verified"
+              label={t("documents.verified")}
               value={data.filter((d) => d.is_verified).length}
               icon={<FiCheckCircle />}
               color="bg-emerald-100 text-emerald-600"
-              subtitle="Documents approved"
+              subtitle={t("documents.documentsApproved")}
             />
             <StatCard
-              label="Pending"
+              label={t("documents.pending")}
               value={data.filter((d) => !d.is_verified).length}
               icon={<FiClock />}
               color="bg-amber-100 text-amber-600"
-              subtitle="Awaiting verification"
+              subtitle={t("documents.awaitingVerification")}
             />
             {/* Suggestion card */}
             <article className="rounded-2xl border border-violet-100 bg-white px-5 py-4 shadow-sm">
@@ -168,10 +172,10 @@ export default function DocumentPage() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Suggestion
+                    {t("documents.suggestion")}
                   </p>
                   <p className="text-sm font-semibold text-slate-700 leading-snug mt-0.5">
-                    Keep documents up to date
+                    {t("documents.keepUpToDate")}
                   </p>
                 </div>
               </div>
@@ -183,7 +187,7 @@ export default function DocumentPage() {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by file name or type..."
+              placeholder={t("documents.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"

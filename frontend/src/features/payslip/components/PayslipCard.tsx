@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { FiDownload } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 import { useUser } from "@/context/UserContext";
@@ -19,6 +20,7 @@ interface PayslipRecord {
   approved_at?: string;
   paid_at?: string;
   created_at?: string;
+  user?: { id: number; name: string; email: string; role?: string };
 }
 
 const monthNames = [
@@ -51,10 +53,13 @@ export default function PayslipCard({
   onBack: () => void;
 }) {
   const { user } = useUser();
-  const userName = user?.name ?? "-";
-  const userRole = user?.role ?? "-";
-  const userId = String(user?.id ?? "-");
-  const userEmail = user?.email ?? "-";
+  const { t } = useTranslation();
+  // Prefer embedded employee data (admin viewing another user's payslip);
+  // fall back to logged-in user (employee viewing their own payslip).
+  const userName = data.user?.name ?? user?.name ?? "-";
+  const userRole = data.user?.role ?? user?.role ?? "-";
+  const userId = String(data.user?.id ?? user?.id ?? "-");
+  const userEmail = data.user?.email ?? user?.email ?? "-";
 
   const base = Number(data.base_salary);
   const bonus = Number(data.bonus);
@@ -106,7 +111,7 @@ export default function PayslipCard({
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
           <FiDownload className="h-4 w-4" />
-          Download PDF
+          {t("payslip.downloadPdf")}
         </button>
         <button
           type="button"
@@ -138,14 +143,16 @@ export default function PayslipCard({
         {/* Title */}
         <div className="border-b border-blue-100 bg-blue-600 px-6 py-3.5 rounded-t-xl">
           <h2 className="text-base font-semibold text-white">
-            Payslip Details
+            {t("payslip.payslipDetails")}
           </h2>
         </div>
         {/* Period bar + Company header */}
         <div className="border-b border-slate-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-500">Payroll Period</p>
+              <p className="text-sm text-slate-500">
+                {t("payslip.payrollPeriod")}
+              </p>
               <p className="text-base font-semibold text-slate-900">
                 {monthNames[data.month]} {data.year}
               </p>
@@ -172,27 +179,27 @@ export default function PayslipCard({
           {/* Left column — Employee Info */}
           <div className="md:col-span-1">
             <h3 className="mb-2.5 rounded-md bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 uppercase tracking-wide">
-              Employee Information
+              {t("payslip.employeeInfo")}
             </h3>
             <div className="space-y-2.5 text-sm">
               <div>
-                <p className="text-slate-400">Employee Name</p>
+                <p className="text-slate-400">{t("payslip.employeeName")}</p>
                 <p className="font-medium text-slate-800">{userName}</p>
               </div>
               <div>
-                <p className="text-slate-400">Employee ID</p>
+                <p className="text-slate-400">{t("payslip.employeeId")}</p>
                 <p className="font-medium text-slate-800">
                   EMP-{String(userId).padStart(3, "0")}
                 </p>
               </div>
               <div>
-                <p className="text-slate-400">Role</p>
+                <p className="text-slate-400">{t("payslip.role")}</p>
                 <p className="font-medium capitalize text-slate-800">
                   {userRole}
                 </p>
               </div>
               <div>
-                <p className="text-slate-400">Email</p>
+                <p className="text-slate-400">{t("payslip.email")}</p>
                 <p className="font-medium text-slate-800">{userEmail}</p>
               </div>
             </div>
@@ -206,24 +213,30 @@ export default function PayslipCard({
                 className="mb-1.5 rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-bold
                   text-emerald-700 uppercase tracking-wide"
               >
-                Earnings
+                {t("payslip.earnings")}
               </h3>
               <table className="w-full text-sm">
                 <tbody>
                   <tr className="border-b border-slate-100">
-                    <td className="py-2 text-slate-600">Base Salary</td>
+                    <td className="py-2 text-slate-600">
+                      {t("payslip.baseSalary")}
+                    </td>
                     <td className="py-2 text-right font-medium text-slate-900">
                       {fmt(base)}
                     </td>
                   </tr>
                   <tr className="border-b border-slate-100">
-                    <td className="py-2 text-slate-600">Allowance</td>
+                    <td className="py-2 text-slate-600">
+                      {t("payslip.allowance")}
+                    </td>
                     <td className="py-2 text-right font-medium text-slate-900">
                       {fmt(allowance)}
                     </td>
                   </tr>
                   <tr className="border-b border-slate-100">
-                    <td className="py-2 text-slate-600">Bonus</td>
+                    <td className="py-2 text-slate-600">
+                      {t("payslip.bonus")}
+                    </td>
                     <td className="py-2 text-right font-medium text-slate-900">
                       {fmt(bonus)}
                     </td>
@@ -231,7 +244,9 @@ export default function PayslipCard({
                 </tbody>
               </table>
               <div className="mt-1.5 flex justify-between border-t border-slate-200 pt-1.5 text-sm font-bold">
-                <span className="text-slate-900">TOTAL GROSS INCOME</span>
+                <span className="text-slate-900">
+                  {t("payslip.totalGross")}
+                </span>
                 <span className="text-slate-900">{fmt(gross)}</span>
               </div>
             </div>
@@ -239,18 +254,20 @@ export default function PayslipCard({
             {/* Deductions */}
             <div>
               <h3 className="mb-1.5 rounded-md bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 uppercase tracking-wide">
-                Deductions
+                {t("payslip.deductionsTitle")}
               </h3>
               <table className="w-full text-sm">
                 <tbody>
                   <tr className="border-b border-slate-100">
-                    <td className="py-2 text-slate-600">Tax</td>
+                    <td className="py-2 text-slate-600">{t("payslip.tax")}</td>
                     <td className="py-2 text-right font-medium text-red-500">
                       {fmt(tax)}
                     </td>
                   </tr>
                   <tr className="border-b border-slate-100">
-                    <td className="py-2 text-slate-600">Other Deductions</td>
+                    <td className="py-2 text-slate-600">
+                      {t("payslip.otherDeductions")}
+                    </td>
                     <td className="py-2 text-right font-medium text-red-500">
                       {fmt(deductions - tax > 0 ? deductions - tax : 0)}
                     </td>
@@ -258,17 +275,21 @@ export default function PayslipCard({
                 </tbody>
               </table>
               <div className="mt-1.5 flex justify-between border-t border-slate-200 pt-1.5 text-sm font-bold">
-                <span className="text-slate-900">TOTAL DEDUCTIONS</span>
+                <span className="text-slate-900">
+                  {t("payslip.totalDeductions")}
+                </span>
                 <span className="text-red-500">{fmt(deductions)}</span>
               </div>
             </div>
 
             {/* Net Pay */}
             <div className="rounded-lg bg-blue-50 border border-blue-100 px-5 py-3.5">
-              <p className="mb-0.5 text-sm text-blue-500">Net Pay Summary</p>
+              <p className="mb-0.5 text-sm text-blue-500">
+                {t("payslip.netPaySummary")}
+              </p>
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold text-slate-900">
-                  NET PAY
+                  {t("payslip.netPay")}
                 </span>
                 <span className="text-2xl font-bold text-green-600">
                   {fmt(net)}

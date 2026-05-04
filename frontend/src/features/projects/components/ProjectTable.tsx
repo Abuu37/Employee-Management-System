@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiEdit2, FiEye, FiPlus, FiTrash2, FiBriefcase } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import type { ProjectItem } from "./types";
 import { useUser } from "@/context/UserContext";
 
@@ -59,6 +60,7 @@ function ProjectTable({
 }: ProjectTableProps) {
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE));
   const paginated = projects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -69,7 +71,7 @@ function ProjectTable({
         <h3 className="text-base font-semibold text-slate-800">{title}</h3>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {projects.length} records
+            {projects.length} {t("projects.records")}
           </div>
         </div>
       </div>
@@ -79,12 +81,22 @@ function ProjectTable({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">Project Name</th>
-              <th className="px-5 py-3 font-medium">Start Date</th>
-              <th className="px-5 py-3 font-medium">End Date</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              {isAdmin && <th className="px-5 py-3 font-medium">Manager</th>}
-              <th className="px-5 py-3 justify-end font-medium">Actions</th>
+              <th className="px-5 py-3 font-medium">
+                {t("projects.projectName")}
+              </th>
+              <th className="px-5 py-3 font-medium">
+                {t("projects.startDate")}
+              </th>
+              <th className="px-5 py-3 font-medium">{t("projects.endDate")}</th>
+              <th className="px-5 py-3 font-medium">{t("projects.status")}</th>
+              {isAdmin && (
+                <th className="px-5 py-3 font-medium">
+                  {t("projects.manager")}
+                </th>
+              )}
+              <th className="px-5 py-3 justify-end font-medium">
+                {t("projects.actions")}
+              </th>
             </tr>
           </thead>
 
@@ -111,14 +123,16 @@ function ProjectTable({
                       value={project.status}
                       onChange={(e) => onUpdateStatus(project, e.target.value)}
                     >
-                      <option value="pending">Pending</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="complete">Complete</option>
+                      <option value="pending">{t("projects.pending")}</option>
+                      <option value="in_progress">
+                        {t("projects.inProgress")}
+                      </option>
+                      <option value="complete">{t("projects.complete")}</option>
                     </select>
                   </td>
                   {isAdmin && (
                     <td className="px-5 py-4 text-slate-600">
-                      {project.managerName || "Unassigned"}
+                      {project.managerName || t("projects.unassigned")}
                     </td>
                   )}
                   <td className="px-5 py-4">
@@ -129,7 +143,7 @@ function ProjectTable({
                         className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
                       >
                         <FiEye className="h-4 w-4" />
-                        View
+                        {t("common.view")}
                       </button>
                       <button
                         type="button"
@@ -138,17 +152,17 @@ function ProjectTable({
                          border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
                       >
                         <FiEdit2 className="h-3.5 w-3.5" />
-                        Edit
+                        {t("common.edit")}
                       </button>
                       <button
                         type="button"
                         onClick={() => onDelete(project)}
                         className="inline-flex items-center gap-1 rounded-lg border
-                         border-red-100 bg-red-50 px-3 py-1.5 text-xs font-medium
-                          text-red-600 transition hover:bg-red-100"
+                         border-red-200 bg-white px-3 py-1.5 text-xs font-medium
+                          text-red-700 hover:bg-red-500 transition hover:text-white"
                       >
                         <FiTrash2 className="h-3.5 w-3.5" />
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   </td>
@@ -177,14 +191,14 @@ function ProjectTable({
           disabled={page === 1}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Previous
+          {t("projects.previous")}
         </button>
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Next
+          {t("projects.next")}
         </button>
       </div>
     </section>

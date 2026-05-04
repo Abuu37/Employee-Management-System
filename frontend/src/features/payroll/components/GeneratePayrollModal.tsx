@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ModalShell from "@/features/employees/components/ModalShell";
+import { useTranslation } from "react-i18next";
 import { getAllSalaries } from "@/services/salary.service";
 
 const monthNames = [
@@ -41,6 +42,7 @@ export default function GeneratePayrollModal({
   onSave,
   isSaving,
 }: GeneratePayrollModalProps) {
+  const { t } = useTranslation();
   const [formValues, setFormValues] = useState<PayrollFormValues>({
     user_id: 0,
     month: 0,
@@ -83,14 +85,14 @@ export default function GeneratePayrollModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Generate Payroll"
+      title={t("payroll.generatePayroll") || "Generate Payroll"}
       maxWidth="max-w-2xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Select Employee
+              {t("payroll.selectEmployee")}
             </span>
             <select
               name="user_id"
@@ -101,7 +103,7 @@ export default function GeneratePayrollModal({
               required
             >
               <option value="" disabled>
-                Select Employee
+                {t("payroll.selectEmployee")}
               </option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
@@ -113,7 +115,7 @@ export default function GeneratePayrollModal({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Month
+              {t("payroll.month")}
             </span>
             <select
               name="month"
@@ -124,7 +126,7 @@ export default function GeneratePayrollModal({
               required
             >
               <option value="" disabled>
-                Select Month
+                {t("payroll.selectMonth")}
               </option>
               {monthNames.map((name, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -136,7 +138,7 @@ export default function GeneratePayrollModal({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Year
+              {t("payroll.year")}
             </span>
             <input
               type="number"
@@ -166,7 +168,7 @@ export default function GeneratePayrollModal({
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition
              hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
-            {isSaving ? "Generating..." : "Generate Payroll"}
+            {isSaving ? t("payroll.generating") : t("payroll.generatePayroll")}
           </button>
         </div>
       </form>

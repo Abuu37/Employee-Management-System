@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FiBell,
   FiCheck,
@@ -57,6 +58,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const navigate = useNavigate();
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const { t } = useTranslation();
 
   const fetchNotifications = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -192,7 +194,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <h3 className="text-sm font-semibold text-slate-800">
-              Notifications{" "}
+              {t("notifications.title")}{" "}
               {unreadCount > 0 && (
                 <span className="ml-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">
                   {unreadCount}
@@ -207,7 +209,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-blue-600 hover:bg-blue-50 transition"
                 >
                   <FiCheck className="h-3 w-3" />
-                  Mark all read
+                  {t("notifications.markAllRead")}
                 </button>
               )}
               {notifications.length > 0 && (
@@ -217,7 +219,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition"
                 >
                   <FiTrash2 className="h-3 w-3" />
-                  Clear
+                  {t("notifications.clear")}
                 </button>
               )}
             </div>
@@ -228,7 +230,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-400">
                 <FiBell className="h-8 w-8 opacity-30" />
-                <p className="text-xs">No notifications yet</p>
+                <p className="text-xs">{t("notifications.noNotifications")}</p>
               </div>
             ) : (
               notifications.map((n) => (

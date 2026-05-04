@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getNavItemsByRole } from "@/config/navItems";
 import { useState } from "react";
 import LogoutConfirmModal from "@/components/ui/LogoutConfirmModal";
@@ -24,6 +25,7 @@ import {
   FiPieChart,
   FiWatch,
   FiGrid,
+  FiLock,
 } from "react-icons/fi";
 // Map nav item keys to icons
 const navIcons = {
@@ -49,31 +51,41 @@ const navIcons = {
 function Sidebar() {
   const navigate = useNavigate();
   const { user, logout } = useUser();
+  const { t } = useTranslation();
   // Use context role when loaded, fall back to localStorage so nav renders correctly immediately
   const role = user?.role ?? localStorage.getItem("user-role");
   const navItems = getNavItemsByRole(role);
-  const [reportsHovered, setReportsHovered] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const settingsSubItems = [
+    {
+      nameKey: "settings.changePassword",
+      path: "/settings",
+      icon: <FiLock className="h-4 w-4" />,
+    },
+  ];
+
   const reportSubItems = [
     {
-      name: "Attendance",
+      nameKey: "nav.reportAttendance",
       path: "/reports/attendance",
       icon: <FiClock className="h-4 w-4" />,
     },
     {
-      name: "Leave",
+      nameKey: "nav.reportLeave",
       path: "/reports/leave",
       icon: <FiUserMinus className="h-4 w-4" />,
     },
     {
-      name: "Payroll",
+      nameKey: "nav.reportPayroll",
       path: "/reports/payroll",
       icon: <FiCreditCard className="h-4 w-4" />,
     },
     {
-      name: "Employee Summary",
+      nameKey: "nav.reportEmployeeSummary",
       path: "/reports/employee-summary",
       icon: <FiPieChart className="h-4 w-4" />,
     },
@@ -125,44 +137,85 @@ function Sidebar() {
               className="flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-medium text-blue-200 transition-all hover:bg-white/10 hover:text-white"
             >
               {navIcons[item.key] || <span className="h-5 w-5" />}
-              {item.name}
+              {t(item.nameKey)}
             </button>
-          ) : item.key === "reports" ? (
-            <div
-              key={item.key}
-              className="relative"
-              onMouseEnter={() => setReportsHovered(true)}
-              onMouseLeave={() => setReportsHovered(false)}
-            >
-              <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-medium transition-all ${
-                    isActive
-                      ? "bg-white text-[#1e3a5f] shadow-lg font-bold"
-                      : "text-blue-200 hover:bg-white/10 hover:text-white"
-                  }`
-                }
+          ) : item.key === "settings" ? (
+            <div key={item.key} className="relative">
+              {/* Settings trigger button */}
+              <button
+                type="button"
+                onClick={() => setSettingsOpen((p) => !p)}
+                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-medium transition-all ${
+                  settingsOpen
+                    ? "bg-white text-[#1e3a5f] shadow-lg font-bold"
+                    : "text-blue-200 hover:bg-white/10 hover:text-white"
+                }`}
               >
                 {navIcons[item.key] || <span className="h-5 w-5" />}
-                <span className="flex-1">{item.name}</span>
-                <FiChevronRight className="h-4 w-4 opacity-60" />
-              </NavLink>
+                <span className="flex-1">{t(item.nameKey)}</span>
+                <FiChevronRight
+                  className={`h-4 w-4 opacity-60 transition-transform ${settingsOpen ? "rotate-90" : ""}`}
+                />
+              </button>
 
-              {reportsHovered && (
-                <div className="absolute left-full top-0 z-[9999] ml-2 w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
+              {/* Right-side flyout panel */}
+              {settingsOpen && (
+                <div className="absolute left-full top-0 z-9999 ml-2 w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
                   <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                    Report Types
+                    {t("settings.accountSettings")}
+                  </p>
+                  {settingsSubItems.map((sub) => (
+                    <button
+                      key={sub.path}
+                      type="button"
+                      onClick={() => {
+                        navigate(sub.path);
+                        setSettingsOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      {sub.icon}
+                      {t(sub.nameKey)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : item.key === "reports" ? (
+            <div key={item.key} className="relative">
+              <button
+                type="button"
+                onClick={() => setReportsOpen((p) => !p)}
+                className={`flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-medium transition-all ${
+                  reportsOpen
+                    ? "bg-white text-[#1e3a5f] shadow-lg font-bold"
+                    : "text-blue-200 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {navIcons[item.key] || <span className="h-5 w-5" />}
+                <span className="flex-1">{t(item.nameKey)}</span>
+                <FiChevronRight
+                  className={`h-4 w-4 opacity-60 transition-transform ${reportsOpen ? "rotate-90" : ""}`}
+                />
+              </button>
+
+              {reportsOpen && (
+                <div className="absolute left-full top-0 z-9999 ml-2 w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
+                  <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                    {t("nav.reportTypes")}
                   </p>
                   {reportSubItems.map((sub) => (
                     <button
                       key={sub.path}
                       type="button"
-                      onClick={() => navigate(sub.path)}
+                      onClick={() => {
+                        navigate(sub.path);
+                        setReportsOpen(false);
+                      }}
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
                     >
                       {sub.icon}
-                      {sub.name}
+                      {t(sub.nameKey)}
                     </button>
                   ))}
                 </div>
@@ -181,7 +234,7 @@ function Sidebar() {
               }
             >
               {navIcons[item.key] || <span className="h-5 w-5" />}
-              {item.name}
+              {t(item.nameKey)}
             </NavLink>
           ),
         )}

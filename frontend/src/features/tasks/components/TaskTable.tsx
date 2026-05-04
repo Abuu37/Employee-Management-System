@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiMessageCircle } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 const PAGE_SIZE = 8;
 
@@ -57,6 +58,7 @@ function TaskTable({
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(tasks.length / PAGE_SIZE));
   const paginated = tasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { t } = useTranslation();
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -71,14 +73,16 @@ function TaskTable({
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-5 py-3 font-medium">Task</th>
-              <th className="px-5 py-3 font-medium">Project</th>
-              <th className="px-5 py-3 font-medium">Assigned By</th>
-              <th className="px-5 py-3 font-medium">Description</th>
-              <th className="px-5 py-3 font-medium">Priority</th>
-              <th className="px-5 py-3 font-medium">Deadline</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Comments</th>
+              <th className="px-5 py-3 font-medium">{t("tasks.task")}</th>
+              <th className="px-5 py-3 font-medium">{t("tasks.project")}</th>
+              <th className="px-5 py-3 font-medium">{t("tasks.assignedBy")}</th>
+              <th className="px-5 py-3 font-medium">
+                {t("tasks.description")}
+              </th>
+              <th className="px-5 py-3 font-medium">{t("tasks.priority")}</th>
+              <th className="px-5 py-3 font-medium">{t("tasks.deadline")}</th>
+              <th className="px-5 py-3 font-medium">{t("tasks.status")}</th>
+              <th className="px-5 py-3 font-medium">{t("tasks.comments")}</th>
             </tr>
           </thead>
 
@@ -139,20 +143,18 @@ function TaskTable({
                       </select>
                     </td>
 
-                    { !isadmin && (
-                    <td className="px-5 py-4">
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                        onClick={() => onViewTask(task)}
-                      >
-                        <FiMessageCircle className="h-3.5 w-3.5" />
-                        Comment
-                      </button>
-                    </td>
-              )}
-
-
+                    {!isadmin && (
+                      <td className="px-5 py-4">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                          onClick={() => onViewTask(task)}
+                        >
+                          <FiMessageCircle className="h-3.5 w-3.5" />
+                          {t("tasks.comment")}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })
@@ -176,14 +178,14 @@ function TaskTable({
           disabled={page === 1}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Previous
+          {t("common.previous")}
         </button>
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Next
+          {t("common.next")}
         </button>
       </div>
     </section>

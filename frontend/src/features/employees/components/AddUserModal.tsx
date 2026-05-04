@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ModalShell from "./ModalShell";
+import { useTranslation } from "react-i18next";
 import type { UserRole } from "./types";
 import { useUser } from "@/context/UserContext";
 
@@ -34,6 +35,7 @@ const AddUserModal = ({
   // Get current user role from context
   const { user: currentUser } = useUser();
   const currentUserRole = currentUser?.role ?? null;
+  const { t } = useTranslation();
   const [formValues, setFormValues] = useState<AddUserFormValues>({
     name: "",
     email: "",
@@ -180,7 +182,7 @@ const AddUserModal = ({
           {/* Name */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Full Name
+              {t("employees.fullName")}
             </span>
             <input
               type="text"
@@ -196,7 +198,7 @@ const AddUserModal = ({
           {/* Email */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Email Address
+              {t("employees.emailAddress")}
             </span>
             <input
               type="email"
@@ -212,7 +214,7 @@ const AddUserModal = ({
           {/* Role */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Role
+              {t("employees.role")}
             </span>
             <select
               name="role"
@@ -233,11 +235,11 @@ const AddUserModal = ({
           {formValues.role === "employee" && currentUserRole === "admin" && (
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Manager
+                {t("employees.assignManager")}
               </span>
               {loadingManagers ? (
                 <div className="text-xs text-slate-500">
-                  Loading managers...
+                  {t("employees.loadingManagers")}
                 </div>
               ) : managerError ? (
                 <div className="text-xs text-red-500">{managerError}</div>
@@ -249,7 +251,7 @@ const AddUserModal = ({
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
                   required
                 >
-                  <option value="">Select manager</option>
+                  <option value="">{t("employees.selectManager")}</option>
                   {managers.map((manager) => (
                     <option key={manager.id} value={manager.id}>
                       {manager.name}
@@ -266,7 +268,7 @@ const AddUserModal = ({
             <>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">
-                  Department
+                  {t("employees.department")}
                 </span>
                 <select
                   name="department_id"
@@ -286,7 +288,7 @@ const AddUserModal = ({
 
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">
-                  Position
+                  {t("employees.position")}
                 </span>
                 <input
                   type="text"

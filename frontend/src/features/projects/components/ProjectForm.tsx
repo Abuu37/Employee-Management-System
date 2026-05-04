@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ModalShell from "@/features/employees/components/ModalShell";
+import { useTranslation } from "react-i18next";
 import type { ManagerOption, ProjectFormValues, ProjectItem } from "./types";
 
 interface ProjectFormProps {
@@ -34,6 +35,7 @@ function ProjectForm({
   isSaving,
   project,
 }: ProjectFormProps) {
+  const { t } = useTranslation();
   const [formValues, setFormValues] = useState<ProjectFormValues>({
     name: "",
     description: "",
@@ -97,14 +99,16 @@ function ProjectForm({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={project ? "Edit Project" : "Create Project"}
+      title={
+        project ? t("projects.editProject") : t("projects.createProjectTitle")
+      }
       maxWidth="max-w-2xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Project Name
+              {t("projects.projectName")}
             </span>
             <input
               type="text"
@@ -118,7 +122,7 @@ function ProjectForm({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Description
+              {t("projects.description")}
             </span>
             <textarea
               name="description"
@@ -131,7 +135,7 @@ function ProjectForm({
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Manager
+              {t("projects.manager")}
             </span>
             <select
               name="managerId"
@@ -141,7 +145,7 @@ function ProjectForm({
               required
             >
               <option value="" disabled>
-                Select Manager
+                {t("projects.selectManager")}
               </option>
               {managers.map((manager) => (
                 <option key={manager.id} value={manager.id}>
@@ -154,7 +158,7 @@ function ProjectForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Start Date
+                {t("projects.startDate")}
               </span>
               <input
                 type="date"
@@ -168,7 +172,7 @@ function ProjectForm({
 
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                End Date
+                {t("projects.endDate")}
               </span>
               <input
                 type="date"
@@ -183,7 +187,7 @@ function ProjectForm({
           {project ? (
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Status
+                {t("projects.status")}
               </span>
               <select
                 name="status"
@@ -191,9 +195,9 @@ function ProjectForm({
                 onChange={handleChange}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               >
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="complete">Complete</option>
+                <option value="pending">{t("projects.pending")}</option>
+                <option value="in_progress">{t("projects.inProgress")}</option>
+                <option value="complete">{t("projects.complete")}</option>
               </select>
             </label>
           ) : null}
@@ -205,7 +209,7 @@ function ProjectForm({
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
@@ -213,10 +217,10 @@ function ProjectForm({
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
             {isSaving
-              ? "Saving..."
+              ? t("projects.saving")
               : project
-                ? "Save Changes"
-                : "Create Project"}
+                ? t("projects.saveChanges")
+                : t("projects.createProject")}
           </button>
         </div>
       </form>

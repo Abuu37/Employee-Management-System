@@ -1,5 +1,6 @@
 ﻿import React, { useState } from "react";
 import { FiCheck, FiX, FiEye } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import ViewLeaveModal from "./ViewLeaveModal";
 import CancelLeaveModal from "./CancelLeaveModal";
 import RejectLeaveModal from "./RejectLeaveModal";
@@ -34,7 +35,7 @@ interface LeavesTableProps {
   emptyMessage: string;
 }
 
-function statusBadge(status: string) {
+function statusBadge(status: string, t: (key: string) => string) {
   const map: Record<string, string> = {
     pending_manager: "bg-yellow-50 text-yellow-700",
     pending_hr: "bg-yellow-50 text-yellow-700",
@@ -42,16 +43,18 @@ function statusBadge(status: string) {
     rejected_by_manager: "bg-red-50 text-red-600",
     rejected_by_hr: "bg-red-50 text-red-600",
   };
-  const labels: Record<string, string> = {
-    pending_manager: "Pending Manager",
-    pending_hr: "Pending HR",
-    approved: "Approved",
-    rejected_by_manager: "Rejected by Manager",
-    rejected_by_hr: "Rejected by HR",
+  const labelKey: Record<string, string> = {
+    pending_manager: "leaves.statusLabels.pending_manager",
+    pending_hr: "leaves.statusLabels.pending_hr",
+    approved: "leaves.approved",
+    rejected_by_manager: "leaves.statusLabels.rejected_by_manager",
+    rejected_by_hr: "leaves.statusLabels.rejected_by_hr",
   };
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${map[status] ?? "bg-slate-100 text-slate-600"}`}>
-      {labels[status] ?? status}
+    <span
+      className={`rounded-full px-2.5 py-1 text-xs font-medium ${map[status] ?? "bg-slate-100 text-slate-600"}`}
+    >
+      {labelKey[status] ? t(labelKey[status]) : status}
     </span>
   );
 }
@@ -66,9 +69,13 @@ function LeavesTable({
   emptyMessage,
 }: LeavesTableProps) {
   const pageSize = 8;
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(leaves.length / pageSize));
-  const paginated = leaves.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginated = leaves.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -90,10 +97,12 @@ function LeavesTable({
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-base font-semibold text-slate-800">
-          {isManager && !isMyLeaves ? "Team Leave Requests" : "My Leaves"}
+          {isManager && !isMyLeaves
+            ? t("leaves.teamLeaveRequests")
+            : t("leaves.myLeaves")}
         </h3>
         <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {leaves.length} records
+          {leaves.length} {t("leaves.records")}
         </div>
       </div>
 
@@ -103,14 +112,18 @@ function LeavesTable({
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
               {isManager && !isMyLeaves && (
-                <th className="px-5 py-3 font-medium">Employee</th>
+                <th className="px-5 py-3 font-medium">
+                  {t("leaves.employee")}
+                </th>
               )}
-              <th className="px-5 py-3 font-medium">Type</th>
-              <th className="px-5 py-3 font-medium">Start Date</th>
-              <th className="px-5 py-3 font-medium">End Date</th>
-              <th className="px-5 py-3 font-medium">Days</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium text-right">Actions</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.type")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.startDate")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.endDate")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.days")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.status")}</th>
+              <th className="px-5 py-3 font-medium text-right">
+                {t("leaves.actions")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -122,59 +135,78 @@ function LeavesTable({
                       {(currentPage - 1) * pageSize + idx + 1}
                     </td>
                     {isManager && !isMyLeaves && (
-                      <td className="px-5 py-4 text-slate-600">{leave.employeeName ?? "-"}</td>
+                      <td className="px-5 py-4 text-slate-600">
+                        {leave.employeeName ?? "-"}
+                      </td>
                     )}
-                    <td className="px-5 py-4 font-semibold text-slate-900 capitalize">{leave.type}</td>
-                    <td className="px-5 py-4 text-slate-600">{leave.startDate}</td>
-                    <td className="px-5 py-4 text-slate-600">{leave.endDate}</td>
+                    <td className="px-5 py-4 font-semibold text-slate-900 capitalize">
+                      {leave.type}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {leave.startDate}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {leave.endDate}
+                    </td>
                     <td className="px-5 py-4 text-slate-600">{leave.days}</td>
-                    <td className="px-5 py-4">{statusBadge(getDisplayStatus(leave))}</td>
+                    <td className="px-5 py-4">
+                      {statusBadge(getDisplayStatus(leave), t)}
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
                         {/* Manager approves / rejects pending_manager leaves (team view) */}
-                        {isManager && !isMyLeaves && leave.overallStatus === "pending_manager" && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => onManagerApprove(leave)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition"
-                            >
-                              <FiCheck className="h-4 w-4" />
-                              Approve
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setRejectingLeave(leave)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
-                            >
-                              <FiX className="h-4 w-4" />
-                              Reject
-                            </button>
-                          </>
-                        )}
+                        {isManager &&
+                          !isMyLeaves &&
+                          leave.overallStatus === "pending_manager" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onManagerApprove(leave)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition"
+                              >
+                                <FiCheck className="h-4 w-4" />
+                                {t("leaves.approve")}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setRejectingLeave(leave)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
+                              >
+                                <FiX className="h-4 w-4" />
+                                {t("leaves.reject")}
+                              </button>
+                            </>
+                          )}
 
                         {/* Cancel button: employee on pending_manager; manager on own pending_manager or pending_hr */}
-                        {((leave.overallStatus === "pending_manager" && (isMyLeaves || !isManager)) ||
-                          (isManager && isMyLeaves && leave.overallStatus === "pending_hr")) && (
+                        {((leave.overallStatus === "pending_manager" &&
+                          (isMyLeaves || !isManager)) ||
+                          (isManager &&
+                            isMyLeaves &&
+                            leave.overallStatus === "pending_hr")) && (
                           <button
                             type="button"
                             onClick={() => setCancelingLeave(leave)}
                             className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
                           >
                             <FiX className="h-4 w-4" />
-                            Cancel
+                            {t("leaves.cancelLeave")}
                           </button>
                         )}
 
                         {/* View details for any non-cancellable state */}
-                        {leave.overallStatus !== "pending_manager" || (isManager && !isMyLeaves) ? (
+                        {leave.overallStatus !== "pending_manager" ||
+                        (isManager && !isMyLeaves) ? (
                           <button
                             type="button"
-                            onClick={() => { setSelectedLeave(leave); setIsViewOpen(true); }}
+                            onClick={() => {
+                              setSelectedLeave(leave);
+                              setIsViewOpen(true);
+                            }}
                             className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 transition"
                           >
                             <FiEye className="h-4 w-4" />
-                            View
+                            {t("leaves.view")}
                           </button>
                         ) : null}
                       </div>
@@ -205,14 +237,14 @@ function LeavesTable({
           disabled={currentPage === 1}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Previous
+          {t("leaves.previous")}
         </button>
         <button
           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           disabled={currentPage === totalPages}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Next
+          {t("leaves.next")}
         </button>
       </div>
 
@@ -225,13 +257,19 @@ function LeavesTable({
       <CancelLeaveModal
         isOpen={cancelingLeave !== null}
         onClose={() => setCancelingLeave(null)}
-        onConfirm={() => { onCancel(cancelingLeave!); setCancelingLeave(null); }}
+        onConfirm={() => {
+          onCancel(cancelingLeave!);
+          setCancelingLeave(null);
+        }}
       />
 
       <RejectLeaveModal
         isOpen={rejectingLeave !== null}
         onClose={() => setRejectingLeave(null)}
-        onConfirm={(comment) => { onManagerReject(rejectingLeave!, comment); setRejectingLeave(null); }}
+        onConfirm={(comment) => {
+          onManagerReject(rejectingLeave!, comment);
+          setRejectingLeave(null);
+        }}
       />
     </section>
   );

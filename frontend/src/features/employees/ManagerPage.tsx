@@ -3,6 +3,7 @@ import Sidebar from "@/layouts/Sidebar";
 import UserManagementSection from "@/features/employees/components/UserManagementSection";
 import { useState } from "react";
 import { FiSearch, FiPlus } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import type { User } from "@/features/employees/components/types";
 import { useUser } from "@/context/UserContext";
 
@@ -12,6 +13,7 @@ function Managers() {
   const [addTrigger, setAddTrigger] = useState(0);
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
+  const { t } = useTranslation();
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -25,10 +27,10 @@ function Managers() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                Managers Management
+                {t("employees.managersTitle")}
               </h1>
               <p className="mt-1 text-sm text-slate-500">
-                Manage all manager accounts and information
+                {t("employees.managersSubtitle")}
               </p>
             </div>
             {isAdmin && (
@@ -38,7 +40,7 @@ function Managers() {
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 <FiPlus className="h-4 w-4" />
-                Add Manager
+                {t("nav.addManager") || "Add Manager"}
               </button>
             )}
           </div>
@@ -48,7 +50,7 @@ function Managers() {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search managers..."
+              placeholder={t("employees.searchManagers")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm
@@ -58,7 +60,7 @@ function Managers() {
 
           {/* Manager table */}
           <UserManagementSection
-            title="All Managers"
+            title={t("employees.allManagers")}
             filterRole="manager"
             emptyMessage="No managers found."
             roleOptions={["manager"]}

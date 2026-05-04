@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import { useUser } from "@/context/UserContext";
@@ -162,6 +163,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const { user } = useUser();
+  const { t } = useTranslation();
   const token = localStorage.getItem("token") ?? "";
   const userName = user?.name ?? "User";
   const userRole = user?.role ?? "";
@@ -200,10 +202,12 @@ export default function Dashboard() {
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      setAttendanceMsg("Checked in!");
+      setAttendanceMsg(t("dashboard.checkedIn"));
       fetchTodayAttendance();
     } catch (e: any) {
-      setAttendanceMsg(e.response?.data?.message ?? "Check-in failed.");
+      setAttendanceMsg(
+        e.response?.data?.message ?? t("dashboard.checkInFailed"),
+      );
     } finally {
       setAttendanceLoading(false);
     }
@@ -218,10 +222,12 @@ export default function Dashboard() {
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      setAttendanceMsg("Checked out!");
+      setAttendanceMsg(t("dashboard.checkedOut"));
       fetchTodayAttendance();
     } catch (e: any) {
-      setAttendanceMsg(e.response?.data?.message ?? "Check-out failed.");
+      setAttendanceMsg(
+        e.response?.data?.message ?? t("dashboard.checkOutFailed"),
+      );
     } finally {
       setAttendanceLoading(false);
     }
@@ -286,10 +292,10 @@ export default function Dashboard() {
                 <div className="flex items-start justify-between mb-3">
                   <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
                     {isEmployee
-                      ? "MY TASKS"
+                      ? t("dashboard.myTasks")
                       : isManager
-                        ? "TOTAL TEAM MEMBERS"
-                        : "TOTAL EMPLOYEES"}
+                        ? t("dashboard.totalTeamMembers")
+                        : t("dashboard.totalEmployees")}
                   </p>
                   <span
                     className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -311,10 +317,10 @@ export default function Dashboard() {
                 </p>
                 <p className="text-xs text-blue-300 mt-2">
                   {isEmployee
-                    ? "Tasks assigned to you"
+                    ? t("dashboard.tasksAssigned")
                     : isManager
-                      ? "Team members"
-                      : "Company staff"}
+                      ? t("dashboard.teamMembers")
+                      : t("dashboard.companyStaff")}
                 </p>
               </div>
 
@@ -323,7 +329,7 @@ export default function Dashboard() {
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      MY PROJECTS
+                      {t("dashboard.myProjects")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -335,13 +341,15 @@ export default function Dashboard() {
                   <p className="text-4xl font-black text-slate-800 leading-none">
                     {summary?.totalProjects ?? 0}
                   </p>
-                  <p className="text-xs text-slate-400 mt-2">Your projects</p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {t("dashboard.yourProjects")}
+                  </p>
                 </div>
               ) : isManager ? (
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      TOTAL PROJECTS
+                      {t("dashboard.totalProjects")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -353,13 +361,15 @@ export default function Dashboard() {
                   <p className="text-4xl font-black text-slate-800 leading-none">
                     {summary?.totalProjects ?? 0}
                   </p>
-                  <p className="text-xs text-slate-400 mt-2">Your projects</p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {t("dashboard.yourProjects")}
+                  </p>
                 </div>
               ) : (
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      TOTAL MANAGERS
+                      {t("dashboard.totalManagers")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -372,7 +382,7 @@ export default function Dashboard() {
                     {summary?.totalManagers ?? 0}
                   </p>
                   <p className="text-xs text-slate-400 mt-2">
-                    Company managers
+                    {t("dashboard.companyManagers")}
                   </p>
                 </div>
               )}
@@ -382,7 +392,7 @@ export default function Dashboard() {
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      MY LEAVES
+                      {t("dashboard.myLeaves")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -395,14 +405,14 @@ export default function Dashboard() {
                     {totalLeaves}
                   </p>
                   <p className="text-xs text-slate-400 mt-2">
-                    Total leave requests
+                    {t("dashboard.totalLeaveRequests")}
                   </p>
                 </div>
               ) : isManager ? (
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      TOTAL TASKS
+                      {t("dashboard.totalTasks")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -416,13 +426,15 @@ export default function Dashboard() {
                       (summary?.tasks.in_progress ?? 0) +
                       (summary?.tasks.completed ?? 0)}
                   </p>
-                  <p className="text-xs text-slate-400 mt-2">Team tasks</p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {t("dashboard.teamTasks")}
+                  </p>
                 </div>
               ) : (
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      TOTAL PROJECTS
+                      {t("dashboard.totalProjects")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -434,7 +446,9 @@ export default function Dashboard() {
                   <p className="text-4xl font-black text-slate-800 leading-none">
                     {summary?.totalProjects ?? 0}
                   </p>
-                  <p className="text-xs text-slate-400 mt-2">All projects</p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {t("dashboard.allProjects")}
+                  </p>
                 </div>
               )}
 
@@ -443,7 +457,7 @@ export default function Dashboard() {
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
                   <div className="flex items-start justify-between mb-2">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      My Attendance
+                      {t("dashboard.myAttendance")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -454,7 +468,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex flex-col gap-1.5 mb-2">
                     <p className="text-[11px] text-slate-500">
-                      In:{" "}
+                      {t("dashboard.checkInLabel")}:{" "}
                       <span className="font-bold text-slate-700">
                         {todayRecord?.check_in
                           ? todayRecord.check_in.slice(0, 5)
@@ -462,7 +476,7 @@ export default function Dashboard() {
                       </span>
                     </p>
                     <p className="text-[11px] text-slate-500">
-                      Out:{" "}
+                      {t("dashboard.checkOutLabel")}:{" "}
                       <span className="font-bold text-slate-700">
                         {todayRecord?.check_out
                           ? todayRecord.check_out.slice(0, 5)
@@ -477,7 +491,7 @@ export default function Dashboard() {
                       className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-slate-800 disabled:opacity-50 transition"
                       style={{ background: "#6ee7b7" }}
                     >
-                      <FiLogIn className="h-4 w-4" /> Check In
+                      <FiLogIn className="h-4 w-4" /> {t("dashboard.checkIn")}
                     </button>
                     <button
                       disabled={
@@ -489,7 +503,7 @@ export default function Dashboard() {
                       className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white disabled:opacity-50 transition"
                       style={{ background: NAVY }}
                     >
-                      <FiLogOut className="h-4 w-4" /> Check Out
+                      <FiLogOut className="h-4 w-4" /> {t("dashboard.checkOut")}
                     </button>
                   </div>
                   {attendanceMsg && (
@@ -502,7 +516,7 @@ export default function Dashboard() {
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      TOTAL TASKS
+                      {t("dashboard.totalTasks")}
                     </p>
                     <span
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
@@ -516,7 +530,9 @@ export default function Dashboard() {
                       (summary?.tasks.in_progress ?? 0) +
                       (summary?.tasks.completed ?? 0)}
                   </p>
-                  <p className="text-xs text-slate-400 mt-2">All tasks</p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {t("dashboard.allTasks")}
+                  </p>
                 </div>
               )}
             </div>
@@ -535,20 +551,20 @@ export default function Dashboard() {
                 <div className="flex items-start justify-between mb-5">
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                      Monthly Overview
+                      {t("dashboard.monthlyOverview")}
                     </p>
                     <p
                       className="text-lg font-black mt-0.5"
                       style={{ color: NAVY }}
                     >
-                      Result
+                      {t("dashboard.result")}
                     </p>
                   </div>
                   <button
                     className="rounded-lg px-4 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90 transition"
                     style={{ background: BLUE }}
                   >
-                    Check Now
+                    {t("dashboard.checkNow")}
                   </button>
                 </div>
                 <ResponsiveContainer width="100%" height={230}>
@@ -578,7 +594,7 @@ export default function Dashboard() {
                     <Line
                       type="basis"
                       dataKey="totalBase"
-                      name="Total Base Salary"
+                      name={t("dashboard.totalBaseSalary")}
                       stroke="#facc15"
                       strokeWidth={2.5}
                       dot={false}
@@ -588,7 +604,7 @@ export default function Dashboard() {
                     <Line
                       type="basis"
                       dataKey="totalNet"
-                      name="Total Net Salary"
+                      name={t("dashboard.totalNetSalary")}
                       stroke="#e879f9"
                       strokeWidth={2.5}
                       dot={false}
@@ -600,11 +616,11 @@ export default function Dashboard() {
                 <div className="flex items-center gap-5 mt-3 ml-1">
                   <span className="flex items-center gap-1.5 text-xs text-slate-500">
                     <span className="h-2.5 w-2.5 rounded-full inline-block bg-yellow-300" />
-                    Total Base Salary
+                    {t("dashboard.totalBaseSalary")}
                   </span>
                   <span className="flex items-center gap-1.5 text-xs text-slate-500">
                     <span className="h-2.5 w-2.5 rounded-full inline-block bg-fuchsia-400" />
-                    Total Net Salary
+                    {t("dashboard.totalNetSalary")}
                   </span>
                 </div>
               </div>
@@ -615,10 +631,10 @@ export default function Dashboard() {
                 style={{ background: NAVY }}
               >
                 <p className="text-[11px] font-bold uppercase tracking-widest text-blue-300 mb-1">
-                  Leave Status
+                  {t("dashboard.leaveStatus")}
                 </p>
                 <p className="text-lg font-black mb-2 text-white">
-                  Distribution
+                  {t("dashboard.distribution")}
                 </p>
                 <div className="flex items-center justify-center flex-1">
                   <ResponsiveContainer width="100%" height={160}>
@@ -665,7 +681,7 @@ export default function Dashboard() {
                                   fill="#93c5fd"
                                   fontSize={10}
                                 >
-                                  Total Leave
+                                  {t("dashboard.totalLeave")}
                                 </tspan>
                               </text>
                             );
@@ -712,13 +728,13 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                      Last Uploaded
+                      {t("dashboard.lastUploaded")}
                     </p>
                     <p
                       className="text-lg font-black mt-0.5"
                       style={{ color: NAVY }}
                     >
-                      Recent Documents
+                      {t("dashboard.recentDocuments")}
                     </p>
                   </div>
                   <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-50">
@@ -730,7 +746,7 @@ export default function Dashboard() {
                   <div className="flex flex-col items-center justify-center py-14 text-slate-300">
                     <FiFile size={36} />
                     <p className="mt-3 text-sm font-medium">
-                      No documents uploaded yet
+                      {t("dashboard.noDocuments")}
                     </p>
                   </div>
                 ) : (
@@ -739,11 +755,11 @@ export default function Dashboard() {
                       <thead>
                         <tr className="bg-slate-50">
                           {[
-                            "File",
-                            "Type",
-                            "Owner",
-                            "Uploaded By",
-                            "Status",
+                            t("dashboard.file"),
+                            t("dashboard.type"),
+                            t("dashboard.owner"),
+                            t("dashboard.uploadedBy"),
+                            t("common.status"),
                           ].map((h) => (
                             <th
                               key={h}
@@ -816,11 +832,13 @@ export default function Dashboard() {
                                 >
                                   {d.isVerified ? (
                                     <>
-                                      <FiCheckCircle size={11} /> Verified
+                                      <FiCheckCircle size={11} />{" "}
+                                      {t("dashboard.verified")}
                                     </>
                                   ) : (
                                     <>
-                                      <FiClock size={11} /> Pending
+                                      <FiClock size={11} />{" "}
+                                      {t("dashboard.pending")}
                                     </>
                                   )}
                                 </span>

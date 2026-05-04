@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import { useUser } from "@/context/UserContext";
@@ -33,6 +34,7 @@ export default function AttendancePage() {
   const [leavesToday, setLeavesToday] = useState(0);
 
   const { user } = useUser();
+  const { t } = useTranslation();
   const role = user?.role ?? "";
   const token = localStorage.getItem("token") ?? "";
   const userName = user?.name ?? "Employee";
@@ -180,10 +182,12 @@ export default function AttendancePage() {
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      setActionMsg("Checked in successfully!");
+      setActionMsg(t("attendance.checkedIn"));
       fetchRecords();
     } catch (err: any) {
-      setActionMsg(err.response?.data?.message ?? "Check-in failed.");
+      setActionMsg(
+        err.response?.data?.message ?? t("attendance.checkInFailed"),
+      );
     } finally {
       setActionLoading(false);
     }
@@ -199,10 +203,12 @@ export default function AttendancePage() {
         {},
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      setActionMsg("Checked out successfully!");
+      setActionMsg(t("attendance.checkedOut"));
       fetchRecords();
     } catch (err: any) {
-      setActionMsg(err.response?.data?.message ?? "Check-out failed.");
+      setActionMsg(
+        err.response?.data?.message ?? t("attendance.checkOutFailed"),
+      );
     } finally {
       setActionLoading(false);
     }
@@ -218,39 +224,39 @@ export default function AttendancePage() {
           <div className="p-6">
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-slate-900">
-                My Attendance
+                {t("nav.myAttendance")}
               </h1>
               <p className="text-sm text-slate-500">
-                Track your daily check-in and check-out
+                {t("attendance.monitorAll")}
               </p>
             </div>
 
             <section className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatCard
-                label="Present Today"
+                label={t("attendance.presentToday")}
                 value={presentToday}
                 icon={<FiCheckCircle className="h-5 w-5" />}
                 color="bg-green-100 text-green-600"
-                subtitle="Your status today"
-                extra={`${myAttendanceRate}% this month`}
+                subtitle={t("attendance.myStatus")}
+                extra={`${myAttendanceRate}% ${t("attendance.newThisMonth")}`}
                 extraClassName="text-emerald-300"
                 featured
               />
               <StatCard
-                label="Late Today"
+                label={t("attendance.lateToday")}
                 value={lateToday}
                 icon={<FiClock className="h-5 w-5" />}
                 color="bg-amber-100 text-amber-600"
-                subtitle="Arrived after time"
+                subtitle={t("attendance.arrivedAfterTime")}
                 extra={lateToday > 0 ? avgLateText : undefined}
                 extraClassName="text-amber-600"
               />
               <StatCard
-                label="Absent Today"
+                label={t("attendance.absentToday")}
                 value={absentToday}
                 icon={<FiXCircle className="h-5 w-5" />}
                 color="bg-red-100 text-red-600"
-                subtitle="Not checked in"
+                subtitle={t("attendance.notCheckedIn")}
                 extra={`${myAbsentThisMonth} days absent this month`}
                 extraClassName="text-slate-500"
               />
@@ -258,7 +264,7 @@ export default function AttendancePage() {
               {/* Check In / Check Out card */}
               <article className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-sm flex flex-col justify-between gap-3">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                  Attendance
+                  {t("attendance.attendance")}
                 </p>
                 <div className="flex flex-col gap-2">
                   <button
@@ -272,7 +278,7 @@ export default function AttendancePage() {
                     }}
                   >
                     <FiLogIn className="h-4 w-4" />
-                    Check In
+                    {t("attendance.checkIn")}
                   </button>
                   <button
                     type="button"
@@ -289,7 +295,7 @@ export default function AttendancePage() {
                     }}
                   >
                     <FiLogOut className="h-4 w-4" />
-                    Check Out
+                    {t("attendance.checkOut")}
                   </button>
                 </div>
                 {actionMsg && (
@@ -305,7 +311,7 @@ export default function AttendancePage() {
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search by date..."
+                placeholder={t("attendance.searchDate")}
                 value={employeeSearch}
                 onChange={(e) => setEmployeeSearch(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -336,52 +342,60 @@ export default function AttendancePage() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
-                {role === "admin" ? "All Attendance" : "Team Attendance"}
+                {role === "admin"
+                  ? t("attendance.allTitle")
+                  : t("attendance.teamTitle")}
               </h1>
               <p className="text-sm text-slate-500">
                 {role === "admin"
-                  ? "Monitor attendance across all employees"
-                  : "Monitor your team members' attendance"}
+                  ? t("attendance.monitorAll")
+                  : t("attendance.monitorTeam")}
               </p>
             </div>
           </div>
 
           <section className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <StatCard
-              label={role === "admin" ? "Total Employees" : "Team Members"}
+              label={
+                role === "admin"
+                  ? t("attendance.totalEmployees")
+                  : t("attendance.teamMembers")
+              }
               value={totalEmployees}
               icon={<FiUsers className="h-5 w-5" />}
               color="bg-slate-100 text-slate-600"
-              subtitle="Total staff members"
+              subtitle={t("attendance.totalStaff")}
               extra={
-                newThisMonth > 0 ? `+${newThisMonth} this month` : undefined
+                newThisMonth > 0
+                  ? `+${newThisMonth} ${t("attendance.newThisMonth")}`
+                  : undefined
               }
               featured
             />
             <StatCard
-              label="Present Today"
+              label={t("attendance.presentToday")}
               value={presentToday}
               icon={<FiCheckCircle className="h-5 w-5" />}
               color="bg-green-100 text-green-600"
-              subtitle="Checked in today"
+              subtitle={t("attendance.checkedInToday")}
               extra={`${attendanceRate}% attendance rate`}
               extraClassName="text-green-600"
             />
             <StatCard
-              label="Late Today"
+              label={t("attendance.lateToday")}
               value={lateToday}
               icon={<FiClock className="h-5 w-5" />}
               color="bg-amber-100 text-amber-600"
-              subtitle="Arrived after time"
+              subtitle={t("attendance.arrivedAfterTime")}
               extra={lateToday > 0 ? avgLateText : undefined}
               extraClassName="text-amber-600"
             />
             <StatCard
-              label="Absent Today"
+              label={t("attendance.absentToday")}
               value={absentToday}
               icon={<FiXCircle className="h-5 w-5" />}
               color="bg-red-100 text-red-600"
-              subtitle="Not checked in"
+              subtitle={t("attendance.notCheckedIn")}
               extra={absentBreakdown}
               extraClassName="text-slate-500"
             />

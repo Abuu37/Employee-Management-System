@@ -1,5 +1,6 @@
 ﻿import React, { useState } from "react";
 import { FiEye, FiCheck, FiX, FiCalendar } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import ViewLeaveModal from "./ViewLeaveModal";
 import RejectLeaveModal from "./RejectLeaveModal";
 
@@ -30,7 +31,7 @@ interface AllLeavesTableProps {
   onHrReject: (leave: Leave, comment: string) => void;
 }
 
-function statusBadge(status: string) {
+function statusBadge(status: string, t: (key: string) => string) {
   const map: Record<string, string> = {
     pending_manager: "bg-yellow-50 text-yellow-700",
     pending_hr: "bg-yellow-50 text-yellow-700",
@@ -38,18 +39,18 @@ function statusBadge(status: string) {
     rejected_by_manager: "bg-red-50 text-red-600",
     rejected_by_hr: "bg-red-50 text-red-600",
   };
-  const labels: Record<string, string> = {
-    pending_manager: "Pending Manager",
-    pending_hr: "Pending HR",
-    approved: "Approved",
-    rejected_by_manager: "Rejected by Manager",
-    rejected_by_hr: "Rejected by HR",
+  const labelKey: Record<string, string> = {
+    pending_manager: "leaves.statusLabels.pending_manager",
+    pending_hr: "leaves.statusLabels.pending_hr",
+    approved: "leaves.approved",
+    rejected_by_manager: "leaves.statusLabels.rejected_by_manager",
+    rejected_by_hr: "leaves.statusLabels.rejected_by_hr",
   };
   return (
     <span
       className={`rounded-full px-2.5 py-1 text-xs font-medium ${map[status] ?? "bg-slate-100 text-slate-600"}`}
     >
-      {labels[status] ?? status}
+      {labelKey[status] ? t(labelKey[status]) : status}
     </span>
   );
 }
@@ -61,6 +62,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
   onHrReject,
 }) => {
   const pageSize = 8;
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(leaves.length / pageSize));
   const paginated = leaves.slice(
@@ -76,17 +78,17 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
 
   const tableTitle =
     tab === "hr_pending"
-      ? "Pending HR Approval"
+      ? t("leaves.pendingHRApproval")
       : tab === "manager"
-        ? "Manager Leave Requests"
-        : "All Leave Requests";
+        ? t("leaves.managerLeaveRequests")
+        : t("leaves.allLeaveRequests");
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-base font-semibold text-slate-800">{tableTitle}</h3>
         <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {leaves.length} records
+          {leaves.length} {t("leaves.records")}
         </div>
       </div>
 
@@ -95,14 +97,18 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">Employee</th>
-              <th className="px-5 py-3 font-medium">Type</th>
-              <th className="px-5 py-3 font-medium">Start Date</th>
-              <th className="px-5 py-3 font-medium">End Date</th>
-              <th className="px-5 py-3 font-medium">Days</th>
-              <th className="px-5 py-3 font-medium">Backup Person</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium text-right">Actions</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.employee")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.type")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.startDate")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.endDate")}</th>
+              <th className="px-5 py-3 font-medium">{t("leaves.days")}</th>
+              <th className="px-5 py-3 font-medium">
+                {t("leaves.backupPerson")}
+              </th>
+              <th className="px-5 py-3 font-medium">{t("leaves.status")}</th>
+              <th className="px-5 py-3 font-medium text-right">
+                {t("leaves.actions")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -135,6 +141,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                           leave.overallStatus === "pending_manager"
                           ? "pending_hr"
                           : leave.overallStatus,
+                        t,
                       )}
                     </td>
                     <td className="px-5 py-4">
@@ -152,7 +159,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                               className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-500 transition hover:text-white"
                             >
                               <FiCheck className="h-4 w-4" />
-                              Approve
+                              {t("leaves.approve")}
                             </button>
                             <button
                               type="button"
@@ -160,7 +167,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                               className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-500 transition hover:text-white"
                             >
                               <FiX className="h-4 w-4" />
-                              Reject
+                              {t("leaves.reject")}
                             </button>
                           </>
                         )}
@@ -175,7 +182,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                           className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
                         >
                           <FiEye className="h-4 w-4" />
-                          View
+                          {t("leaves.view")}
                         </button>
                       </div>
                     </td>
@@ -189,7 +196,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                 <td colSpan={9} className="px-5 py-16 text-center">
                   <div className="flex flex-col items-center justify-center text-slate-400">
                     <FiCalendar className="h-12 w-12 mb-3 opacity-30" />
-                    <p className="text-sm">No leave records found.</p>
+                    <p className="text-sm">{t("leaves.noRecords")}</p>
                   </div>
                 </td>
               </tr>
@@ -205,14 +212,14 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
           disabled={currentPage === 1}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Previous
+          {t("leaves.previous")}
         </button>
         <button
           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           disabled={currentPage === totalPages}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Next
+          {t("leaves.next")}
         </button>
       </div>
 

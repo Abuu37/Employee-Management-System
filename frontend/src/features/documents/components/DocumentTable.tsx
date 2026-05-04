@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FiDownload,
   FiCheckCircle,
@@ -47,12 +48,13 @@ export default function DocumentTable({
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
   const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { t } = useTranslation();
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-base font-semibold text-slate-800">
-          All Documents
+          {t("documents.allDocuments")}
         </h3>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -66,16 +68,23 @@ export default function DocumentTable({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-
-              <th className="px-5 py-3 font-medium">File Name</th>
-              <th className="px-5 py-3 font-medium">Type</th>
-              <th className="px-5 py-3 font-medium">Visibility</th>
-              <th className="px-5 py-3 font-medium">Status</th>
+              <th className="px-5 py-3 font-medium">
+                {t("documents.fileName")}
+              </th>
+              <th className="px-5 py-3 font-medium">{t("documents.type")}</th>
+              <th className="px-5 py-3 font-medium">
+                {t("documents.visibility")}
+              </th>
+              <th className="px-5 py-3 font-medium">{t("documents.status")}</th>
               {role !== "employee" && (
-                <th className="px-5 py-3 font-medium">Uploaded By</th>
+                <th className="px-5 py-3 font-medium">
+                  {t("documents.uploadedBy")}
+                </th>
               )}
-              <th className="px-5 py-3 font-medium">Date</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-medium">{t("documents.date")}</th>
+              <th className="px-5 py-3 font-medium">
+                {t("documents.actions")}
+              </th>
             </tr>
           </thead>
 
@@ -114,11 +123,11 @@ export default function DocumentTable({
                       {doc.is_verified ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-600">
                           <FiCheckCircle className="h-3.5 w-3.5" />
-                          Verified
+                          {t("documents.verifiedStatus")}
                         </span>
                       ) : (
                         <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600">
-                          Pending
+                          {t("documents.pendingStatus")}
                         </span>
                       )}
                     </td>
@@ -143,7 +152,7 @@ export default function DocumentTable({
                           title="Download"
                         >
                           <FiDownload className="h-3.5 w-3.5" />
-                          Download
+                          {t("documents.download")}
                         </button>
 
                         {(role === "admin" || role === "manager") &&
@@ -156,7 +165,7 @@ export default function DocumentTable({
                               title="Verify"
                             >
                               <FiShield className="h-3.5 w-3.5" />
-                              Verify
+                              {t("documents.verify")}
                             </button>
                           )}
 
@@ -167,11 +176,11 @@ export default function DocumentTable({
                           <button
                             type="button"
                             onClick={() => onDelete(doc)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
                             title="Delete"
                           >
                             <FiTrash2 className="h-3.5 w-3.5" />
-                            Delete
+                            {t("documents.delete")}
                           </button>
                         )}
                       </div>
@@ -187,7 +196,7 @@ export default function DocumentTable({
                 >
                   <div className="flex flex-col items-center justify-center text-slate-400">
                     <FiFileText className="h-12 w-12 mb-3 opacity-30" />
-                    <p className="text-sm">No documents found</p>
+                    <p className="text-sm">{t("documents.noDocuments")}</p>
                   </div>
                 </td>
               </tr>
@@ -202,14 +211,14 @@ export default function DocumentTable({
           disabled={page === 1}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Previous
+          {t("common.previous")}
         </button>
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Next
+          {t("common.next")}
         </button>
       </div>
     </section>

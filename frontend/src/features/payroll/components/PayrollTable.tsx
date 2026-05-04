@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiPlus, FiEye, FiCreditCard } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import { approvePayroll, markAsPaid } from "@/services/payroll.service";
 import { useUser } from "@/context/UserContext";
 
@@ -64,6 +65,7 @@ export default function PayrollTable({
   };
 
   const { user } = useUser();
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
   const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -72,11 +74,11 @@ export default function PayrollTable({
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-base font-semibold text-slate-800">
-          All Payroll Records
+          {t("payroll.title")}
         </h3>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {data.length} records
+            {data.length} {t("payroll.records")}
           </div>
         </div>
       </div>
@@ -86,16 +88,22 @@ export default function PayrollTable({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">Employee</th>
-              <th className="px-5 py-3 font-medium">Period</th>
-              <th className="px-5 py-3 font-medium">Base Salary</th>
-              <th className="px-5 py-3 font-medium">Bonus</th>
-              <th className="px-5 py-3 font-medium">Allowance</th>
-              <th className="px-5 py-3 font-medium">Deductions</th>
-              <th className="px-5 py-3 font-medium">Tax</th>
-              <th className="px-5 py-3 font-medium">Net Pay</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-medium">{t("payroll.employee")}</th>
+              <th className="px-5 py-3 font-medium">{t("payroll.period")}</th>
+              <th className="px-5 py-3 font-medium">
+                {t("payroll.baseSalary")}
+              </th>
+              <th className="px-5 py-3 font-medium">{t("payroll.bonus")}</th>
+              <th className="px-5 py-3 font-medium">
+                {t("payroll.allowance")}
+              </th>
+              <th className="px-5 py-3 font-medium">
+                {t("payroll.deductions")}
+              </th>
+              <th className="px-5 py-3 font-medium">{t("payroll.tax")}</th>
+              <th className="px-5 py-3 font-medium">{t("payroll.netPay")}</th>
+              <th className="px-5 py-3 font-medium">{t("payroll.status")}</th>
+              <th className="px-5 py-3 font-medium">{t("payroll.actions")}</th>
             </tr>
           </thead>
 
@@ -145,31 +153,30 @@ export default function PayrollTable({
                     </span>
                   </td>
                   <td className="px-5 py-4">
-
                     <div className="flex items-center gap-2">
-                      {item.status === "pending" && (
-                        (user?.role === "manager" || user?.role === "admin") && (
-                        <button
-                          type="button"
-                          onClick={() => handleApprove(item.id)}
-                          className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium
+                      {item.status === "pending" &&
+                        (user?.role === "manager" ||
+                          user?.role === "admin") && (
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(item.id)}
+                            className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium
                            text-blue-700 transition hover:bg-blue-500 hover:text-white"
-                        >
-                          Approve
-                        </button>
-                      ))}
+                          >
+                            {t("payroll.approve")}
+                          </button>
+                        )}
 
-                      {item.status === "approved" && (
-                         (user?.role === "admin") && (
+                      {item.status === "approved" && user?.role === "admin" && (
                         <button
                           type="button"
                           onClick={() => handlePay(item.id)}
                           className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium
                            text-emerald-700 transition hover:bg-emerald-500 hover:text-white"
                         >
-                          Mark Paid
+                          {t("payroll.markPaid")}
                         </button>
-                      ))}
+                      )}
 
                       {item.status === "paid" && onView && (
                         <button
@@ -180,7 +187,7 @@ export default function PayrollTable({
                            hover:bg-blue-500 hover:text-white"
                         >
                           <FiEye className="h-3.5 w-3.5" />
-                          View
+                          {t("payroll.view")}
                         </button>
                       )}
                     </div>
@@ -192,7 +199,7 @@ export default function PayrollTable({
                 <td colSpan={11} className="px-5 py-16 text-center">
                   <div className="flex flex-col items-center justify-center text-slate-400">
                     <FiCreditCard className="h-12 w-12 mb-3 opacity-30" />
-                    <p className="text-sm">No payroll records found</p>
+                    <p className="text-sm">{t("payroll.noRecords")}</p>
                   </div>
                 </td>
               </tr>
@@ -208,7 +215,7 @@ export default function PayrollTable({
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700
            hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Previous
+          {t("payroll.previous")}
         </button>
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -216,7 +223,7 @@ export default function PayrollTable({
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700
            hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Next
+          {t("payroll.next")}
         </button>
       </div>
     </section>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
+import { useTranslation } from "react-i18next";
 import { getMyPayslips } from "@/services/payroll.service";
 import { FiFileText, FiEye, FiSearch } from "react-icons/fi";
 
@@ -35,6 +36,7 @@ export default function MyPayslipPage() {
   const [selected, setSelected] = useState<any | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const { t } = useTranslation();
 
   useEffect(() => {
     getMyPayslips()
@@ -60,10 +62,10 @@ export default function MyPayslipPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900">
-                    My Payslips
+                    {t("payslip.title")}
                   </h1>
                   <p className="mt-1 text-sm text-slate-500">
-                    View your payroll history
+                    {t("payslip.subtitle")}
                   </p>
                 </div>
               </div>
@@ -73,7 +75,7 @@ export default function MyPayslipPage() {
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search by period or status..."
+                  placeholder={t("payslip.searchPlaceholder")}
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -100,12 +102,24 @@ export default function MyPayslipPage() {
                       <thead className="bg-slate-50 text-slate-500">
                         <tr>
                           <th className="px-5 py-3 font-medium">S/N</th>
-                          <th className="px-5 py-3 font-medium">Period</th>
-                          <th className="px-5 py-3 font-medium">Gross</th>
-                          <th className="px-5 py-3 font-medium">Deductions</th>
-                          <th className="px-5 py-3 font-medium">Net Pay</th>
-                          <th className="px-5 py-3 font-medium">Status</th>
-                          <th className="px-5 py-3 font-medium">Action</th>
+                          <th className="px-5 py-3 font-medium">
+                            {t("payslip.period")}
+                          </th>
+                          <th className="px-5 py-3 font-medium">
+                            {t("payslip.baseSalary")}
+                          </th>
+                          <th className="px-5 py-3 font-medium">
+                            {t("payroll.deductions")}
+                          </th>
+                          <th className="px-5 py-3 font-medium">
+                            {t("payslip.netSalary")}
+                          </th>
+                          <th className="px-5 py-3 font-medium">
+                            {t("payslip.status")}
+                          </th>
+                          <th className="px-5 py-3 font-medium">
+                            {t("common.actions")}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>

@@ -6,6 +6,7 @@ import TaskTable, {
 import TaskDetailsModal from "@/features/tasks/components/TaskDetailsModal";
 import { TaskComment } from "@/features/tasks/components/types";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -49,6 +50,7 @@ const normalizePriority = (priority?: string): TaskItem["priority"] => {
 function Tasks() {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -234,11 +236,11 @@ function Tasks() {
           ) : null}
 
           <TaskTable
-            title="My Assigned Tasks"
+            title={t("tasks.myAssignedTasks")}
             tasks={displayedTasks}
             loading={loading}
             updatingId={updatingId}
-            emptyMessage="No assigned tasks found."
+            emptyMessage={t("tasks.noAssignedTasks")}
             onStatusChange={handleStatusChange}
             onViewTask={handleCommentTask}
           />

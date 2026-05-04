@@ -1,6 +1,7 @@
 // For Admin / HR manage payroll
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import PayrollTable from "@/features/payroll/components/PayrollTable";
@@ -9,8 +10,8 @@ import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
 import StatCard from "@/features/attendance/components/StatCard";
 import type { PayrollFormValues } from "@/features/payroll/components/GeneratePayrollModal";
 import { useUser } from "@/context/UserContext";
-import { 
-  getAllPayroll, 
+import {
+  getAllPayroll,
   generatePayroll,
   getTeamPayroll,
   getMyPayslips,
@@ -27,6 +28,7 @@ import {
 
 export default function PayrollPage() {
   const { user } = useUser();
+  const { t } = useTranslation();
   const [data, setData] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -34,7 +36,7 @@ export default function PayrollPage() {
   const [viewSlip, setViewSlip] = useState<any | null>(null);
 
   const fetchPayroll = async () => {
-    try{
+    try {
       let payroll = [];
 
       if (user?.role === "admin") {
@@ -46,10 +48,9 @@ export default function PayrollPage() {
       }
 
       setData(payroll);
-    }catch(err){
+    } catch (err) {
       console.error(err);
     }
-
   };
 
   useEffect(() => {
@@ -86,57 +87,57 @@ export default function PayrollPage() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Payroll</h1>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {t("payroll.title")}
+              </h1>
               <p className="mt-1 text-sm text-slate-500">
-                Manage and process employee payroll records
+                {t("payroll.subtitle")}
               </p>
             </div>
 
             {user?.role === "admin" && (
-            <button
-              type="button"
-              onClick={() => setFormOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium
+              <button
+                type="button"
+                onClick={() => setFormOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium
               text-white transition hover:bg-blue-700"
-            >
-              <FiPlus className="h-4 w-4" />
-              Generate Payroll
-            </button>
-          )}
-
-
+              >
+                <FiPlus className="h-4 w-4" />
+                {t("payroll.generatePayroll")}
+              </button>
+            )}
           </div>
 
           {/* Stat cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              label="Total Records"
+              label={t("payroll.totalRecords")}
               value={data.length}
               icon={<FiDollarSign />}
               color=""
               featured
-              subtitle="All payroll entries"
+              subtitle={t("payroll.allPayrollEntries")}
             />
             <StatCard
-              label="Paid"
+              label={t("payroll.paid")}
               value={data.filter((d) => d.status === "paid").length}
               icon={<FiAward />}
               color="bg-emerald-100 text-emerald-600"
-              subtitle="Disbursed payments"
+              subtitle={t("payroll.disbursedPayments")}
             />
             <StatCard
-              label="Approved"
+              label={t("payroll.approved")}
               value={data.filter((d) => d.status === "approved").length}
               icon={<FiCheckCircle />}
               color="bg-blue-100 text-blue-600"
-              subtitle="Ready to pay"
+              subtitle={t("payroll.readyToPay")}
             />
             <StatCard
-              label="Pending"
+              label={t("payroll.pending")}
               value={data.filter((d) => d.status === "pending").length}
               icon={<FiClock />}
               color="bg-amber-100 text-amber-600"
-              subtitle="Awaiting approval"
+              subtitle={t("payroll.awaitingApproval")}
             />
           </div>
 
@@ -147,8 +148,8 @@ export default function PayrollPage() {
               type="text"
               placeholder={
                 user?.role === "employee"
-                  ? "Search by month, year..."
-                  : "Search by employee, month, year..."
+                  ? t("payroll.searchMonthYear")
+                  : t("payroll.searchEmployee")
               }
               value={search}
               onChange={(e) => setSearch(e.target.value)}

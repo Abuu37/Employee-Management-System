@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import SalaryTable from "@/features/salary/components/SalaryTable";
@@ -14,6 +15,7 @@ import {
 } from "@/services/salary.service";
 
 export default function SalaryPage() {
+  const { t } = useTranslation();
   const [data, setData] = useState<SalaryRecord[]>([]);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -87,10 +89,10 @@ export default function SalaryPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">
-                  Salary Management
+                  {t("salary.title")}
                 </h1>
                 <p className="mt-1 text-sm text-slate-500">
-                  Manage all employee salary records
+                  {t("salary.subtitle")}
                 </p>
               </div>
               <button
@@ -99,7 +101,7 @@ export default function SalaryPage() {
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 <FiPlus className="h-4 w-4" />
-                Set Salary
+                {t("salary.setSalary")}
               </button>
             </div>
 
@@ -108,7 +110,7 @@ export default function SalaryPage() {
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search employees..."
+                placeholder={t("salary.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"

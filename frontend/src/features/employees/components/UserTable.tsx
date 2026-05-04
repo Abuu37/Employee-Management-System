@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiEdit2, FiEye, FiPlus, FiTrash2, FiUsers } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import type { User } from "./types";
 import { useUser } from "@/context/UserContext";
 
@@ -31,6 +32,7 @@ function UserTable({
   // Only show Add User button for admin
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
+  const { t } = useTranslation();
 
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
@@ -51,7 +53,7 @@ function UserTable({
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
             >
               <FiPlus className="h-4 w-4" />
-              Add User
+              {t("employees.addUser")}
             </button>
           )}
         </div>
@@ -62,10 +64,12 @@ function UserTable({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">Name</th>
-              <th className="px-5 py-3 font-medium">Email</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium text-right">Actions</th>
+              <th className="px-5 py-3 font-medium">{t("employees.name")}</th>
+              <th className="px-5 py-3 font-medium">{t("employees.email")}</th>
+              <th className="px-5 py-3 font-medium">{t("employees.status")}</th>
+              <th className="px-5 py-3 font-medium text-right">
+                {t("employees.actions")}
+              </th>
             </tr>
           </thead>
 
@@ -106,7 +110,7 @@ function UserTable({
                       <button
                         type="button"
                         onClick={() => onDelete(user)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
                       >
                         <FiTrash2 className="h-3.5 w-3.5" />
                         Delete

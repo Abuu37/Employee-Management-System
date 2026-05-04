@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
 import ProjectTable from "@/features/projects/components/ProjectTable";
@@ -74,6 +75,7 @@ const normalizeUsers = (payload: unknown): RawUser[] => {
 
 function Projects() {
   const { user } = useUser();
+  const { t } = useTranslation();
   // Handler to update project status
   const handleUpdateStatus = async (project: ProjectItem, status: string) => {
     const token = localStorage.getItem("token");
@@ -522,9 +524,11 @@ function Projects() {
             {/* Page header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+                <h1 className="text-2xl font-bold text-slate-900">
+                  {t("projects.title")}
+                </h1>
                 <p className="mt-1 text-sm text-slate-500">
-                  Manage and track all ongoing projects
+                  {t("projects.subtitle")}
                 </p>
               </div>
               {user?.role === "admin" && (
@@ -535,7 +539,7 @@ function Projects() {
                  text-white transition hover:bg-blue-700"
                 >
                   <FiPlus className="h-4 w-4" />
-                  Create Project
+                  {t("projects.createProject")}
                 </button>
               )}
             </div>
@@ -543,15 +547,15 @@ function Projects() {
             {/* Stat cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                label="Total Projects"
+                label={t("projects.totalProjects")}
                 value={projects.length}
                 icon={<FiFolder />}
                 color=""
                 featured
-                subtitle="All projects"
+                subtitle={t("projects.allProjectsLabel")}
               />
               <StatCard
-                label="In Progress"
+                label={t("projects.inProgress")}
                 value={
                   projects.filter(
                     (p) =>
@@ -560,21 +564,21 @@ function Projects() {
                 }
                 icon={<FiClock />}
                 color="bg-blue-100 text-blue-600"
-                subtitle="Currently active"
+                subtitle={t("projects.currentlyActive")}
               />
               <StatCard
-                label="Completed"
+                label={t("projects.completed")}
                 value={projects.filter((p) => p.status === "completed").length}
                 icon={<FiCheckCircle />}
                 color="bg-emerald-100 text-emerald-600"
-                subtitle="Finished projects"
+                subtitle={t("projects.finishedProjects")}
               />
               <StatCard
-                label="Pending"
+                label={t("projects.pending")}
                 value={projects.filter((p) => p.status === "pending").length}
                 icon={<FiList />}
                 color="bg-amber-100 text-amber-600"
-                subtitle="Not yet started"
+                subtitle={t("projects.notYetStarted")}
               />
             </div>
 
@@ -583,7 +587,7 @@ function Projects() {
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search projects..."
+                placeholder={t("projects.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -613,9 +617,9 @@ function Projects() {
             ) : null}
 
             <ProjectTable
-              title="All Projects"
+              title={t("projects.allProjectsTitle")}
               projects={displayedProjects}
-              emptyMessage="No projects found."
+              emptyMessage={t("projects.noProjects")}
               onAdd={handleCreateOpen}
               onView={handleViewOpen}
               onEdit={handleEditOpen}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ModalShell from "@/features/employees/components/ModalShell";
+import { useTranslation } from "react-i18next";
 import { useUser } from "@/context/UserContext";
 
 interface Colleague {
@@ -33,6 +34,7 @@ function AddLeaveModal({
 }: AddLeaveModalProps) {
   const { user } = useUser();
   const isManager = user?.role === "manager";
+  const { t } = useTranslation();
   const [formValues, setFormValues] = useState<AddLeaveFormValues>({
     type: "",
     startDate: "",
@@ -60,7 +62,7 @@ function AddLeaveModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Apply for Leave"
+      title={t("leaves.applyLeave")}
       maxWidth="max-w-xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
@@ -68,7 +70,7 @@ function AddLeaveModal({
           {/* Leave Type */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Leave Type <span className="text-red-500">*</span>
+              {t("leaves.leaveType")} <span className="text-red-500">*</span>
             </span>
             <select
               name="type"
@@ -77,12 +79,12 @@ function AddLeaveModal({
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
               required
             >
-              <option value="">Select Leave Type</option>
-              <option value="annual">Annual</option>
-              <option value="sick">Sick</option>
-              <option value="casual">Casual</option>
-              <option value="emergency">Emergency</option>
-              <option value="unpaid">Unpaid</option>
+              <option value="">{t("leaves.selectLeaveType")}</option>
+              <option value="annual">{t("leaves.annual")}</option>
+              <option value="sick">{t("leaves.sick")}</option>
+              <option value="casual">{t("leaves.casual")}</option>
+              <option value="emergency">{t("leaves.emergency")}</option>
+              <option value="unpaid">{t("leaves.unpaid")}</option>
             </select>
           </label>
 
@@ -90,7 +92,7 @@ function AddLeaveModal({
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                Start Date <span className="text-red-500">*</span>
+                {t("leaves.startDate")} <span className="text-red-500">*</span>
               </span>
               <input
                 type="date"
@@ -103,7 +105,7 @@ function AddLeaveModal({
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                End Date <span className="text-red-500">*</span>
+                {t("leaves.endDate")} <span className="text-red-500">*</span>
               </span>
               <input
                 type="date"
@@ -119,7 +121,7 @@ function AddLeaveModal({
           {/* Reason */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Reason <span className="text-red-500">*</span>
+              {t("leaves.reason")} <span className="text-red-500">*</span>
             </span>
             <textarea
               name="reason"
@@ -137,7 +139,7 @@ function AddLeaveModal({
             <>
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">
-                  Work Handover / Backup Person
+                  {t("leaves.handoverBackup")}
                 </span>
                 <select
                   name="backupEmployeeId"
@@ -145,7 +147,7 @@ function AddLeaveModal({
                   onChange={handleChange}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
                 >
-                  <option value="">Select colleague (optional)</option>
+                  <option value="">{t("leaves.selectColleague")}</option>
                   {colleagues.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -156,14 +158,14 @@ function AddLeaveModal({
 
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">
-                  Handover Notes
+                  {t("leaves.handoverNotes")}
                 </span>
                 <textarea
                   name="handoverNote"
                   value={formValues.handoverNote}
                   onChange={handleChange}
                   rows={2}
-                  placeholder="Instructions or notes for backup person"
+                  placeholder={t("leaves.handoverPlaceholder")}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
                 />
               </label>

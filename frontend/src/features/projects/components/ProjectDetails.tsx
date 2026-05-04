@@ -3,6 +3,7 @@ import DeleteTaskModal from "@/features/tasks/components/DeleteTaskModal";
 import { FiPlus } from "react-icons/fi";
 import { FiMessageCircle } from "react-icons/fi";
 import ModalShell from "@/features/employees/components/ModalShell";
+import { useTranslation } from "react-i18next";
 import TaskFormModal, {
   type TaskFormValues,
 } from "@/features/tasks/components/TaskFormModal";
@@ -74,6 +75,7 @@ function ProjectDetails({
   const { user } = useUser();
   const role = user?.role ?? null;
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const canCreateTask = role === "manager" && project?.status === "in_progress";
 
@@ -119,7 +121,7 @@ function ProjectDetails({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Project Details"
+      title={t("projects.projectSnapshot") || "Project Details"}
       maxWidth="max-w-4xl"
     >
       {project ? (
@@ -128,7 +130,7 @@ function ProjectDetails({
           <div className="rounded-2xl bg-linear-to-br from-blue-600 via-cyan-600 to-teal-500 p-px">
             <div className="rounded-2xl bg-white px-5 py-5">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
-                Project Snapshot
+                {t("projects.projectSnapshot")}
               </p>
               <h3 className="mt-3 text-2xl font-semibold text-slate-900">
                 {project.name}
@@ -142,7 +144,7 @@ function ProjectDetails({
                     return (
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
-                          Manager
+                          {t("projects.manager")}
                         </p>
                         <p className="text-sm font-semibold text-slate-900">
                           {project.managerName || ""}
@@ -153,7 +155,7 @@ function ProjectDetails({
                     return (
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
-                          Description
+                          {t("projects.description")}
                         </p>
                         <p className="text-sm font-semibold text-slate-900">
                           {project.description || ""}
@@ -164,7 +166,7 @@ function ProjectDetails({
                 })()}
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
-                    Start Date
+                    {t("projects.startDate")}
                   </p>
                   <p className="text-sm font-semibold text-slate-900">
                     {formatDate(project.startDate)}
@@ -172,7 +174,7 @@ function ProjectDetails({
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
-                    End Date
+                    {t("projects.endDate")}
                   </p>
                   <p className="text-sm font-semibold text-slate-900">
                     {formatDate(project.endDate)}
@@ -180,10 +182,12 @@ function ProjectDetails({
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
-                    Status
+                    {t("projects.status")}
                   </p>
                   <p className="text-sm font-semibold text-slate-900">
-                    {formatStatus(project.status)}
+                    {t(
+                      `projects.${project.status === "in_progress" ? "inProgress" : project.status === "complete" ? "complete" : project.status}`,
+                    )}
                   </p>
                 </div>
               </div>
@@ -193,7 +197,9 @@ function ProjectDetails({
           {/* ====================== Tasks Table ======================= */}
           <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-5 py-4 flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-slate-900">Tasks</h4>
+              <h4 className="text-sm font-semibold text-slate-900">
+                {t("projects.tasks")}
+              </h4>
               <button
                 type="button"
                 onClick={() => setIsTaskModalOpen(true)}
@@ -202,7 +208,7 @@ function ProjectDetails({
                  hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 <FiPlus className="h-4 w-4" />
-                Create Task
+                {t("projects.createTask")}
               </button>
             </div>
 
@@ -210,13 +216,27 @@ function ProjectDetails({
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-slate-50 text-slate-500">
                   <tr>
-                    <th className="px-5 py-3 font-medium">Task Name</th>
-                    <th className="px-5 py-3 font-medium">Description</th>
-                    <th className="px-5 py-3 font-medium">Assigned To</th>
-                    <th className="px-5 py-3 font-medium">Status</th>
-                    <th className="px-5 py-3 font-medium">Deadline</th>
-                    <th className="px-5 py-3 font-medium">Comment</th>
-                    <th className="px-5 py-3 font-medium">Delete</th>
+                    <th className="px-5 py-3 font-medium">
+                      {t("projects.taskName")}
+                    </th>
+                    <th className="px-5 py-3 font-medium">
+                      {t("projects.description")}
+                    </th>
+                    <th className="px-5 py-3 font-medium">
+                      {t("projects.assignedTo")}
+                    </th>
+                    <th className="px-5 py-3 font-medium">
+                      {t("projects.status")}
+                    </th>
+                    <th className="px-5 py-3 font-medium">
+                      {t("projects.deadline")}
+                    </th>
+                    <th className="px-5 py-3 font-medium">
+                      {t("projects.comment")}
+                    </th>
+                    <th className="px-5 py-3 font-medium">
+                      {t("projects.delete")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -237,7 +257,9 @@ function ProjectDetails({
                             className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap
                                ${statusColorMap[task.status] || "bg-slate-100 text-slate-700 border border-slate-200"}`}
                           >
-                            {formatStatus(task.status)}
+                            {t(
+                              `projects.${task.status === "in_progress" ? "inProgress" : task.status === "complete" || task.status === "completed" ? "complete" : task.status}`,
+                            )}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-slate-600">
@@ -255,7 +277,7 @@ function ProjectDetails({
                             title="Comment on Tasks"
                           >
                             <FiMessageCircle className="h-5 w-5" />
-                            Comment
+                            {t("projects.comment")}
                           </button>
                         </td>
 
@@ -263,11 +285,11 @@ function ProjectDetails({
                           {canDeleteTask && (
                             <button
                               type="button"
-                              className="rounded-xl bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 border border-red-200 hover:bg-red-100"
+                              className="rounded-xl border border-red-200 bg-white px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-500 transition hover:text-white"
                               onClick={() => handleDeleteClick(task)}
                               title="Delete Task"
                             >
-                              Delete
+                              {t("projects.delete")}
                             </button>
                           )}
                         </td>
@@ -279,7 +301,7 @@ function ProjectDetails({
                         colSpan={7}
                         className="px-5 py-8 text-center text-sm text-slate-500"
                       >
-                        No tasks found for this project.
+                        {t("projects.noTasks")}
                       </td>
                     </tr>
                   )}
@@ -292,7 +314,7 @@ function ProjectDetails({
                 disabled={taskPage === 1}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
               >
-                Previous
+                {t("common.previous")}
               </button>
               <button
                 onClick={() =>
@@ -301,7 +323,7 @@ function ProjectDetails({
                 disabled={taskPage === taskTotalPages}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
               >
-                Next
+                {t("common.next")}
               </button>
             </div>
           </section>
@@ -310,7 +332,7 @@ function ProjectDetails({
           <ModalShell
             isOpen={commentModalOpen}
             onClose={() => setCommentModalOpen(false)}
-            title="Task Comments"
+            title={t("tasks.comments") || "Task Comments"}
             maxWidth="max-w-3xl"
           >
             {selectedTaskId && (

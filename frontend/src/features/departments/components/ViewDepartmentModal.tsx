@@ -1,6 +1,7 @@
 import type { Department } from "../types";
 import { FiHash, FiUser, FiUsers, FiCheckCircle } from "react-icons/fi";
 import ModalShell from "../../employees/components/ModalShell";
+import { useTranslation } from "react-i18next";
 
 interface ViewDepartmentModalProps {
   isOpen: boolean;
@@ -13,23 +14,31 @@ export default function ViewDepartmentModal({
   onClose,
   department,
 }: ViewDepartmentModalProps) {
+  const { t } = useTranslation();
   const infoCards = department
     ? [
-        { icon: FiHash, label: "Department Code", value: department.code },
+        {
+          icon: FiHash,
+          label: t("departments.departmentCode"),
+          value: department.code,
+        },
         {
           icon: FiUser,
-          label: "Manager",
-          value: department.manager?.name ?? "Unassigned",
+          label: t("departments.manager"),
+          value: department.manager?.name ?? t("departments.unassigned"),
         },
         {
           icon: FiUsers,
-          label: "Total Employees",
+          label: t("departments.employees"),
           value: String(department.employeeCount),
         },
         {
           icon: FiCheckCircle,
-          label: "Status",
-          value: department.status === "active" ? "Active" : "Inactive",
+          label: t("common.status"),
+          value:
+            department.status === "active"
+              ? t("departments.active")
+              : t("departments.inactive"),
         },
       ]
     : [];
@@ -38,7 +47,7 @@ export default function ViewDepartmentModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Department Details"
+      title={t("departments.viewTitle")}
       maxWidth="max-w-xl"
     >
       {department ? (
@@ -47,7 +56,7 @@ export default function ViewDepartmentModal({
           <div className="rounded-2xl bg-linear-to-br from-blue-600 via-cyan-600 to-teal-500 p-px">
             <div className="rounded-2xl bg-white px-5 py-5">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
-                Profile Snapshot
+                {t("departments.profileSnapshot")}
               </p>
               <h3 className="mt-3 text-2xl font-semibold text-slate-900">
                 {department.name}
@@ -60,7 +69,9 @@ export default function ViewDepartmentModal({
                     : "bg-red-50 text-red-600"
                 }`}
               >
-                {department.status === "active" ? "Active" : "Inactive"}
+                {department.status === "active"
+                  ? t("departments.active")
+                  : t("departments.inactive")}
               </div>
             </div>
           </div>
@@ -95,7 +106,7 @@ export default function ViewDepartmentModal({
               onClick={onClose}
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
             >
-              Close
+              {t("departments.close")}
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import ModalShell from "@/features/employees/components/ModalShell";
 import { FiAlertTriangle } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 interface CancelLeaveModalProps {
   isOpen: boolean;
@@ -13,11 +14,12 @@ const CancelLeaveModal: React.FC<CancelLeaveModalProps> = ({
   onClose,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Cancel Leave Request"
+      title={t("leaves.cancelTitle")}
       maxWidth="max-w-md"
     >
       <div className="space-y-5">
@@ -29,7 +31,7 @@ const CancelLeaveModal: React.FC<CancelLeaveModalProps> = ({
             </span>
           </span>
           <p className="text-sm font-medium text-orange-700">
-            Are you sure you want to cancel this leave request? This action cannot be undone.
+            {t("leaves.cancelWarning")}
           </p>
         </div>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -38,14 +40,14 @@ const CancelLeaveModal: React.FC<CancelLeaveModalProps> = ({
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
           >
-            No, Keep It
+            {t("leaves.keepIt")}
           </button>
           <button
             type="button"
             onClick={onConfirm}
             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700"
           >
-            Yes, Cancel Leave
+            {t("leaves.cancelConfirm")}
           </button>
         </div>
       </div>

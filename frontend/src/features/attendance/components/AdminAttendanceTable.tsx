@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FiClock, FiCalendar } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 import { AttendanceRecord, statusConfig, fmt, fmtHours } from "./types";
 
 const PAGE_SIZE = 8;
@@ -18,6 +19,7 @@ export default function AdminAttendanceTable({
   role,
 }: Props) {
   const [page, setPage] = useState(1);
+  const { t } = useTranslation();
   const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
   const paginated = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -48,12 +50,12 @@ export default function AdminAttendanceTable({
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-400">
               <tr>
                 <th className="px-5 py-3">S/N</th>
-                <th className="px-5 py-3">Employee</th>
-                <th className="px-5 py-3">Date</th>
-                <th className="px-5 py-3">Check In</th>
-                <th className="px-5 py-3">Check Out</th>
-                <th className="px-5 py-3">Hours</th>
-                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">{t("attendance.employee")}</th>
+                <th className="px-5 py-3">{t("attendance.date")}</th>
+                <th className="px-5 py-3">{t("attendance.checkInTime")}</th>
+                <th className="px-5 py-3">{t("attendance.checkOutTime")}</th>
+                <th className="px-5 py-3">{t("attendance.hours")}</th>
+                <th className="px-5 py-3">{t("attendance.status")}</th>
               </tr>
             </thead>
             <tbody>

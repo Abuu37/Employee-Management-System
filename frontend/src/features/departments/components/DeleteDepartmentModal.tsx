@@ -1,52 +1,53 @@
 import ModalShell from "@/features/employees/components/ModalShell";
 import { useTranslation } from "react-i18next";
-import type { ProjectItem } from "./types";
+import type { Department } from "../types";
 
-// Modal component for confirming project deletion, displaying project details and asking the user to confirm the action
-interface DeleteProjectModalProps {
+interface DeleteDepartmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
-  project: ProjectItem | null;
+  department: Department | null;
   isDeleting: boolean;
 }
 
-// Main component for confirming project deletion, displayed inside a modal
-function DeleteProjectModal({
+export default function DeleteDepartmentModal({
   isOpen,
   onClose,
   onConfirm,
-  project,
+  department,
   isDeleting,
-}: DeleteProjectModalProps) {
+}: DeleteDepartmentModalProps) {
   const { t } = useTranslation();
+
   return (
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={t("projects.deleteProject")}
+      title={t("departments.deleteTitle")}
       maxWidth="max-w-lg"
     >
-      {project ? (
+      {department ? (
         <div className="space-y-5">
           <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-4">
             <p className="text-sm font-medium text-red-700">
-              {t("projects.deleteConfirm", { name: project.name })}
+              {t("departments.deleteConfirm", { name: department.name })}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
             <p>
               <span className="font-semibold text-slate-900">
-                {t("projects.manager")}:
+                {t("departments.manager")}:
               </span>{" "}
-              {project.managerName}
+              {department.manager?.name ?? t("departments.unassigned")}
             </p>
             <p className="mt-1">
               <span className="font-semibold text-slate-900">
-                {t("projects.status")}:
+                {t("common.status")}:
               </span>{" "}
-              {project.status}
+              {department.status === "active"
+                ? t("departments.active")
+                : t("departments.inactive")}
             </p>
           </div>
 
@@ -65,8 +66,8 @@ function DeleteProjectModal({
               className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
             >
               {isDeleting
-                ? t("projects.deleting")
-                : t("projects.deleteProject")}
+                ? t("departments.deleting")
+                : t("departments.deleteTitle")}
             </button>
           </div>
         </div>
@@ -74,5 +75,3 @@ function DeleteProjectModal({
     </ModalShell>
   );
 }
-
-export default DeleteProjectModal;

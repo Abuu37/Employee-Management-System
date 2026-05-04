@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FiCheck, FiX } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
 
 const PAGE_SIZE = 8;
 
@@ -26,6 +27,7 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
   onReject,
 }) => {
   const [page, setPage] = useState(1);
+  const { t } = useTranslation();
   const totalPages = Math.max(1, Math.ceil(leaves.length / PAGE_SIZE));
   const paginated = leaves.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -33,24 +35,26 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-lg font-semibold text-slate-900">
-          Pending Approvals
+          {t("leaves.pendingApprovals")}
         </h3>
         <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {leaves.length} records
+          {leaves.length} {t("leaves.records")}
         </div>
       </div>
       <table className="min-w-full text-left text-sm">
         <thead className="bg-slate-50 text-slate-500">
           <tr>
             <th className="px-5 py-3 font-medium">S/N</th>
-            <th className="px-5 py-3 font-medium">Manager Name</th>
-            <th className="px-5 py-3 font-medium">Type</th>
-            <th className="px-5 py-3 font-medium">Start Date</th>
-            <th className="px-5 py-3 font-medium">End Date</th>
-            <th className="px-5 py-3 font-medium">Days</th>
-            <th className="px-5 py-3 font-medium">Reason</th>
-            <th className="px-5 py-3 font-medium">Status</th>
-            <th className="px-5 py-3 font-medium text-right">Actions</th>
+            <th className="px-5 py-3 font-medium">{t("leaves.managerName")}</th>
+            <th className="px-5 py-3 font-medium">{t("leaves.type")}</th>
+            <th className="px-5 py-3 font-medium">{t("leaves.startDate")}</th>
+            <th className="px-5 py-3 font-medium">{t("leaves.endDate")}</th>
+            <th className="px-5 py-3 font-medium">{t("leaves.days")}</th>
+            <th className="px-5 py-3 font-medium">{t("leaves.reason")}</th>
+            <th className="px-5 py-3 font-medium">{t("leaves.status")}</th>
+            <th className="px-5 py-3 font-medium text-right">
+              {t("leaves.actions")}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -92,7 +96,7 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
                      border-emerald-100 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition"
                     >
                       <FiCheck className="h-4 w-4" />
-                      Approve
+                      {t("leaves.approve")}
                     </button>
                     <button
                       type="button"
@@ -101,7 +105,7 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
                      bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
                     >
                       <FiX className="h-4 w-4" />
-                      Reject
+                      {t("leaves.reject")}
                     </button>
                   </div>
                 </td>
@@ -113,7 +117,7 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
                 colSpan={9}
                 className="px-5 py-10 text-center text-sm text-slate-500"
               >
-                No pending approvals.
+                {t("leaves.noPending")}
               </td>
             </tr>
           )}
@@ -125,14 +129,14 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
           disabled={page === 1}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Previous
+          {t("leaves.previous")}
         </button>
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          Next
+          {t("leaves.next")}
         </button>
       </div>
     </section>
