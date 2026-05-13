@@ -53,6 +53,11 @@ Task.init(
       allowNull: true,
       field: "comments",
     },
+    completedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "completed_at",
+    },
   },
   {
     sequelize,

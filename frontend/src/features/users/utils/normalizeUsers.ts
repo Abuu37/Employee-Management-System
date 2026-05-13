@@ -1,0 +1,26 @@
+import type { User } from "@/features/users/types/user.types";
+
+export const normalizeUser = (user: Partial<User>): User => ({
+  id: Number(user.id),
+  name: String(user.name ?? ""),
+  email: String(user.email ?? ""),
+  role: (user.role as User["role"]) ?? "employee",
+  status: String(user.status ?? "Active"),
+  department: user.department,
+  department_id: user.department_id,
+  manager_id: user.manager_id,
+  position: user.position,
+  phone: user.phone,
+  employee_id: user.employee_id,
+  gender: user.gender,
+  date_of_birth: user.date_of_birth,
+  address: user.address,
+  emergency_contact: user.emergency_contact,
+  employment_type: user.employment_type,
+  join_date: user.join_date,
+  createdAt: user.createdAt,
+  reportsTo: user.reportsTo,
+  reports_to: user.reports_to,
+  officeBranch: user.officeBranch,
+  office_branch: user.office_branch,
+});

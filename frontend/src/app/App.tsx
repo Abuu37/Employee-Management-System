@@ -3,7 +3,8 @@ import { Toaster } from "react-hot-toast";
 import { I18nextProvider } from "react-i18next";
 import i18n from "@/i18n";
 import AppRouter from "./router";
-import { UserProvider, useUser } from "@/context/UserContext";
+import { UserProvider } from "@/context/UserProvider";
+import { useUser } from "@/context/UserContext";
 import "./App.css";
 
 function AppWithGate() {

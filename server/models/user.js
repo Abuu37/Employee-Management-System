@@ -41,8 +41,69 @@ User.init(
       allowNull: true,
     },
 
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    employee_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    gender: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    date_of_birth: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+
+    address: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    emergency_contact: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    employment_type: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    join_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+
     manager_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    status: {
+      type: DataTypes.ENUM("active", "inactive"),
+      allowNull: false,
+      defaultValue: "active",
+    },
+
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    reports_to: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    office_branch: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
 

@@ -1,5 +1,5 @@
 import React from "react";
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { FiAlertTriangle } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 

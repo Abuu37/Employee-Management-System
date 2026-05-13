@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
 import type { SalaryRecord } from "@/services/salary.service";
 

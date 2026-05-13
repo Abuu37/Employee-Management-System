@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { usePagination } from "@/Hook/usePagination";
+import toast from "react-hot-toast";
 import { FiPlus, FiEye, FiCreditCard } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { approvePayroll, markAsPaid } from "@/services/payroll.service";
 import { useUser } from "@/context/UserContext";
+import TablePagination from "@/components/common/TablePagination";
 
 const PAGE_SIZE = 8;
 
@@ -55,20 +57,31 @@ export default function PayrollTable({
   onView?: (record: PayrollRecord) => void;
 }) {
   const handleApprove = async (id: number) => {
-    await approvePayroll(id);
-    onRefresh();
+    try {
+      await approvePayroll(id);
+      toast.success("Payroll approved");
+      onRefresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to approve payroll");
+    }
   };
 
   const handlePay = async (id: number) => {
-    await markAsPaid(id);
-    onRefresh();
+    try {
+      await markAsPaid(id);
+      toast.success("Payroll marked as paid");
+      onRefresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to mark as paid");
+    }
   };
 
   const { user } = useUser();
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
-  const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { page, setPage, totalPages, paginated } = usePagination(
+    data,
+    PAGE_SIZE,
+  );
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -207,25 +220,11 @@ export default function PayrollTable({
           </tbody>
         </table>
       </div>
-      {/* Pagination */}
-      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700
-           hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("payroll.previous")}
-        </button>
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700
-           hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("payroll.next")}
-        </button>
-      </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </section>
   );
 }

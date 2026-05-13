@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { FiUploadCloud } from "react-icons/fi";
 import { useUser } from "@/context/UserContext";
 

@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
 import { useTranslation } from "react-i18next";
 import { getMyPayslips } from "@/services/payroll.service";
-import { FiFileText, FiEye, FiSearch } from "react-icons/fi";
+import { FiFileText, FiEye } from "react-icons/fi";
+import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
+import TablePagination from "@/components/common/TablePagination";
 
 const monthNames = [
   "",
@@ -41,7 +44,10 @@ export default function MyPayslipPage() {
   useEffect(() => {
     getMyPayslips()
       .then(setData)
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        toast.error("Failed to load payslips");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -72,7 +78,7 @@ export default function MyPayslipPage() {
 
               {/* Search bar */}
               <div className="relative w-full max-w-sm">
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <AnimatedSearchIcon />
                 <input
                   type="text"
                   placeholder={t("payslip.searchPlaceholder")}
@@ -198,26 +204,11 @@ export default function MyPayslipPage() {
                     </table>
                   </div>
                   {data.length > PAGE_SIZE && (
-                    <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-                      <button
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={() =>
-                          setPage((p) =>
-                            Math.min(Math.ceil(data.length / PAGE_SIZE), p + 1),
-                          )
-                        }
-                        disabled={page === Math.ceil(data.length / PAGE_SIZE)}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-                      >
-                        Next
-                      </button>
-                    </div>
+                    <TablePagination
+                      page={page}
+                      totalPages={Math.ceil(data.length / PAGE_SIZE)}
+                      onPageChange={setPage}
+                    />
                   )}
                 </div>
               )}

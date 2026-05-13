@@ -1,15 +1,10 @@
 import { useState } from "react";
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { toast } from "react-hot-toast";
+import type { TaskFormValues } from "@/features/tasks/types/task.types";
 
-export type TaskFormValues = {
-  title: string;
-  description?: string;
-  assignedTo: number;
-  priority: "low" | "medium" | "high";
-  deadline?: string;
-  projectId?: number;
-};
+// Re-export for any consumers that import TaskFormValues from this file
+export type { TaskFormValues };
 
 type TaskFormModalProps = {
   isOpen: boolean;
@@ -91,15 +86,12 @@ export default function TaskFormModal({
         priority: form.priority,
         deadline: form.deadline || undefined,
       });
-      
+
       toast.success("Task created successfully");
       resetForm();
       onClose();
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Failed to submit task",
-    
-      );
+      toast.error(error?.response?.data?.message || "Failed to submit task");
     } finally {
       setSubmitting(false);
     }

@@ -2,62 +2,59 @@ import Express from "express";
 import { verifyToken } from "../Middlewares/authMiddleware.js";
 import { checkRole } from "../Middlewares/roleMiddleware.js";
 import {
-    checkIn,
-    checkOut,
-    getMyAttendance,
-    getAllAttendance,
-    getTeamAttendance,
-    getAttendanceByStatus
-} from "../controller/attendanceController.js";
+  checkIn,
+  checkOut,
+  getMyAttendance,
+  getAllAttendance,
+  getTeamAttendance,
+  getAttendanceByStatus,
+} from "../controller/attendance/attendanceController.js";
+import { getAttendanceStats } from "../controller/attendance/attendanceStatsController.js";
 
-const router = Express.Router(); 
+const router = Express.Router();
 // Employee check-in
 router.post(
-    "/check-in",
-    verifyToken,
-    checkRole("employee", "manager"),
-    checkIn
+  "/check-in",
+  verifyToken,
+  checkRole("employee", "manager"),
+  checkIn,
 );
 
 // Employee check-out
 router.post(
-    "/check-out",
-    verifyToken,
-    checkRole("employee", "manager"),
-    checkOut
+  "/check-out",
+  verifyToken,
+  checkRole("employee", "manager"),
+  checkOut,
 );
 
 // admin
-router.get(
-    "/all",
-    verifyToken,
-    checkRole("admin"),
-    getAllAttendance
-);
+router.get("/all", verifyToken, checkRole("admin"), getAllAttendance);
 
 // manager
-router.get(
-    "/team",
-    verifyToken,
-    checkRole("manager"),
-    getTeamAttendance
-);
+router.get("/team", verifyToken, checkRole("manager"), getTeamAttendance);
 
 // ========== employee and manager =================
 router.get(
-    "/my",
-    verifyToken,
-    checkRole("employee", "manager"),
-    getMyAttendance
+  "/my",
+  verifyToken,
+  checkRole("employee", "manager"),
+  getMyAttendance,
 );
 
 //================= get attendance by status (for admin and manager) =================
 router.get(
-    "/status/:status",
-    verifyToken,
-    checkRole("admin", "manager"),
-    getAttendanceByStatus
+  "/status/:status",
+  verifyToken,
+  checkRole("admin", "manager"),
+  getAttendanceByStatus,
 );
 
+router.get(
+  "/stats",
+  verifyToken,
+  checkRole("admin", "manager", "employee"),
+  getAttendanceStats,
+);
 
 export default router;

@@ -1,8 +1,10 @@
 ﻿import React, { useState } from "react";
+import { usePagination } from "@/Hook/usePagination";
 import { FiEye, FiCheck, FiX, FiCalendar } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import ViewLeaveModal from "./ViewLeaveModal";
 import RejectLeaveModal from "./RejectLeaveModal";
+import TablePagination from "@/components/common/TablePagination";
 
 interface Leave {
   id: number;
@@ -61,14 +63,13 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
   onHrApprove,
   onHrReject,
 }) => {
-  const pageSize = 8;
   const { t } = useTranslation();
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(leaves.length / pageSize));
-  const paginated = leaves.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const {
+    page: currentPage,
+    setPage: setCurrentPage,
+    totalPages,
+    paginated,
+  } = usePagination(leaves, 8);
 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -205,23 +206,11 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-        <button
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("leaves.previous")}
-        </button>
-        <button
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("leaves.next")}
-        </button>
-      </div>
+      <TablePagination
+        page={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <ViewLeaveModal
         isOpen={isViewOpen}

@@ -35,6 +35,23 @@ Attendance.init(
       allowNull: false,
       defaultValue: "present",
     },
+    work_summary: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    completed_task_ids: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: [],
+    },
+    department: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     sequelize,

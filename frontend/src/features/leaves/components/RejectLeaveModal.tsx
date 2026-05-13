@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
 import { FiAlertCircle } from "react-icons/fi";
 

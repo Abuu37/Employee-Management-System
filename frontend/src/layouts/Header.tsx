@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Lottie, { LottieRefCurrentProps } from "lottie-react";
+import searchIcon from "@/assets/icons/search.json";
 import { useTranslation } from "react-i18next";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { useUser } from "@/context/UserContext";
 import NotificationDropdown from "@/components/ui/NotificationDropdown";
 import ProfileDropdown from "@/components/ui/ProfileDropdown";
@@ -19,6 +21,7 @@ function Header({
   const { t } = useTranslation();
 
   const [focused, setFocused] = useState(false);
+  const searchLottieRef = useRef<LottieRefCurrentProps>(null);
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString("en-US", {
@@ -74,6 +77,42 @@ function Header({
 
         {/* ===================== Right controls ===================== */}
         <div className="flex items-center gap-2.5 ml-auto">
+          {/* =========== Animated Search Bar =========== */}
+          <div
+            className={`flex items-center gap-1 rounded-full border px-3 py-1.5 transition-all duration-200 bg-white ${
+              focused
+                ? "border-blue-500 shadow-sm shadow-blue-100 w-52"
+                : "border-slate-200 w-40"
+            }`}
+            onMouseEnter={() => {
+              searchLottieRef.current?.goToAndPlay(0, true);
+            }}
+            onMouseLeave={() => {
+              if (!focused) searchLottieRef.current?.goToAndStop(0, true);
+            }}
+          >
+            <Lottie
+              lottieRef={searchLottieRef}
+              animationData={searchIcon}
+              loop={false}
+              autoplay={false}
+              style={{ width: 22, height: 22, flexShrink: 0 }}
+            />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder="Search..."
+              className="flex-1 bg-transparent text-xs text-slate-700 placeholder-slate-400 outline-none min-w-0"
+            />
+            {searchTerm && (
+              <button onClick={() => onSearchChange("")}>
+                <FiX className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600" />
+              </button>
+            )}
+          </div>
           {/* Date / time pill */}
           <div className="hidden xl:flex flex-col items-end">
             <span className="text-[11px] font-semibold text-slate-700 leading-none">

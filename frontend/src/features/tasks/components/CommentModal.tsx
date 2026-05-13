@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 interface CommentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -10,15 +10,30 @@ const CommentModal: React.FC<CommentModalProps> = ({
   onClose,
   children,
 }) => {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      const t = setTimeout(() => setShown(true), 10);
+      return () => clearTimeout(t);
+    } else {
+      setShown(false);
+      const t = setTimeout(() => setMounted(false), 200);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen]);
+
+  if (!mounted) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/59 bg-opacity-30"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-lg w-full max-w-3xl relative p-0"
+        className={`bg-white rounded-2xl shadow-lg w-full max-w-3xl relative p-0 transition-all duration-200 ${shown ? "scale-100 translate-y-0 opacity-100" : "scale-95 translate-y-2 opacity-0"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b px-6 py-4 rounded-t-2xl">

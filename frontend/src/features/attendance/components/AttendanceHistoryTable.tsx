@@ -1,20 +1,43 @@
-import { useState } from "react";
-import { FiCalendar } from "react-icons/fi";
+import { usePagination } from "@/Hook/usePagination";
+import {
+  FiCalendar,
+  FiCheckCircle,
+  FiClock,
+  FiXCircle,
+  FiMinus,
+} from "react-icons/fi";
+import SortArrow from "@/components/common/SortArrow";
 import { useTranslation } from "react-i18next";
-import { AttendanceRecord, statusConfig, fmt, fmtHours } from "./types";
+import type { AttendanceRecord } from "@/features/attendance/types/attendance.types";
+import {
+  statusConfig,
+  fmt,
+  fmtHours,
+} from "@/features/attendance/utils/attendance.utils";
+import TablePagination from "@/components/common/TablePagination";
 
 const PAGE_SIZE = 8;
 
 type Props = {
   records: AttendanceRecord[];
   loading: boolean;
+  sortBy: string;
+  sortOrder: string;
+  onSort: (column: string) => void;
 };
 
-export default function AttendanceHistoryTable({ records, loading }: Props) {
-  const [page, setPage] = useState(1);
+export default function AttendanceHistoryTable({
+  records,
+  loading,
+  sortBy,
+  sortOrder,
+  onSort,
+}: Props) {
   const { t } = useTranslation();
-  const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
-  const paginated = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { page, setPage, totalPages, paginated } = usePagination(
+    records,
+    PAGE_SIZE,
+  );
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -31,11 +54,64 @@ export default function AttendanceHistoryTable({ records, loading }: Props) {
           <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <tr>
               <th className="px-5 py-3">S/N</th>
-              <th className="px-5 py-3">{t("attendance.date")}</th>
-              <th className="px-5 py-3">{t("attendance.checkInTime")}</th>
-              <th className="px-5 py-3">{t("attendance.checkOutTime")}</th>
-              <th className="px-5 py-3">{t("attendance.hours")}</th>
-              <th className="px-5 py-3">{t("attendance.status")}</th>
+
+              <th
+                className="px-5 py-3 cursor-pointer"
+                onClick={() => onSort("date")}
+              >
+                {t("attendance.date")}{" "}
+                <SortArrow
+                  column="date"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+
+              <th
+                className="px-5 py-3 cursor-pointer"
+                onClick={() => onSort("check_in")}
+              >
+                {t("attendance.checkInTime")}{" "}
+                <SortArrow
+                  column="check_in"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+
+              <th
+                className="px-5 py-3 cursor-pointer"
+                onClick={() => onSort("check_out")}
+              >
+                {t("attendance.checkOutTime")}{" "}
+                <SortArrow
+                  column="check_out"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 cursor-pointer"
+                onClick={() => onSort("total_hours")}
+              >
+                {t("attendance.hours")}{" "}
+                <SortArrow
+                  column="total_hours"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 cursor-pointer"
+                onClick={() => onSort("status")}
+              >
+                {t("attendance.status")}{" "}
+                <SortArrow
+                  column="status"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -68,6 +144,7 @@ export default function AttendanceHistoryTable({ records, loading }: Props) {
                     <td className="px-5 py-4 font-semibold text-slate-400">
                       {(page - 1) * PAGE_SIZE + idx + 1}
                     </td>
+
                     <td className="px-5 py-4 font-medium text-slate-800">
                       {new Date(rec.date).toLocaleDateString("en-GB", {
                         day: "2-digit",
@@ -75,22 +152,37 @@ export default function AttendanceHistoryTable({ records, loading }: Props) {
                         year: "numeric",
                       })}
                     </td>
+
                     <td className="px-5 py-4 text-slate-700">
                       {fmt(rec.check_in)}
                     </td>
+
                     <td className="px-5 py-4 text-slate-700">
                       {fmt(rec.check_out)}
                     </td>
+
                     <td className="px-5 py-4 font-semibold text-slate-700">
                       {fmtHours(rec.total_hours)}
                     </td>
+
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${st.bg} ${st.text}`}
+                        className={`inline-flex items-center gap-1.5 rounded-full whitespace-nowrap px-2.5 py-1 text-xs font-semibold ${st.chip}`}
                       >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${st.dot}`}
-                        />
+                        <span className={`rounded-full p-0.5 ${st.iconCls}`}>
+                          {rec.status === "present" && (
+                            <FiCheckCircle className="h-3 w-3" />
+                          )}
+                          {rec.status === "late" && (
+                            <FiClock className="h-3 w-3" />
+                          )}
+                          {rec.status === "absent" && (
+                            <FiXCircle className="h-3 w-3" />
+                          )}
+                          {rec.status === "half_day" && (
+                            <FiMinus className="h-3 w-3" />
+                          )}
+                        </span>
                         {st.label}
                       </span>
                     </td>
@@ -103,22 +195,11 @@ export default function AttendanceHistoryTable({ records, loading }: Props) {
       </div>
       {/* Pagination */}
       {!loading && (
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-          >
-            Next
-          </button>
-        </div>
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

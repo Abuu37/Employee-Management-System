@@ -8,8 +8,8 @@ import {
   FiClock,
   FiSlash,
   FiPlus,
-  FiSearch,
 } from "react-icons/fi";
+import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import axios from "axios";
 import StatCard from "@/features/attendance/components/StatCard";
 import Header from "@/layouts/Header";
@@ -352,7 +352,7 @@ const Leaves: React.FC = () => {
 
           {/* Search */}
           <div className="relative w-full max-w-sm">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <AnimatedSearchIcon />
             <input
               type="text"
               placeholder={t("leaves.searchPlaceholder")}

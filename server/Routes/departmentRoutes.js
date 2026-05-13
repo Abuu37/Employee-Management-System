@@ -9,8 +9,8 @@ import {
   deleteDepartment,
   toggleDepartmentStatus,
   assignManager,
-  getDepartmentStats,
-} from "../controller/departmentController.js";
+} from "../controller/department/departmentController.js";
+import { getDepartmentStats } from "../controller/department/departmentStatsController.js";
 
 const router = express.Router();
 

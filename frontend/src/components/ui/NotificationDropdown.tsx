@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import Lottie, { LottieRefCurrentProps } from "lottie-react";
+import bellIcon from "@/assets/icons/notificationbell.json";
 import {
-  FiBell,
   FiCheck,
   FiTrash2,
   FiFileText,
@@ -54,11 +55,19 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
+  const bellLottieRef = useRef<LottieRefCurrentProps>(null);
   const pausedRef = useRef(false); // true when server is unreachable
   const navigate = useNavigate();
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const { t } = useTranslation();
+
+  // Ring the bell whenever unread count goes above 0
+  useEffect(() => {
+    if (unreadCount > 0) {
+      bellLottieRef.current?.goToAndPlay(0, true);
+    }
+  }, [unreadCount]);
 
   const fetchNotifications = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -179,8 +188,15 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         }}
         className="relative flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-slate-100"
         style={{ border: "1.5px solid #e2e8f0" }}
+        onMouseEnter={() => bellLottieRef.current?.goToAndPlay(0, true)}
       >
-        <FiBell className="h-4 w-4 text-slate-500" />
+        <Lottie
+          lottieRef={bellLottieRef}
+          animationData={bellIcon}
+          loop={false}
+          autoplay={false}
+          style={{ width: 22, height: 22 }}
+        />
         {unreadCount > 0 && (
           <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -189,99 +205,115 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       </button>
 
       {/* Dropdown */}
-      {open && (
-        <div className="absolute right-0 top-11 z-50 w-80 rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <h3 className="text-sm font-semibold text-slate-800">
-              {t("notifications.title")}{" "}
-              {unreadCount > 0 && (
-                <span className="ml-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">
-                  {unreadCount}
-                </span>
-              )}
-            </h3>
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button
-                  type="button"
-                  onClick={markAllRead}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-blue-600 hover:bg-blue-50 transition"
-                >
-                  <FiCheck className="h-3 w-3" />
-                  {t("notifications.markAllRead")}
-                </button>
-              )}
-              {notifications.length > 0 && (
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition"
-                >
-                  <FiTrash2 className="h-3 w-3" />
-                  {t("notifications.clear")}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* List */}
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-400">
-                <FiBell className="h-8 w-8 opacity-30" />
-                <p className="text-xs">{t("notifications.noNotifications")}</p>
-              </div>
-            ) : (
-              notifications.map((n) => (
-                <div
-                  key={n.id}
-                  onClick={() => markOneRead(n)}
-                  className={`group flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-slate-50 border-b border-slate-50 ${
-                    !n.isRead ? "bg-blue-50/40" : ""
-                  }`}
-                >
-                  {/* Icon */}
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm">
-                    {TYPE_ICON[n.type] ?? (
-                      <FiBell className="h-4 w-4 text-slate-400" />
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-1">
-                      <p
-                        className={`text-xs font-semibold leading-snug text-slate-800 ${!n.isRead ? "font-bold" : ""}`}
-                      >
-                        {n.title}
-                      </p>
-                      {!n.isRead && (
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
-                      )}
-                    </div>
-                    <p className="mt-0.5 text-[11px] leading-snug text-slate-500 line-clamp-2">
-                      {n.message}
-                    </p>
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      {timeAgo(n.createdAt)}
-                    </p>
-                  </div>
-
-                  {/* Delete */}
-                  <button
-                    type="button"
-                    onClick={(e) => deleteOne(e, n.id)}
-                    className="mt-0.5 hidden shrink-0 rounded-lg p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 group-hover:flex transition"
-                  >
-                    <FiX className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))
+      <div
+        className={`absolute right-0 top-11 z-50 w-80 rounded-2xl border border-slate-200 bg-white shadow-2xl
+          transition-all duration-200 ease-out origin-top-right
+          ${
+            open
+              ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+          }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <h3 className="text-sm font-semibold text-slate-800">
+            {t("notifications.title")}{" "}
+            {unreadCount > 0 && (
+              <span className="ml-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">
+                {unreadCount}
+              </span>
+            )}
+          </h3>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={markAllRead}
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-blue-600 hover:bg-blue-50 transition"
+              >
+                <FiCheck className="h-3 w-3" />
+                {t("notifications.markAllRead")}
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition"
+              >
+                <FiTrash2 className="h-3 w-3" />
+                {t("notifications.clear")}
+              </button>
             )}
           </div>
         </div>
-      )}
+
+        {/* List */}
+        <div className="max-h-80 overflow-y-auto">
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-400">
+              <Lottie
+                animationData={bellIcon}
+                loop={true}
+                autoplay={true}
+                style={{ width: 40, height: 40, opacity: 0.35 }}
+              />
+              <p className="text-xs">{t("notifications.noNotifications")}</p>
+            </div>
+          ) : (
+            notifications.map((n) => (
+              <div
+                key={n.id}
+                onClick={() => markOneRead(n)}
+                className={`group flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-slate-50 border-b border-slate-50 ${
+                  !n.isRead ? "bg-blue-50/40" : ""
+                }`}
+              >
+                {/* Icon */}
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm">
+                  {TYPE_ICON[n.type] ?? (
+                    <Lottie
+                      animationData={bellIcon}
+                      loop={false}
+                      autoplay={false}
+                      style={{ width: 16, height: 16 }}
+                    />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-1">
+                    <p
+                      className={`text-xs font-semibold leading-snug text-slate-800 ${!n.isRead ? "font-bold" : ""}`}
+                    >
+                      {n.title}
+                    </p>
+                    {!n.isRead && (
+                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500 line-clamp-2">
+                    {n.message}
+                  </p>
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    {timeAgo(n.createdAt)}
+                  </p>
+                </div>
+
+                {/* Delete */}
+                <button
+                  type="button"
+                  onClick={(e) => deleteOne(e, n.id)}
+                  className="mt-0.5 hidden shrink-0 rounded-lg p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 group-hover:flex transition"
+                >
+                  <FiX className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React from "react";
-import { TaskComment } from "./types";
+import type { TaskComment } from "@/features/tasks/types/task.types";
 
 interface TaskCommentBubbleProps {
   comment: TaskComment;

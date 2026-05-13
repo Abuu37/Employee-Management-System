@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "@/services/axios";
 import { useTranslation } from "react-i18next";
 import type { DeptFormValues } from "../types";
-import ModalShell from "../../employees/components/ModalShell";
+import ModalShell from "../../users/components/ModalShell";
 
 interface Manager {
   id: number;

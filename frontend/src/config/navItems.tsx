@@ -124,13 +124,13 @@ const employeeNavItems: NavItem[] = [
     path: "/my-attendance",
     nameKey: "nav.myAttendance",
   },
-  { name: "Tasks", key: "tasks", path: "/tasks", nameKey: "nav.tasks" },
   {
     name: "My-Documents",
     key: "documents",
     path: "/documents",
     nameKey: "nav.myDocuments",
   },
+  { name: "Tasks", key: "tasks", path: "/tasks", nameKey: "nav.tasks" },
   { name: "Leaves", key: "leaves", path: "/leaves", nameKey: "nav.leaves" },
   {
     name: "My Payslip",

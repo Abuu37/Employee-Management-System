@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@/context/UserContext";
 

@@ -1,24 +1,34 @@
-import { useState } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  FiDownload,
-  FiCheckCircle,
-  FiPlus,
-  FiTrash2,
   FiEye,
+  FiCheckCircle,
+  FiClock,
+  FiTrash2,
+  FiLock,
+  FiUsers,
+  FiGlobe,
   FiShield,
   FiFileText,
 } from "react-icons/fi";
-import type { DocumentRecord } from "@/services/document.service";
-
-const PAGE_SIZE = 8;
+import type { DocumentRecord } from "@/features/documents/types/document.types";
+import TablePagination from "@/components/common/TablePagination";
+import SortArrow from "@/components/common/SortArrow";
 
 interface DocumentTableProps {
   data: DocumentRecord[];
+  loading?: boolean;
+  total: number;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  sortBy?: string;
+  sortOrder?: "ASC" | "DESC";
+  onSort?: (col: string) => void;
   role: string;
   onAdd: () => void;
   onDelete: (doc: DocumentRecord) => void;
-  onDownload: (doc: DocumentRecord) => void;
+  onView: (doc: DocumentRecord) => void;
   onVerify?: (doc: DocumentRecord) => void;
 }
 
@@ -31,24 +41,55 @@ const fileTypeLabels: Record<string, string> = {
   evaluation: "Evaluation",
 };
 
-const visibilityBadge: Record<string, { bg: string; text: string }> = {
-  private: { bg: "bg-slate-100 text-slate-600", text: "Private" },
-  team: { bg: "bg-blue-50 text-blue-600", text: "Team" },
-  company: { bg: "bg-purple-50 text-purple-600", text: "Company" },
+const visibilityConfig: Record<
+  string,
+  { bg: string; border: string; text: string; icon: ReactNode }
+> = {
+  private: {
+    bg: "bg-slate-100",
+    border: "border-slate-200",
+    text: "text-slate-600",
+    icon: <FiLock className="h-3 w-3" />,
+  },
+  team: {
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    text: "text-blue-600",
+    icon: <FiUsers className="h-3 w-3" />,
+  },
+  company: {
+    bg: "bg-purple-50",
+    border: "border-purple-200",
+    text: "text-purple-600",
+    icon: <FiGlobe className="h-3 w-3" />,
+  },
 };
 
 export default function DocumentTable({
   data,
+  loading = false,
+  total,
+  page,
+  totalPages,
+  onPageChange,
+  sortBy,
+  sortOrder,
+  onSort,
   role,
   onAdd,
   onDelete,
-  onDownload,
+  onView,
   onVerify,
 }: DocumentTableProps) {
-  const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
-  const paginated = data.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const { t } = useTranslation();
+
+  // Sort helper for th props
+  const thSort = (col: string) => ({
+    onClick: () => onSort?.(col),
+    className: onSort
+      ? "px-5 py-3 font-medium cursor-pointer select-none hover:text-slate-800"
+      : "px-5 py-3 font-medium",
+  });
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -56,10 +97,8 @@ export default function DocumentTable({
         <h3 className="text-base font-semibold text-slate-800">
           {t("documents.allDocuments")}
         </h3>
-        <div className="flex items-center gap-3">
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {data.length} records
-          </div>
+        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+          {total} records
         </div>
       </div>
 
@@ -68,12 +107,29 @@ export default function DocumentTable({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">
+              <th {...thSort("file_name")}>
                 {t("documents.fileName")}
+                <SortArrow
+                  column="file_name"
+                  sortBy={sortBy ?? ""}
+                  sortOrder={sortOrder ?? "DESC"}
+                />
               </th>
-              <th className="px-5 py-3 font-medium">{t("documents.type")}</th>
-              <th className="px-5 py-3 font-medium">
+              <th {...thSort("file_type")}>
+                {t("documents.type")}
+                <SortArrow
+                  column="file_type"
+                  sortBy={sortBy ?? ""}
+                  sortOrder={sortOrder ?? "DESC"}
+                />
+              </th>
+              <th {...thSort("visibility")}>
                 {t("documents.visibility")}
+                <SortArrow
+                  column="visibility"
+                  sortBy={sortBy ?? ""}
+                  sortOrder={sortOrder ?? "DESC"}
+                />
               </th>
               <th className="px-5 py-3 font-medium">{t("documents.status")}</th>
               {role !== "employee" && (
@@ -81,7 +137,14 @@ export default function DocumentTable({
                   {t("documents.uploadedBy")}
                 </th>
               )}
-              <th className="px-5 py-3 font-medium">{t("documents.date")}</th>
+              <th {...thSort("created_at")}>
+                {t("documents.date")}
+                <SortArrow
+                  column="created_at"
+                  sortBy={sortBy ?? ""}
+                  sortOrder={sortOrder ?? "DESC"}
+                />
+              </th>
               <th className="px-5 py-3 font-medium">
                 {t("documents.actions")}
               </th>
@@ -89,17 +152,26 @@ export default function DocumentTable({
           </thead>
 
           <tbody>
-            {data.length > 0 ? (
-              paginated.map((doc, idx) => {
+            {loading ? (
+              <tr>
+                <td
+                  colSpan={role === "employee" ? 7 : 8}
+                  className="px-5 py-16 text-center text-sm text-slate-400"
+                >
+                  Loading...
+                </td>
+              </tr>
+            ) : data.length > 0 ? (
+              data.map((doc, idx) => {
                 const vis =
-                  visibilityBadge[doc.visibility] ?? visibilityBadge.private;
+                  visibilityConfig[doc.visibility] ?? visibilityConfig.private;
+                const rowNum = (page - 1) * 10 + idx + 1;
 
                 return (
                   <tr key={doc.id} className="border-t border-slate-100">
                     <td className="px-5 py-4 font-semibold text-slate-900">
-                      {(page - 1) * PAGE_SIZE + idx + 1}
+                      {rowNum}
                     </td>
-
                     <td className="px-5 py-4 text-slate-600 max-w-50 truncate">
                       {doc.file_name}
                     </td>
@@ -114,19 +186,24 @@ export default function DocumentTable({
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${vis.bg}`}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${vis.bg} ${vis.border} ${vis.text}`}
                       >
-                        {vis.text}
+                        {vis.icon}
+                        {doc.visibility
+                          ? doc.visibility.charAt(0).toUpperCase() +
+                            doc.visibility.slice(1)
+                          : "Private"}
                       </span>
                     </td>
                     <td className="px-5 py-4">
                       {doc.is_verified ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
                           <FiCheckCircle className="h-3.5 w-3.5" />
                           {t("documents.verifiedStatus")}
                         </span>
                       ) : (
-                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">
+                          <FiClock className="h-3.5 w-3.5" />
                           {t("documents.pendingStatus")}
                         </span>
                       )}
@@ -147,12 +224,12 @@ export default function DocumentTable({
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => onDownload(doc)}
+                          onClick={() => onView(doc)}
                           className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
-                          title="Download"
+                          title="View"
                         >
-                          <FiDownload className="h-3.5 w-3.5" />
-                          {t("documents.download")}
+                          <FiEye className="h-3.5 w-3.5" />
+                          View
                         </button>
 
                         {(role === "admin" || role === "manager") &&
@@ -191,7 +268,7 @@ export default function DocumentTable({
             ) : (
               <tr>
                 <td
-                  colSpan={role === "employee" ? 7 : 9}
+                  colSpan={role === "employee" ? 7 : 8}
                   className="px-5 py-16 text-center"
                 >
                   <div className="flex flex-col items-center justify-center text-slate-400">
@@ -204,23 +281,12 @@ export default function DocumentTable({
           </tbody>
         </table>
       </div>
-      {/* Pagination */}
-      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("common.previous")}
-        </button>
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("common.next")}
-        </button>
-      </div>
+
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+      />
     </section>
   );
 }

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
-import type { ManagerOption, ProjectFormValues, ProjectItem } from "./types";
+import type {
+  ManagerOption,
+  ProjectFormValues,
+  ProjectItem,
+} from "@/features/projects/types/project.types";
 
 interface ProjectFormProps {
   isOpen: boolean;

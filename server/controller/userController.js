@@ -2,6 +2,10 @@ import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { Op } from "sequelize";
+import Attendance from "../models/Attendance.js";
+import Task from "../models/task.js";
+import Leave from "../models/Leave.js";
 import {
   sendCredentialsEmail,
   sendPasswordResetEmail,
@@ -63,6 +67,15 @@ export const createUserByAdmin = async (req, res) => {
       department,
       department_id,
       position,
+      phone,
+      gender,
+      date_of_birth,
+      address,
+      emergency_contact,
+      employment_type,
+      status,
+      reports_to,
+      office_branch,
     } = req.body;
 
     const existingUser = await User.findOne({ where: { email } });
@@ -72,6 +85,12 @@ export const createUserByAdmin = async (req, res) => {
 
     const plainPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    const generatedEmployeeId = `EMP-${Date.now().toString().slice(-6)}-${crypto
+      .randomBytes(2)
+      .toString("hex")
+      .toUpperCase()}`;
+    const defaultJoinDate = new Date().toISOString().slice(0, 10);
 
     // ✅ Manager assignment logic
     let assignedManagerId = null;
@@ -115,7 +134,19 @@ export const createUserByAdmin = async (req, res) => {
           ? assignedDepartmentId || department_id || null
           : department_id || null,
       position: position || null,
+      phone: phone || null,
+      employee_id:
+        role === "employee" ? employee_id || generatedEmployeeId : null,
+      gender: role === "employee" ? gender || null : null,
+      date_of_birth: role === "employee" ? date_of_birth || null : null,
+      address: role === "employee" ? address || null : null,
+      emergency_contact: role === "employee" ? emergency_contact || null : null,
+      employment_type: role === "employee" ? employment_type || null : null,
+      join_date: role === "employee" ? join_date || defaultJoinDate : null,
       manager_id: assignedManagerId,
+      reports_to: role === "manager" ? reports_to || null : null,
+      office_branch: role === "manager" ? office_branch || null : null,
+      status: status || "active",
     });
 
     // ✅ Send credentials email
@@ -170,6 +201,436 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+// ================= GET EMPLOYEES (ADMIN) =================
+export const getEmployees = async (req, res) => {
+  try {
+    const {
+      search = "",
+      status = "all",
+      page = "1",
+      limit = "8",
+      sortBy = "createdAt",
+      sortOrder = "DESC",
+    } = req.query;
+
+    const parsedPage = Math.max(1, Number.parseInt(page, 10) || 1);
+    const parsedLimit = Math.max(1, Number.parseInt(limit, 10) || 8);
+
+    const where = {
+      role: "employee",
+    };
+
+    // Managers only see employees assigned to them
+    if (req.user.role === "manager") {
+      where.manager_id = req.user.id;
+    }
+
+    if (status && status !== "all") {
+      where.status = String(status).toLowerCase();
+    }
+
+    const searchText = typeof search === "string" ? search.trim() : "";
+    if (searchText) {
+      where[Op.or] = [
+        { name: { [Op.iLike]: `%${searchText}%` } },
+        { email: { [Op.iLike]: `%${searchText}%` } },
+        { department: { [Op.iLike]: `%${searchText}%` } },
+        { position: { [Op.iLike]: `%${searchText}%` } },
+      ];
+    }
+
+    const allowedSortColumns = [
+      "name",
+      "email",
+      "department",
+      "position",
+      "phone",
+      "createdAt",
+      "status",
+    ];
+    const safeSortBy = allowedSortColumns.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+    const safeSortOrder =
+      String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
+    const dbSortBy = safeSortBy === "status" ? "createdAt" : safeSortBy;
+
+    const offset = (parsedPage - 1) * parsedLimit;
+
+    const { count, rows } = await User.findAndCountAll({
+      where,
+      attributes: { exclude: ["password"] },
+      order: [[dbSortBy, safeSortOrder]],
+      limit: parsedLimit,
+      offset,
+    });
+
+    const totalPages = Math.max(1, Math.ceil(count / parsedLimit));
+
+    res.json({
+      data: rows,
+      page: parsedPage,
+      totalPages,
+      total: count,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= GET EMPLOYEE BY ID (ADMIN) =================
+export const getEmployeeById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const employee = await User.findOne({
+      where: { id, role: "employee" },
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    res.json(employee);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= GET EMPLOYEE INSIGHTS (ADMIN) =================
+export const getEmployeeInsights = async (req, res) => {
+  try {
+    const employeeId = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(employeeId) || employeeId <= 0) {
+      return res.status(400).json({ message: "Invalid employee id" });
+    }
+
+    const employee = await User.findOne({
+      where: { id: employeeId, role: "employee" },
+      attributes: ["id", "updatedAt", "manager_id"],
+    });
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    // Managers can only view insights for their own direct reports
+    if (req.user.role === "manager" && employee.manager_id !== req.user.id) {
+      return res.status(403).json({ message: "Not allowed." });
+    }
+
+    const [attendanceRows, taskRows, approvedLeaveDays, latestLeave] =
+      await Promise.all([
+        Attendance.findAll({
+          where: { user_id: employeeId },
+          order: [["date", "DESC"]],
+          limit: 60,
+        }),
+        Task.findAll({
+          where: { assignedTo: employeeId },
+          attributes: [
+            "id",
+            "title",
+            "status",
+            "priority",
+            "deadline",
+            "completedAt",
+            "createdAt",
+            "updatedAt",
+          ],
+          order: [["updatedAt", "DESC"]],
+          limit: 30,
+        }),
+        Leave.sum("days", {
+          where: {
+            userId: employeeId,
+            overallStatus: "approved",
+          },
+        }),
+        Leave.findOne({
+          where: { userId: employeeId },
+          attributes: ["id", "type", "createdAt", "overallStatus"],
+          order: [["createdAt", "DESC"]],
+        }),
+      ]);
+
+    const presentLikeCount = attendanceRows.filter((row) =>
+      ["present", "late"].includes(String(row.status).toLowerCase()),
+    ).length;
+    const lateArrivals = attendanceRows.filter(
+      (row) => String(row.status).toLowerCase() === "late",
+    ).length;
+
+    const attendancePct = attendanceRows.length
+      ? Math.round((presentLikeCount / attendanceRows.length) * 100)
+      : 0;
+
+    const overtime = Math.round(
+      attendanceRows.reduce((sum, row) => {
+        const totalHours = Number(row.total_hours ?? 0);
+        return sum + Math.max(totalHours - 8, 0);
+      }, 0),
+    );
+
+    const leaveDays = Number(approvedLeaveDays ?? 0);
+
+    const recentAttendance = attendanceRows.slice(0, 8).map((row) => {
+      const rawStatus = String(row.status ?? "present").toLowerCase();
+      const status =
+        rawStatus === "present"
+          ? "Present"
+          : rawStatus === "late"
+            ? "Late"
+            : rawStatus === "absent"
+              ? "Absent"
+              : "Half Day";
+
+      return {
+        id: row.id,
+        date: row.date,
+        checkIn: row.check_in || "-",
+        checkOut: row.check_out || "-",
+        status,
+      };
+    });
+
+    const pendingTasks = taskRows.filter(
+      (task) => String(task.status).toLowerCase() === "pending",
+    ).length;
+    const inProgressTasks = taskRows.filter(
+      (task) => String(task.status).toLowerCase() === "in_progress",
+    ).length;
+    const completedTasks = taskRows.filter(
+      (task) => String(task.status).toLowerCase() === "completed",
+    ).length;
+
+    const tasks = taskRows.slice(0, 8).map((task) => {
+      const status = String(task.status).toLowerCase();
+      const normalizedStatus =
+        status === "completed"
+          ? "completed"
+          : status === "in_progress"
+            ? "in_progress"
+            : "pending";
+
+      const dueLabel = task.deadline
+        ? `Due ${new Date(task.deadline).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}`
+        : "No deadline";
+
+      return {
+        id: task.id,
+        title: task.title,
+        status: normalizedStatus,
+        dueLabel,
+      };
+    });
+
+    const timeline = [];
+
+    const latestCheckIn = attendanceRows.find((row) => !!row.check_in);
+    if (latestCheckIn) {
+      timeline.push({
+        id: `checkin-${latestCheckIn.id}`,
+        title: "Checked in",
+        detail: `Checked in at ${latestCheckIn.check_in}.`,
+        timestamp: latestCheckIn.created_at || latestCheckIn.updated_at,
+      });
+    }
+
+    if (latestLeave) {
+      timeline.push({
+        id: `leave-${latestLeave.id}`,
+        title: "Leave request",
+        detail: `${String(latestLeave.type).toUpperCase()} leave (${latestLeave.overallStatus}).`,
+        timestamp: latestLeave.createdAt,
+      });
+    }
+
+    const latestCompletedTask = taskRows.find(
+      (task) => String(task.status).toLowerCase() === "completed",
+    );
+    if (latestCompletedTask) {
+      timeline.push({
+        id: `task-${latestCompletedTask.id}`,
+        title: "Completed task",
+        detail: latestCompletedTask.title,
+        timestamp:
+          latestCompletedTask.completedAt || latestCompletedTask.updatedAt,
+      });
+    }
+
+    timeline.push({
+      id: `profile-${employee.id}`,
+      title: "Profile updated",
+      detail: "Employee profile information was updated.",
+      timestamp: employee.updatedAt,
+    });
+
+    const sortedTimeline = timeline
+      .filter((item) => !!item.timestamp)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 8)
+      .map((item) => ({
+        ...item,
+        timestamp: new Date(item.timestamp).toLocaleString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+
+    return res.json({
+      attendanceSummary: {
+        attendancePct,
+        lateArrivals,
+        leaveDays,
+        overtime,
+      },
+      recentAttendance,
+      taskSummary: {
+        pendingTasks,
+        inProgressTasks,
+        completedTasks,
+      },
+      tasks,
+      timeline: sortedTimeline,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= GET MANAGERS (ADMIN) =================
+export const getManagers = async (req, res) => {
+  try {
+    const {
+      search = "",
+      status = "all",
+      page = "1",
+      limit = "8",
+      sortBy = "createdAt",
+      sortOrder = "DESC",
+    } = req.query;
+
+    const parsedPage = Math.max(1, Number.parseInt(page, 10) || 1);
+    const parsedLimit = Math.max(1, Number.parseInt(limit, 10) || 8);
+
+    const where = {
+      role: "manager",
+    };
+
+    if (status && status !== "all") {
+      where.status = String(status).toLowerCase();
+    }
+
+    const searchText = typeof search === "string" ? search.trim() : "";
+    if (searchText) {
+      where[Op.or] = [
+        { name: { [Op.iLike]: `%${searchText}%` } },
+        { email: { [Op.iLike]: `%${searchText}%` } },
+        { department: { [Op.iLike]: `%${searchText}%` } },
+        { position: { [Op.iLike]: `%${searchText}%` } },
+      ];
+    }
+
+    const allowedSortColumns = [
+      "name",
+      "email",
+      "department",
+      "position",
+      "phone",
+      "createdAt",
+      "status",
+    ];
+    const safeSortBy = allowedSortColumns.includes(sortBy)
+      ? sortBy
+      : "createdAt";
+    const safeSortOrder =
+      String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
+    const dbSortBy = safeSortBy === "status" ? "createdAt" : safeSortBy;
+
+    const offset = (parsedPage - 1) * parsedLimit;
+
+    const { count, rows } = await User.findAndCountAll({
+      where,
+      attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: User,
+          as: "supervisor",
+          attributes: ["id", "name"],
+          required: false,
+        },
+      ],
+      order: [[dbSortBy, safeSortOrder]],
+      limit: parsedLimit,
+      offset,
+    });
+
+    const data = rows.map((row) => {
+      const obj = row.toJSON();
+      obj.reportsTo = obj.supervisor?.name ?? null;
+      delete obj.supervisor;
+      return obj;
+    });
+
+    const totalPages = Math.max(1, Math.ceil(count / parsedLimit));
+
+    res.json({
+      data,
+      page: parsedPage,
+      totalPages,
+      total: count,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= GET MANAGER BY ID (ADMIN) =================
+export const getManagerById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const manager = await User.findOne({
+      where: { id, role: "manager" },
+      attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: User,
+          as: "supervisor",
+          attributes: ["id", "name"],
+          required: false,
+        },
+      ],
+    });
+
+    if (!manager) {
+      return res.status(404).json({ message: "Manager not found" });
+    }
+
+    const result = manager.toJSON();
+    result.reportsTo = result.supervisor?.name ?? null;
+    delete result.supervisor;
+
+    res.json(result);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ================= UPDATE USER =================
 export const updateUser = async (req, res) => {
   try {
@@ -182,6 +643,15 @@ export const updateUser = async (req, res) => {
       department,
       department_id,
       position,
+      phone,
+      gender,
+      date_of_birth,
+      address,
+      emergency_contact,
+      employment_type,
+      status,
+      reports_to,
+      office_branch,
     } = req.body;
 
     const user = await User.findByPk(id);
@@ -199,6 +669,28 @@ export const updateUser = async (req, res) => {
           ? department_id || null
           : user.department_id;
       user.position = position !== undefined ? position : user.position;
+      user.phone = phone !== undefined ? phone : user.phone;
+      user.status = status || user.status;
+      user.gender = gender !== undefined ? gender || null : user.gender;
+      user.date_of_birth =
+        date_of_birth !== undefined
+          ? date_of_birth || null
+          : user.date_of_birth;
+      user.address = address !== undefined ? address || null : user.address;
+      user.emergency_contact =
+        emergency_contact !== undefined
+          ? emergency_contact || null
+          : user.emergency_contact;
+      user.employment_type =
+        employment_type !== undefined
+          ? employment_type || null
+          : user.employment_type;
+      if (reports_to !== undefined) {
+        user.reports_to = reports_to || null;
+      }
+      if (office_branch !== undefined) {
+        user.office_branch = office_branch || null;
+      }
 
       // ✅ Admin can reassign manager
       if (manager_id !== undefined) {
@@ -281,10 +773,43 @@ export const deleteUser = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ["id", "name", "email", "role"],
+      attributes: [
+        "id",
+        "name",
+        "email",
+        "role",
+        "status",
+        "department",
+        "position",
+        "phone",
+        "manager_id",
+        "avatar",
+        "createdAt",
+      ],
     });
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
+
+    // Resolve manager name if present
+    let managerName = null;
+    if (user.manager_id) {
+      const manager = await User.findByPk(user.manager_id, {
+        attributes: ["name"],
+      });
+      managerName = manager?.name ?? null;
+    }
+
+    res.json({ ...user.toJSON(), managerName });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const avatarPath = `/uploads/avatars/${req.file.filename}`;
+    await User.update({ avatar: avatarPath }, { where: { id: req.user.id } });
+    res.json({ avatar: avatarPath });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }

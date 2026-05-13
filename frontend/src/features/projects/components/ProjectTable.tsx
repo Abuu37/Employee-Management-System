@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { usePagination } from "@/Hook/usePagination";
 import { FiEdit2, FiEye, FiPlus, FiTrash2, FiBriefcase } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import type { ProjectItem } from "./types";
+import type { ProjectItem } from "@/features/projects/types/project.types";
 import { useUser } from "@/context/UserContext";
+import TablePagination from "@/components/common/TablePagination";
 
 const PAGE_SIZE = 8;
 
@@ -61,9 +62,10 @@ function ProjectTable({
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
   const { t } = useTranslation();
-  const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE));
-  const paginated = projects.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { page, setPage, totalPages, paginated } = usePagination(
+    projects,
+    PAGE_SIZE,
+  );
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -130,6 +132,7 @@ function ProjectTable({
                       <option value="complete">{t("projects.complete")}</option>
                     </select>
                   </td>
+
                   {isAdmin && (
                     <td className="px-5 py-4 text-slate-600">
                       {project.managerName || t("projects.unassigned")}
@@ -184,23 +187,11 @@ function ProjectTable({
           </tbody>
         </table>
       </div>
-      {/* Pagination */}
-      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("projects.previous")}
-        </button>
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("projects.next")}
-        </button>
-      </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </section>
   );
 }

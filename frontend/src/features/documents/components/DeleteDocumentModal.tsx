@@ -1,6 +1,6 @@
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
-import type { DocumentRecord } from "@/services/document.service";
+import type { DocumentRecord } from "@/features/documents/types/document.types";
 
 interface DeleteDocumentModalProps {
   isOpen: boolean;

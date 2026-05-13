@@ -108,7 +108,8 @@ export default function PayslipCard({
         <button
           type="button"
           onClick={handleDownloadPDF}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200
+           bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
           <FiDownload className="h-4 w-4" />
           {t("payslip.downloadPdf")}
@@ -116,7 +117,8 @@ export default function PayslipCard({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+          className="rounded-lg border border-slate-200 p-2 text-slate-500 transition
+           hover:bg-slate-100 hover:text-slate-700"
         >
           <svg
             width="18"

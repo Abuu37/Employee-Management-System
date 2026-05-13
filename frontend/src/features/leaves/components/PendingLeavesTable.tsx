@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
+import { usePagination } from "@/Hook/usePagination";
 import { FiCheck, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import TablePagination from "@/components/common/TablePagination";
 
 const PAGE_SIZE = 8;
 
@@ -26,10 +28,11 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
   onApprove,
   onReject,
 }) => {
-  const [page, setPage] = useState(1);
   const { t } = useTranslation();
-  const totalPages = Math.max(1, Math.ceil(leaves.length / PAGE_SIZE));
-  const paginated = leaves.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { page, setPage, totalPages, paginated } = usePagination(
+    leaves,
+    PAGE_SIZE,
+  );
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -123,22 +126,11 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
           )}
         </tbody>
       </table>
-      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("leaves.previous")}
-        </button>
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("leaves.next")}
-        </button>
-      </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </section>
   );
 };

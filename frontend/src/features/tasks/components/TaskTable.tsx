@@ -1,19 +1,13 @@
-import { useState } from "react";
+import { usePagination } from "@/Hook/usePagination";
 import { FiMessageCircle } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import TablePagination from "@/components/common/TablePagination";
+import type { TaskItem } from "@/features/tasks/types/task.types";
+
+// Re-export for any consumers that import TaskItem from this file
+export type { TaskItem };
 
 const PAGE_SIZE = 8;
-
-export interface TaskItem {
-  id: number;
-  title: string;
-  projectName: string;
-  assignedByName: string;
-  description: string;
-  status: "pending" | "in_progress" | "completed";
-  priority: "low" | "medium" | "high";
-  deadline: string;
-}
 
 interface TaskTableProps {
   title: string;
@@ -55,9 +49,10 @@ function TaskTable({
   onViewTask,
   isadmin = false,
 }: TaskTableProps) {
-  const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(tasks.length / PAGE_SIZE));
-  const paginated = tasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { page, setPage, totalPages, paginated } = usePagination(
+    tasks,
+    PAGE_SIZE,
+  );
   const { t } = useTranslation();
 
   return (
@@ -171,23 +166,11 @@ function TaskTable({
           </tbody>
         </table>
       </div>
-      {/* Pagination */}
-      <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-5 py-4">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("common.previous")}
-        </button>
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {t("common.next")}
-        </button>
-      </div>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </section>
   );
 }

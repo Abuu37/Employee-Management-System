@@ -1,6 +1,7 @@
 // For Admin / HR manage payroll
 
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
@@ -21,10 +22,10 @@ import {
   FiDollarSign,
   FiCheckCircle,
   FiClock,
-  FiSearch,
   FiAward,
   FiPlus,
 } from "react-icons/fi";
+import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 
 export default function PayrollPage() {
   const { user } = useUser();
@@ -50,6 +51,7 @@ export default function PayrollPage() {
       setData(payroll);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load payroll records");
     }
   };
 
@@ -67,10 +69,12 @@ export default function PayrollPage() {
         month: values.month,
         year: values.year,
       });
+      toast.success("Payroll generated successfully");
       setFormOpen(false);
       fetchPayroll();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      toast.error(err?.response?.data?.message ?? "Failed to generate payroll");
     } finally {
       setGenerating(false);
     }
@@ -143,7 +147,7 @@ export default function PayrollPage() {
 
           {/* Search bar */}
           <div className="relative w-full max-w-sm">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <AnimatedSearchIcon />
             <input
               type="text"
               placeholder={

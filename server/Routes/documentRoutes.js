@@ -10,7 +10,8 @@ import {
   verifyDocument,
   deleteDocument,
   downloadDocument,
-} from "../controller/documentController.js";
+} from "../controller/document/documentController.js";
+import { getDocumentStats } from "../controller/document/documentStatsController.js";
 import { verifyToken } from "../Middlewares/authMiddleware.js";
 import { checkRole } from "../Middlewares/roleMiddleware.js";
 
@@ -58,6 +59,9 @@ const upload = multer({
 });
 
 const router = express.Router();
+
+// Stats summary (role-aware)
+router.get("/stats", verifyToken, getDocumentStats);
 
 // Upload document (all authenticated roles — controller enforces type restrictions)
 router.post("/upload", verifyToken, upload.single("file"), uploadDocument);

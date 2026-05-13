@@ -1,5 +1,5 @@
-import { FiSearch } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 
 type Props = {
   search: string;
@@ -31,7 +31,7 @@ export default function AttendanceFilters({
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <div className="relative flex-1 min-w-48">
-        <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+        <AnimatedSearchIcon />
         <input
           type="text"
           placeholder={t("attendance.searchPlaceholder")}

@@ -7,12 +7,16 @@ import {
   getProjectById,
   updateProject,
   deleteProject,
-} from "../controller/projectController.js";
+} from "../controller/project/projectController.js";
+import { getProjectStats } from "../controller/project/projectStatsController.js";
 
 const router = express.Router();
 
 // Create a new project (Admin only)
 router.post("/create", verifyToken, checkRole("admin"), createProject);
+
+// Projects stats summary (Admin and Manager)
+router.get("/stats", verifyToken, checkRole("admin", "manager"), getProjectStats);
 
 // Get / VIEW all projects (Admin and Manager)
 router.get("/all", verifyToken, checkRole("admin", "manager"), getProjects);

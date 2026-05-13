@@ -1,23 +1,23 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "@/features/auth/LoginPage";
-import RegisterPage from "@/features/auth/RegisterPage";
-import ForgotPasswordPage from "@/features/auth/ForgotPasswordPage";
-import ResetPasswordPage from "@/features/auth/ResetPasswordPage";
+import LoginPage from "@/features/auth/pages/LoginPage";
+import RegisterPage from "@/features/auth/pages/RegisterPage";
+import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/features/auth/pages/ResetPasswordPage";
 import DashboardPage from "@/features/dashboard/DashboardPage";
-import EmployeePage from "@/features/employees/EmployeePage";
-import ManagerPage from "@/features/employees/ManagerPage";
+import Users from "@/features/users/pages/Users";
+import ManagerPage from "@/features/users/pages/ManagerPage";
 import Reports from "@/features/Report/ReportsPage";
-import TaskPage from "@/features/tasks/TaskPage";
+import TaskPage from "@/features/tasks/pages/Tasks";
 import Settings from "@/features/Setting/SettingsPage";
-import ProjectsPage from "@/features/projects/ProjectsPage";
-import TaskCommentPage from "@/features/tasks/TaskCommentPage";
+import ProjectsPage from "@/features/projects/pages/Projects";
+import TaskCommentPage from "@/features/tasks/pages/TaskCommentPage";
 import LeavesPage from "@/features/leaves/LeavesPage";
 import MyPayslipPage from "@/features/payslip/MyPayslipPage";
 import PayrollPage from "@/features/payroll/PayrollPage";
 import SalaryPage from "@/features/salary/SalaryPage";
-import DocumentPage from "@/features/documents/DocumentPage";
-import AttendancePage from "@/features/attendance/AttendancePage";
-import DepartmentsPage from "@/features/departments/DepartmentsPage";
+import DocumentPage from "@/features/documents/pages/DocumentPage";
+import AttendancePage from "@/features/attendance/pages/AttendancePage";
+import DepartmentsPage from "@/features/departments/pages/DepartmentsPage";
 
 export default function AppRouter() {
   return (
@@ -28,7 +28,7 @@ export default function AppRouter() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/employee" element={<EmployeePage />} />
+      <Route path="/employee" element={<Users />} />
       <Route path="/manager" element={<ManagerPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/tasks" element={<TaskPage />} />

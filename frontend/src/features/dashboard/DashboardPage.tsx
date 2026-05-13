@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import Lottie from "lottie-react";
+import loadingIcon from "@/assets/icons/loading.json";
+import searchIcon from "@/assets/icons/search.json";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import { useUser } from "@/context/UserContext";
+import CheckOutModel from "@/features/attendance/components/CheckOutModel";
 import {
   FiUsers,
   FiUserCheck,
@@ -161,6 +165,9 @@ export default function Dashboard() {
   const [leaveDist, setLeaveDist] = useState<PieDatum[]>([]);
   const [recentDocs, setRecentDocs] = useState<DocRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const isRetrying = useRef(false);
+  const [hasError, setHasError] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   const { user } = useUser();
   const { t } = useTranslation();
@@ -177,6 +184,7 @@ export default function Dashboard() {
   } | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceMsg, setAttendanceMsg] = useState("");
+  const [showCheckOutModal, setShowCheckOutModal] = useState(false);
 
   const fetchTodayAttendance = () => {
     if (!isManager && !isEmployee) return;
@@ -213,15 +221,20 @@ export default function Dashboard() {
     }
   };
 
-  const handleCheckOut = async () => {
+  const handleCheckOut = async (
+    completedTaskIds: number[],
+    summary: string,
+    notes: string,
+  ) => {
     setAttendanceLoading(true);
     setAttendanceMsg("");
     try {
       await axios.post(
         "/api/attendance/check-out",
-        {},
+        { work_summary: summary, notes, completed_task_ids: completedTaskIds },
         { headers: { Authorization: `Bearer ${token}` } },
       );
+      setShowCheckOutModal(false);
       setAttendanceMsg(t("dashboard.checkedOut"));
       fetchTodayAttendance();
     } catch (e: any) {
@@ -232,6 +245,17 @@ export default function Dashboard() {
       setAttendanceLoading(false);
     }
   };
+
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
 
   useEffect(() => {
     fetchTodayAttendance();
@@ -249,8 +273,12 @@ export default function Dashboard() {
         setLeaveDist(r.data.leaveDistribution);
         setRecentDocs(r.data.recentDocuments ?? []);
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(() => {
+        setHasError(true);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [token]);
 
   const totalLeaves = leaveDist.reduce((s, d) => s + d.value, 0);
@@ -266,6 +294,100 @@ export default function Dashboard() {
   const donutData = leaveDist.some((d) => d.value > 0)
     ? leaveDist
     : [{ name: "No data", value: 1 }];
+
+  if (loading && !isRetrying.current) {
+    return (
+      <div className="flex min-h-screen bg-[#f0f2f7] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Lottie
+            animationData={loadingIcon}
+            loop={true}
+            autoplay={true}
+            style={{ width: 140, height: 140 }}
+          />
+          <p className="text-slate-500 text-sm font-medium tracking-wide animate-pulse">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isOffline) {
+    return (
+      <div className="flex min-h-screen bg-[#f0f2f7] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Lottie
+            animationData={searchIcon}
+            loop={true}
+            autoplay={true}
+            style={{ width: 150, height: 150 }}
+          />
+          <p className="text-xl font-bold text-slate-700">
+            No Internet Connection
+          </p>
+          <p className="text-sm text-slate-400 max-w-xs">
+            It looks like you're offline. Please check your network and try
+            again.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 px-5 py-2 rounded-full text-sm font-semibold text-white shadow"
+            style={{ background: "#1e3a5f" }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError && !loading) {
+    return (
+      <div className="flex min-h-screen bg-[#f0f2f7] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Lottie
+            animationData={searchIcon}
+            loop={true}
+            autoplay={true}
+            style={{ width: 150, height: 150 }}
+          />
+          <p className="text-xl font-bold text-slate-700">Connection Failed</p>
+          <p className="text-sm text-slate-400 max-w-xs">
+            Unable to reach the server. Please check your connection or try
+            again later.
+          </p>
+          <button
+            onClick={() => {
+              setHasError(false);
+              isRetrying.current = true;
+              setLoading(true);
+              axios
+                .get("/api/dashboard/summary", {
+                  headers: { Authorization: `Bearer ${token}` },
+                })
+                .then((r) => {
+                  setSummary(r.data.summary);
+                  setTaskTrend(r.data.taskTrend);
+                  setPayrollTrend(r.data.payrollTrend ?? []);
+                  setLeaveDist(r.data.leaveDistribution);
+                  setRecentDocs(r.data.recentDocuments ?? []);
+                })
+                .catch(() => setHasError(true))
+                .finally(() => {
+                  isRetrying.current = false;
+                  setLoading(false);
+                });
+            }}
+            className="mt-2 px-5 py-2 rounded-full text-sm font-semibold text-white shadow"
+            style={{ background: "#1e3a5f" }}
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#f0f2f7]">
@@ -324,7 +446,7 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              {/* Card 2 */}
+              {/*====================== Card 2 =====================*/}
               {isEmployee ? (
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
                   <div className="flex items-start justify-between mb-3">
@@ -452,7 +574,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Card 4 — Attendance (manager+employee) / Tasks (admin) */}
+              {/*==================== Card 4 — Attendance (manager+employee) / Tasks (admin)================ */}
               {isEmployee || isManager ? (
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
                   <div className="flex items-start justify-between mb-2">
@@ -463,7 +585,11 @@ export default function Dashboard() {
                       className="rounded-full w-7 h-7 flex items-center justify-center shadow"
                       style={{ background: BLUE }}
                     >
-                      <FiClock className="h-3.5 w-3.5 text-white" />
+                      {todayRecord?.check_in ? (
+                        <FiLogOut className="h-3.5 w-3.5 text-white" />
+                      ) : (
+                        <FiLogIn className="h-3.5 w-3.5 text-white" />
+                      )}
                     </span>
                   </div>
                   <div className="flex flex-col gap-1.5 mb-2">
@@ -484,28 +610,38 @@ export default function Dashboard() {
                       </span>
                     </p>
                   </div>
+
                   <div className="flex gap-2">
-                    <button
-                      disabled={attendanceLoading || !!todayRecord?.check_in}
-                      onClick={handleCheckIn}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-slate-800 disabled:opacity-50 transition"
-                      style={{ background: "#6ee7b7" }}
-                    >
-                      <FiLogIn className="h-4 w-4" /> {t("dashboard.checkIn")}
-                    </button>
-                    <button
-                      disabled={
-                        attendanceLoading ||
-                        !todayRecord?.check_in ||
-                        !!todayRecord?.check_out
-                      }
-                      onClick={handleCheckOut}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white disabled:opacity-50 transition"
-                      style={{ background: NAVY }}
-                    >
-                      <FiLogOut className="h-4 w-4" /> {t("dashboard.checkOut")}
-                    </button>
+                    {!todayRecord?.check_in && (
+                      <button
+                        disabled={attendanceLoading}
+                        onClick={handleCheckIn}
+                        className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition"
+                        style={{ background: NAVY }}
+                      >
+                        <FiLogIn className="h-4 w-4" /> {t("dashboard.checkIn")}
+                      </button>
+                    )}
+
+                    {todayRecord?.check_in && !todayRecord?.check_out && (
+                      <button
+                        disabled={attendanceLoading}
+                        onClick={() => setShowCheckOutModal(true)}
+                        className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition"
+                        style={{ background: NAVY }}
+                      >
+                        <FiLogOut className="h-4 w-4" />{" "}
+                        {t("dashboard.checkOut")}
+                      </button>
+                    )}
+
+                    {todayRecord?.check_in && todayRecord?.check_out && (
+                      <p className="text-xs font-semibold text-green-600 text-center w-full">
+                        ✓ Attendance completed for today
+                      </p>
+                    )}
                   </div>
+
                   {attendanceMsg && (
                     <p className="text-[10px] text-center mt-1 text-slate-500">
                       {attendanceMsg}
@@ -858,6 +994,14 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      <CheckOutModel
+        open={showCheckOutModal}
+        onClose={() => setShowCheckOutModal(false)}
+        onConfirm={handleCheckOut}
+        token={token}
+        role={userRole as "employee" | "manager"}
+      />
     </div>
   );
 }

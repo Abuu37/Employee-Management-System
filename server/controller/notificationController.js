@@ -21,7 +21,7 @@ export const getMyNotifications = async (req, res) => {
   try {
     const notifications = await Notification.findAll({
       where: { userId: req.user.id },
-      order: [["createdAt", "DESC"]],
+      order: [["id", "DESC"]],
       limit: 50,
     });
     return res.json(notifications);

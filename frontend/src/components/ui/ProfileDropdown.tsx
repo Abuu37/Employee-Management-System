@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGUAGES, type LangCode } from "@/i18n";
 import { useUser } from "@/context/UserContext";
 import LogoutConfirmModal from "@/components/ui/LogoutConfirmModal";
+import ProfileModal from "@/features/profile/ProfileModal";
 
 const NAVY = "#1e3a5f";
 
@@ -40,6 +41,7 @@ export default function ProfileDropdown() {
 
   const [open, setOpen] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -86,12 +88,22 @@ export default function ProfileDropdown() {
         >
           {/* Avatar */}
           <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white shadow-sm"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white shadow-sm overflow-hidden"
             style={{
-              background: `linear-gradient(135deg, ${NAVY} 0%, #2563eb 100%)`,
+              background: user?.avatar
+                ? undefined
+                : `linear-gradient(135deg, ${NAVY} 0%, #2563eb 100%)`,
             }}
           >
-            {getInitials(name)}
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              getInitials(name)
+            )}
           </div>
 
           {/* Name + role */}
@@ -115,147 +127,158 @@ export default function ProfileDropdown() {
         </button>
 
         {/* Dropdown panel */}
-        {open && (
-          <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white shadow-xl border border-slate-100 z-50 overflow-hidden">
-            {/* Header */}
-            <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
-              <p className="text-sm font-bold text-slate-800">{name}</p>
-              <p className="text-xs text-slate-400 truncate">{email}</p>
-            </div>
+        <div
+          className={`absolute right-0 mt-2 w-64 rounded-2xl bg-white shadow-xl border border-slate-100 z-50 overflow-hidden
+            transition-all duration-200 ease-out origin-top-right
+            ${
+              open
+                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+                : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+            }`}
+        >
+          {/* Header */}
+          <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+            <p className="text-sm font-bold text-slate-800">{name}</p>
+            <p className="text-xs text-slate-400 truncate">{email}</p>
+          </div>
 
-            {/* Navigation */}
-            <div className="py-1">
-              <Item
-                icon={<FiUser />}
-                label={t("profile.myProfile")}
-                onClick={() => go("/profile")}
-              />
+          {/* Navigation */}
+          <div className="py-1">
+            <Item
+              icon={<FiUser />}
+              label={t("profile.myProfile")}
+              onClick={() => {
+                setOpen(false);
+                setShowProfile(true);
+              }}
+            />
+            <div>
+              <button
+                onClick={() => setSettingsMenuOpen((p) => !p)}
+                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <span className="text-base">
+                  <FiSettings />
+                </span>
+                <span className="flex-1 text-left">
+                  {t("profile.accountSettings")}
+                </span>
+                <FiChevronRight
+                  className={`h-3.5 w-3.5 text-slate-400 transition-transform ${settingsMenuOpen ? "rotate-90" : ""}`}
+                />
+              </button>
 
-              {/* Account Settings expandable */}
-              <div>
-                <button
-                  onClick={() => setSettingsMenuOpen((p) => !p)}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+              {settingsMenuOpen && (
+                <div
+                  className="mx-3 mb-1 rounded-xl overflow-hidden"
+                  style={{ background: "#1e3a5f" }}
                 >
-                  <span className="text-base">
-                    <FiSettings />
-                  </span>
-                  <span className="flex-1 text-left">
-                    {t("profile.accountSettings")}
-                  </span>
-                  <FiChevronRight
-                    className={`h-3.5 w-3.5 text-slate-400 transition-transform ${settingsMenuOpen ? "rotate-90" : ""}`}
-                  />
-                </button>
-
-                {settingsMenuOpen && (
-                  <div
-                    className="mx-3 mb-1 rounded-xl overflow-hidden"
-                    style={{ background: "#1e3a5f" }}
+                  <button
+                    onClick={() => go("/settings")}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-blue-200 transition hover:bg-white/10 hover:text-white"
                   >
-                    <button
-                      onClick={() => go("/settings")}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-blue-200 transition hover:bg-white/10 hover:text-white"
-                    >
-                      <FiLock className="h-4 w-4" />
-                      <span className="flex-1 text-left">
-                        {t("profile.changePassword")}
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 py-1">
-              {/* Language selector */}
-              <div className="relative">
-                <button
-                  onClick={() => setLangMenuOpen((p) => !p)}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
-                >
-                  <span className="text-base">
-                    <FiGlobe />
-                  </span>
-                  <span className="flex-1 text-left">
-                    {t("profile.language")}
-                  </span>
-                  <span className="text-xs text-slate-400 mr-1">
-                    {SUPPORTED_LANGUAGES.find((l) => l.code === i18n.language)
-                      ?.flag ?? "🌐"}
-                  </span>
-                  <FiChevronRight
-                    className={`h-3.5 w-3.5 text-slate-400 transition-transform ${langMenuOpen ? "rotate-90" : ""}`}
-                  />
-                </button>
-
-                {/* Inline language list */}
-                {langMenuOpen && (
-                  <div
-                    className="mx-3 mb-1 rounded-xl overflow-hidden"
-                    style={{ background: "#1e3a5f" }}
-                  >
-                    {SUPPORTED_LANGUAGES.map((lang) => {
-                      const active =
-                        (i18n.language ?? "en").split("-")[0] === lang.code;
-                      return (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            i18n.changeLanguage(lang.code as LangCode);
-                            if (user?.id) {
-                              localStorage.setItem(
-                                `ems_language_${user.id}`,
-                                lang.code,
-                              );
-                            }
-                            setLangMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition hover:bg-white/10 hover:text-white
-                            ${active ? "text-white font-semibold" : "text-blue-200"}`}
-                        >
-                          <img
-                            src={(lang as any).flagImg}
-                            alt={lang.label}
-                            className="w-6 h-4 rounded-sm object-cover shadow-sm"
-                          />
-                          <span className="flex-1 text-left">{lang.label}</span>
-                          {active && (
-                            <FiCheck className="h-3.5 w-3.5 text-white" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <Item
-                icon={<FiMoon />}
-                label={t("profile.darkMode")}
-                onClick={() => {}}
-              />
-            </div>
-
-            <div className="border-t border-slate-100 py-1">
-              <Item
-                icon={<FiLogOut />}
-                label={t("profile.logout")}
-                onClick={() => {
-                  setOpen(false);
-                  setShowLogout(true);
-                }}
-                danger
-              />
+                    <FiLock className="h-4 w-4" />
+                    <span className="flex-1 text-left">
+                      {t("profile.changePassword")}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        )}
+
+          <div className="border-t border-slate-100 py-1">
+            {/* Language selector */}
+            <div className="relative">
+              <button
+                onClick={() => setLangMenuOpen((p) => !p)}
+                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <span className="text-base">
+                  <FiGlobe />
+                </span>
+                <span className="flex-1 text-left">
+                  {t("profile.language")}
+                </span>
+                <span className="text-xs text-slate-400 mr-1">
+                  {SUPPORTED_LANGUAGES.find((l) => l.code === i18n.language)
+                    ?.flag ?? "🌐"}
+                </span>
+                <FiChevronRight
+                  className={`h-3.5 w-3.5 text-slate-400 transition-transform ${langMenuOpen ? "rotate-90" : ""}`}
+                />
+              </button>
+
+              {/* Inline language list */}
+              {langMenuOpen && (
+                <div
+                  className="mx-3 mb-1 rounded-xl overflow-hidden"
+                  style={{ background: "#1e3a5f" }}
+                >
+                  {SUPPORTED_LANGUAGES.map((lang) => {
+                    const active =
+                      (i18n.language ?? "en").split("-")[0] === lang.code;
+                    return (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          i18n.changeLanguage(lang.code as LangCode);
+                          if (user?.id) {
+                            localStorage.setItem(
+                              `ems_language_${user.id}`,
+                              lang.code,
+                            );
+                          }
+                          setLangMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition hover:bg-white/10 hover:text-white
+                            ${active ? "text-white font-semibold" : "text-blue-200"}`}
+                      >
+                        <img
+                          src={(lang as any).flagImg}
+                          alt={lang.label}
+                          className="w-6 h-4 rounded-sm object-cover shadow-sm"
+                        />
+                        <span className="flex-1 text-left">{lang.label}</span>
+                        {active && (
+                          <FiCheck className="h-3.5 w-3.5 text-white" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <Item
+              icon={<FiMoon />}
+              label={t("profile.darkMode")}
+              onClick={() => {}}
+            />
+          </div>
+
+          <div className="border-t border-slate-100 py-1">
+            <Item
+              icon={<FiLogOut />}
+              label={t("profile.logout")}
+              onClick={() => {
+                setOpen(false);
+                setShowLogout(true);
+              }}
+              danger
+            />
+          </div>
+        </div>
       </div>
 
       <LogoutConfirmModal
         isOpen={showLogout}
         onClose={() => setShowLogout(false)}
         onConfirm={handleLogoutConfirm}
+      />
+      <ProfileModal
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
       />
     </>
   );

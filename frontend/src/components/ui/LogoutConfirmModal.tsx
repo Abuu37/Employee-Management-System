@@ -1,4 +1,4 @@
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import React from "react";
 import { FiXCircle } from "react-icons/fi";
 import { useTranslation } from "react-i18next";

@@ -10,10 +10,75 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>frontend</title>
+    <title>EMS</title>
+    <style>
+      #app-boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: #f0f2f7;
+        z-index: 9999;
+        font-family: "Inter", sans-serif;
+        transition: opacity 0.35s ease;
+      }
+      #app-boot.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .boot-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #94a3b8;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        animation: bootPulse 1.6s ease-in-out infinite;
+      }
+      @keyframes bootPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+    </style>
+    <!-- lottie-web to play loading.json before React boots -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.1/lottie.min.js"></script>
   </head>
   <body>
+    <div id="app-boot">
+      <div id="lottie-boot" style="width: 150px; height: 150px"></div>
+      <span class="boot-label">Loading…</span>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Play loading.json using lottie-web
+      lottie.loadAnimation({
+        container: document.getElementById("lottie-boot"),
+        renderer: "svg",
+        loop: true,
+        autoplay: true,
+        path: "/loading.json",
+      });
+
+      // Remove boot screen as soon as React renders anything into #root
+      const observer = new MutationObserver(() => {
+        if (document.getElementById("root").children.length > 0) {
+          const el = document.getElementById("app-boot");
+          if (el) {
+            el.classList.add("fade-out");
+            setTimeout(() => el.remove(), 380);
+          }
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.getElementById("root"), { childList: true });
+    </script>
   </body>
 </html>

@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -122,6 +123,7 @@ function Settings() {
       setNewPassword("");
       setConfirmPassword("");
       setSuccess("Password changed successfully.");
+      toast.success("Password changed successfully");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
@@ -134,8 +136,12 @@ function Settings() {
         }
 
         setError(err.response?.data?.message || "Failed to change password.");
+        toast.error(
+          err.response?.data?.message || "Failed to change password.",
+        );
       } else {
         setError("Failed to change password.");
+        toast.error("Failed to change password.");
       }
     } finally {
       setIsSaving(false);

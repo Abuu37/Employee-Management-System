@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
@@ -6,7 +7,8 @@ import SalaryTable from "@/features/salary/components/SalaryTable";
 import SetSalaryModal from "@/features/salary/components/SetSalaryModal";
 import DeleteSalaryModal from "@/features/salary/components/DeleteSalaryModal";
 import type { SalaryFormValues } from "@/features/salary/components/SetSalaryModal";
-import { FiSearch, FiPlus } from "react-icons/fi";
+import { FiPlus } from "react-icons/fi";
+import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import {
   getAllSalaries,
   setSalary,
@@ -25,7 +27,12 @@ export default function SalaryPage() {
   const [deleting, setDeleting] = useState(false);
 
   const fetchSalaries = () => {
-    getAllSalaries().then(setData).catch(console.error);
+    getAllSalaries()
+      .then(setData)
+      .catch((err) => {
+        console.error(err);
+        toast.error("Failed to load salary records");
+      });
   };
 
   useEffect(() => {
@@ -52,11 +59,13 @@ export default function SalaryPage() {
         allowance: values.allowance,
         tax_percentage: values.tax_percentage,
       });
+      toast.success(editRecord ? "Salary updated" : "Salary set successfully");
       setFormOpen(false);
       setEditRecord(null);
       fetchSalaries();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      toast.error(err?.response?.data?.message ?? "Failed to save salary");
     } finally {
       setSaving(false);
     }
@@ -67,10 +76,14 @@ export default function SalaryPage() {
     setDeleting(true);
     try {
       await deleteSalary(deleteRecord.id);
+      toast.success("Salary record deleted");
       setDeleteRecord(null);
       fetchSalaries();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      toast.error(
+        err?.response?.data?.message ?? "Failed to delete salary record",
+      );
     } finally {
       setDeleting(false);
     }
@@ -107,7 +120,7 @@ export default function SalaryPage() {
 
             {/* Search bar */}
             <div className="relative w-full max-w-sm">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <AnimatedSearchIcon />
               <input
                 type="text"
                 placeholder={t("salary.searchPlaceholder")}

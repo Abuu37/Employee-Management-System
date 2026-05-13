@@ -1,5 +1,5 @@
 import { FiLogIn, FiLogOut } from "react-icons/fi";
-import { AttendanceRecord } from "./types";
+import type { AttendanceRecord } from "@/features/attendance/types/attendance.types";
 
 type Props = {
   userName: string;

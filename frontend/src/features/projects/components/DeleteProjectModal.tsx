@@ -1,6 +1,6 @@
-import ModalShell from "@/features/employees/components/ModalShell";
+import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
-import type { ProjectItem } from "./types";
+import type { ProjectItem } from "@/features/projects/types/project.types";
 
 // Modal component for confirming project deletion, displaying project details and asking the user to confirm the action
 interface DeleteProjectModalProps {
