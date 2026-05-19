@@ -1,7 +1,12 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import { env } from "./config/env.js";
+import { sanitizeInput } from "./Middlewares/sanitizeInput.js";
 
 import { sequelize, connectDB } from "./config/db.js";
 
@@ -30,16 +35,42 @@ const __dirname = path.dirname(__filename);
 // ===================== APP INIT =====================
 const app = express();
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many authentication attempts. Try again later." },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ===================== GLOBAL MIDDLEWARE =====================
+app.use(helmet());
 app.use(
   cors({
-    origin: "*", // change in production
+    origin: (origin, callback) => {
+      if (!origin || env.corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS origin not allowed"));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(sanitizeInput);
+app.use("/api", apiLimiter);
 
 // Static uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -55,7 +86,7 @@ app.get("/", (req, res) => {
 });
 
 // ===================== API ROUTES =====================
-app.use("/api/auth", AuthRoute);
+app.use("/api/auth", authLimiter, AuthRoute);
 app.use("/api/user", UserRoute);
 app.use("/api/task", TaskRoute);
 app.use("/api/project", ProjectRoute);
@@ -101,12 +132,12 @@ const startServer = async () => {
     console.log("Database connected successfully");
 
     // sync only in development
-    if (process.env.NODE_ENV !== "production") {
+    if (env.nodeEnv !== "production") {
       await sequelize.sync();
       console.log("Database synced successfully");
     }
 
-    const PORT = process.env.PORT || 5000;
+    const PORT = env.port;
 
     server = app.listen(PORT);
 
@@ -136,6 +167,14 @@ Stop the old process or change PORT
       process.exit(1);
     });
   } catch (error) {
+    if (error?.name === "SequelizeConnectionError") {
+      const pgCode = error?.original?.code;
+      if (pgCode === "28P01") {
+        console.error("\nPostgreSQL authentication failed.");
+        console.error("Check server/.env DB_USER and DB_PASSWORD values.");
+        console.error("Then restart the server after updating credentials.\n");
+      }
+    }
     console.error("Server startup failed:", error);
     process.exit(1);
   }

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
   FiEye,
   FiCheckCircle,
-  FiClock,
+  FiAlertTriangle,
   FiTrash2,
   FiLock,
   FiUsers,
@@ -14,6 +14,7 @@ import {
 import type { DocumentRecord } from "@/features/documents/types/document.types";
 import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
+import { useUser } from "@/context/UserContext";
 
 interface DocumentTableProps {
   data: DocumentRecord[];
@@ -82,6 +83,7 @@ export default function DocumentTable({
   onVerify,
 }: DocumentTableProps) {
   const { t } = useTranslation();
+  const { user } = useUser();
 
   // Sort helper for th props
   const thSort = (col: string) => ({
@@ -203,7 +205,7 @@ export default function DocumentTable({
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">
-                          <FiClock className="h-3.5 w-3.5" />
+                          <FiAlertTriangle className="h-3.5 w-3.5" />
                           {t("documents.pendingStatus")}
                         </span>
                       )}
@@ -248,8 +250,7 @@ export default function DocumentTable({
 
                         {(role === "admin" ||
                           role === "manager" ||
-                          doc.uploaded_by ===
-                            Number(localStorage.getItem("user-id"))) && (
+                          doc.uploaded_by === user?.id) && (
                           <button
                             type="button"
                             onClick={() => onDelete(doc)}

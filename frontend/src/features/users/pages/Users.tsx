@@ -6,11 +6,13 @@ import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import UserTable from "@/features/users/components/UserTable";
 import UserForm from "@/features/users/components/UserForm";
 import UserDetails from "@/features/users/components/UserDetails";
-import DeleteUserModal from "@/features/users/components/DeleteUserModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import { useUsers } from "@/features/users/hooks/useUsers";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
 
 export default function Users() {
   const { t } = useTranslation();
+  const deleteConfirmation = useDeleteConfirmation();
   const {
     users,
     totalRecords,
@@ -48,6 +50,17 @@ export default function Users() {
     closeAllModals,
   } = useUsers();
 
+  const handleDeleteRequest = (user: NonNullable<typeof selected>) => {
+    openDelete(user);
+    deleteConfirmation.requestDelete({
+      title: t("common.delete"),
+      message: t("employees.deleteConfirm", { name: user.name }),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      onConfirm: handleDelete,
+    });
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
@@ -79,21 +92,21 @@ export default function Users() {
           </div>
 
           {/* ── Filters ──────────────────────────────────────────────── */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative w-full max-w-sm">
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
               <AnimatedSearchIcon />
               <input
                 type="text"
                 placeholder={t("employees.searchEmployees")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-full max-w-sm rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:w-45"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
             >
               <option value="all">All Status</option>
               <option value="active">{t("departments.active")}</option>
@@ -115,7 +128,7 @@ export default function Users() {
               onAdd={() => setAddOpen(true)}
               onView={openView}
               onEdit={openEdit}
-              onDelete={openDelete}
+              onDelete={handleDeleteRequest}
               hideAddButton={!isAdmin}
               page={page}
               totalPages={totalPages}
@@ -156,12 +169,25 @@ export default function Users() {
         roleOptions={["employee"]}
         isSaving={isSaving}
       />
-      <DeleteUserModal
-        isOpen={deleteOpen}
-        onClose={closeAllModals}
-        onConfirm={handleDelete}
-        user={selected}
-        isDeleting={isDeleting}
+      <DeleteConfirmModal
+        isOpen={deleteConfirmation.isOpen}
+        title={deleteConfirmation.dialog?.title ?? t("common.delete")}
+        message={
+          deleteConfirmation.dialog?.message ??
+          "Are you sure you want to delete this user?"
+        }
+        confirmLabel={
+          deleteConfirmation.dialog?.confirmLabel ?? t("common.delete")
+        }
+        cancelLabel={
+          deleteConfirmation.dialog?.cancelLabel ?? t("common.cancel")
+        }
+        isProcessing={isDeleting || deleteConfirmation.isProcessing}
+        onClose={() => {
+          deleteConfirmation.closeDialog();
+          closeAllModals();
+        }}
+        onConfirm={deleteConfirmation.confirmDelete}
       />
     </div>
   );

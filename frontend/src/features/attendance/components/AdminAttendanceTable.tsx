@@ -5,7 +5,7 @@ import {
   useCallback,
   useLayoutEffect,
 } from "react";
-import { usePagination } from "@/Hook/usePagination";
+import { usePagination } from "@/hooks/usePagination";
 import SortArrow from "@/components/common/SortArrow";
 import {
   FiClock,
@@ -27,6 +27,7 @@ import {
 } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import type { AttendanceRecord } from "@/features/attendance/types/attendance.types";
+import RichTextEditor from "@/components/editor/RichTextEditor";
 import {
   statusConfig,
   fmt,
@@ -177,9 +178,15 @@ function TextSection({
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
             {label}
           </p>
-          <p className="mt-2 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
-            {value}
-          </p>
+          <div className="mt-2">
+            <RichTextEditor
+              value={value}
+              onChange={() => {}}
+              readOnly
+              simple
+              height="140px"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -318,7 +325,6 @@ export default function AdminAttendanceTable({
                   />
                 </th>
                 <th className="px-5 py-3">Completed Tasks</th>
-                <th className="px-5 py-3">Summary</th>
                 <th className="px-5 py-3">Action</th>
               </tr>
             </thead>
@@ -401,18 +407,7 @@ export default function AdminAttendanceTable({
                           <span className="text-slate-300">—</span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-slate-600 max-w-xs">
-                        {rec.work_summary ? (
-                          <span
-                            title={rec.work_summary}
-                            className="block truncate"
-                          >
-                            {rec.work_summary}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
-                      </td>
+
                       <td className="px-5 py-4">
                         <button
                           onClick={() => onView(Number(rec.id))}
@@ -427,7 +422,7 @@ export default function AdminAttendanceTable({
                 })
               ) : (
                 <tr>
-                  <td colSpan={11} className="px-5 py-16 text-center">
+                  <td colSpan={10} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center justify-center text-slate-400">
                       <FiCalendar className="h-12 w-12 mb-3 opacity-30" />
                       <p className="text-sm">No attendance records found</p>
@@ -630,7 +625,7 @@ export default function AdminAttendanceTable({
                     )}
                   </div>
 
-                  {/* Footer */}
+                  {/*=========== Footer============= */}
                   <div className="sticky bottom-0 border-t border-slate-100 bg-white px-6 py-4 flex justify-end">
                     <button
                       onClick={onCloseView}

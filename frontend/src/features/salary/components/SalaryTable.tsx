@@ -1,8 +1,9 @@
-import { usePagination } from "@/Hook/usePagination";
+import { usePagination } from "@/hooks/usePagination";
 import { FiEdit2, FiPlus, FiTrash2, FiDollarSign } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import type { SalaryRecord } from "@/services/salary.service";
+import type { SalaryRecord } from "../services/salary.service";
 import TablePagination from "@/components/common/TablePagination";
+import SortArrow from "@/components/common/SortArrow";
 
 const PAGE_SIZE = 8;
 
@@ -11,6 +12,9 @@ interface SalaryTableProps {
   onAdd: () => void;
   onEdit: (record: SalaryRecord) => void;
   onDelete: (record: SalaryRecord) => void;
+  sortBy?: string;
+  sortOrder?: "ASC" | "DESC";
+  onSort?: (column: string) => void;
 }
 
 const computeGross = (r: SalaryRecord) =>
@@ -27,6 +31,9 @@ export default function SalaryTable({
   onAdd,
   onEdit,
   onDelete,
+  sortBy = "created_at",
+  sortOrder = "DESC",
+  onSort,
 }: SalaryTableProps) {
   const { t } = useTranslation();
   const { page, setPage, totalPages, paginated } = usePagination(
@@ -53,13 +60,49 @@ export default function SalaryTable({
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
               <th className="px-5 py-3 font-medium">{t("salary.employee")}</th>
-              <th className="px-5 py-3 font-medium">
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("base_salary")}
+              >
                 {t("salary.baseSalary")}
+                <SortArrow
+                  column="base_salary"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
               </th>
-              <th className="px-5 py-3 font-medium">{t("salary.bonus")}</th>
-              <th className="px-5 py-3 font-medium">{t("salary.allowance")}</th>
-              <th className="px-5 py-3 font-medium">
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("bonus")}
+              >
+                {t("salary.bonus")}
+                <SortArrow
+                  column="bonus"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("allowance")}
+              >
+                {t("salary.allowance")}
+                <SortArrow
+                  column="allowance"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("tax_percentage")}
+              >
                 {t("salary.tax")}&nbsp;%
+                <SortArrow
+                  column="tax_percentage"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
               </th>
               <th className="px-5 py-3 font-medium">{t("salary.gross")}</th>
               <th className="px-5 py-3 font-medium">{t("salary.netPay")}</th>

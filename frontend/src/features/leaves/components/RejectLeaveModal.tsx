@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
 import { FiAlertCircle } from "react-icons/fi";
+import RichTextEditor from "@/components/editor/RichTextEditor";
+import { isRichTextEmpty } from "@/utils/richText";
 
 interface RejectLeaveModalProps {
   isOpen: boolean;
@@ -23,8 +25,8 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
   }, [isOpen]);
 
   const handleSubmit = () => {
-    if (!comment.trim()) return;
-    onConfirm(comment.trim());
+    if (isRichTextEmpty(comment)) return;
+    onConfirm(comment);
     setComment("");
   };
 
@@ -52,13 +54,12 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
           <label className="block text-sm font-medium text-slate-700">
             {t("leaves.rejectReason")} <span className="text-red-500">*</span>
           </label>
-          <textarea
-            autoFocus
-            rows={3}
+          <RichTextEditor
             value={comment}
-            onChange={(e) => setComment(e.target.value)}
+            onChange={setComment}
             placeholder={t("leaves.rejectPlaceholder")}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-red-400 focus:bg-white resize-none"
+            height="120px"
+            simple
           />
         </div>
 
@@ -73,7 +74,7 @@ const RejectLeaveModal: React.FC<RejectLeaveModalProps> = ({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!comment.trim()}
+            disabled={isRichTextEmpty(comment)}
             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
           >
             {t("common.confirm")}

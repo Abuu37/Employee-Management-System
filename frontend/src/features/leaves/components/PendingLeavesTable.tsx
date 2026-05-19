@@ -1,8 +1,9 @@
 import React from "react";
-import { usePagination } from "@/Hook/usePagination";
+import { usePagination } from "@/hooks/usePagination";
 import { FiCheck, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import TablePagination from "@/components/common/TablePagination";
+import { richTextToPlainText } from "@/utils/richText";
 
 const PAGE_SIZE = 8;
 
@@ -76,7 +77,9 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
                 <td className="px-5 py-4 text-slate-600">{leave.startDate}</td>
                 <td className="px-5 py-4 text-slate-600">{leave.endDate}</td>
                 <td className="px-5 py-4 text-slate-600">{leave.days}</td>
-                <td className="px-5 py-4 text-slate-600">{leave.reason}</td>
+                <td className="px-5 py-4 text-slate-600">
+                  {richTextToPlainText(leave.reason) || "-"}
+                </td>
                 <td className="px-5 py-4">
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${

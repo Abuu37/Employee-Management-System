@@ -4,6 +4,8 @@ import React from "react";
 import { useEffect, useState } from "react";
 import api from "@/services/axios";
 import { FiX, FiLogOut, FiCheckCircle, FiClipboard } from "react-icons/fi";
+import RichTextEditor from "@/components/editor/RichTextEditor";
+import { isRichTextEmpty } from "@/features/attendance/utils/attendance.utils";
 
 type Task = {
   id: number;
@@ -243,16 +245,15 @@ export default function CheckOutModel({
           {/* ── Work Summary ── */}
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
-              Work Summary{" "}
+              Reason{" "}
               <span className="text-red-400 normal-case font-bold">*</span>
             </p>
-            <textarea
-              rows={3}
+            <RichTextEditor
               value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              placeholder="Brief summary of what you accomplished today…"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 placeholder-slate-300
-                focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all resize-none shadow-sm"
+              onChange={setSummary}
+              placeholder="Brief reason for checking out…"
+              height="120px"
+              simple
             />
           </div>
 
@@ -261,13 +262,12 @@ export default function CheckOutModel({
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
               Notes
             </p>
-            <textarea
-              rows={2}
+            <RichTextEditor
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={setNotes}
               placeholder="Anything to carry forward to tomorrow…"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 placeholder-slate-300
-                focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all resize-none shadow-sm"
+              height="110px"
+              simple
             />
           </div>
 
@@ -281,7 +281,7 @@ export default function CheckOutModel({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={submitting || !summary.trim()}
+              disabled={submitting || isRichTextEmpty(summary)}
               className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
                 disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:opacity-90 shadow-sm"
               style={{

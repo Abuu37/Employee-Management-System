@@ -2,6 +2,10 @@
 // Replace with Zustand or Redux if the app grows.
 
 import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  AUTH_STORAGE_KEYS,
+  clearAuthSession,
+} from "@/features/auth/services/authSession";
 
 interface AuthState {
   token: string | null;
@@ -16,11 +20,21 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
-  const [role, setRole] = useState<string | null>(localStorage.getItem("user-role"));
-  const [userId, setUserId] = useState<string | null>(localStorage.getItem("user-id"));
-  const [userName, setUserName] = useState<string | null>(localStorage.getItem("user-name"));
-  const [userEmail, setUserEmail] = useState<string | null>(localStorage.getItem("user-email"));
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem(AUTH_STORAGE_KEYS.token),
+  );
+  const [role, setRole] = useState<string | null>(
+    localStorage.getItem(AUTH_STORAGE_KEYS.role),
+  );
+  const [userId, setUserId] = useState<string | null>(
+    localStorage.getItem(AUTH_STORAGE_KEYS.id),
+  );
+  const [userName, setUserName] = useState<string | null>(
+    localStorage.getItem(AUTH_STORAGE_KEYS.name),
+  );
+  const [userEmail, setUserEmail] = useState<string | null>(
+    localStorage.getItem(AUTH_STORAGE_KEYS.email),
+  );
 
   function setAuth(data: Omit<AuthState, "setAuth" | "clearAuth">) {
     setToken(data.token);
@@ -36,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserId(null);
     setUserName(null);
     setUserEmail(null);
-    localStorage.clear();
+    clearAuthSession();
   }
 
   return (

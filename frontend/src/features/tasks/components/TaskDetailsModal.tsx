@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { TaskItem, TaskComment } from "./types";
 import TaskCommentSection from "./TaskCommentSection";
+import RichTextEditor from "@/components/editor/RichTextEditor";
 
 interface TaskDetailsModalProps {
   isOpen: boolean;
@@ -73,7 +74,16 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             <b>Deadline:</b> {task.deadline}
           </div>
           <div>
-            <b>Description:</b> {task.description}
+            <b>Description:</b>
+            <div className="mt-2">
+              <RichTextEditor
+                value={task.description || ""}
+                onChange={() => {}}
+                readOnly
+                simple
+                height="140px"
+              />
+            </div>
           </div>
         </div>
 

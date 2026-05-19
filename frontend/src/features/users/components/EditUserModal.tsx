@@ -9,6 +9,7 @@ import type {
   EditUserFormValues,
 } from "@/features/users/types/user.types";
 import { FiBriefcase, FiUser } from "react-icons/fi";
+import { getAccessToken } from "@/features/auth/services/authSession";
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -116,10 +117,10 @@ function EditUserModal({
       currentUserRole === "admin"
     ) {
       setLoadingManagers(true);
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
       axios
         .get("http://localhost:5000/api/user/view-users", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token ?? ""}` },
         })
         .then((res) => {
           const list = Array.isArray(res.data)
@@ -134,7 +135,7 @@ function EditUserModal({
     if (isOpen && isManagerMode && currentUserRole === "admin") {
       axios
         .get("http://localhost:5000/api/user/view-users", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${getAccessToken() ?? ""}` },
         })
         .then((res) => {
           setSupervisors(
@@ -153,10 +154,10 @@ function EditUserModal({
 
   useEffect(() => {
     if (!isOpen || currentUserRole !== "admin") return;
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     axios
       .get("http://localhost:5000/api/departments", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       .then((res) => {
         setDepartments(
@@ -258,7 +259,14 @@ function EditUserModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={isManagerMode ? "Edit Manager" : t("employees.editUser")}
+      title={
+        <span className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+            <FiUser className="h-4 w-4" />
+          </span>
+          {isManagerMode ? "Edit Manager" : "Edit Employee"}
+        </span>
+      }
       maxWidth="max-w-4xl"
       panelClassName="overflow-hidden"
     >
@@ -547,7 +555,7 @@ function EditUserModal({
                               value={formValues.office_branch ?? ""}
                               onChange={handleChange}
                               className={inputClassName}
-                              placeholder="e.g. New York HQ"
+                              placeholder="e.g. HQ Office / Samora Branch"
                             />
                           </td>
                         </tr>
@@ -854,6 +862,21 @@ function EditUserModal({
                               <option value="contract">Contract</option>
                               <option value="intern">Intern</option>
                             </select>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-slate-200">
+                          <td className="px-2 py-3 font-medium text-slate-700">
+                            Office / Branch
+                          </td>
+                          <td className="px-2 py-3">
+                            <input
+                              type="text"
+                              name="office_branch"
+                              value={formValues.office_branch ?? ""}
+                              onChange={handleChange}
+                              className={inputClassName}
+                              placeholder="e.g. HQ Office / Samora Branch"
+                            />
                           </td>
                         </tr>
                         <tr>

@@ -1,5 +1,6 @@
 import Salary from "../models/salary.js";
 import User from "../models/user.js";
+import { Op, fn, col, literal } from "sequelize";
 
 // ================= SET / UPDATE SALARY =================
 export const setSalary = async (req, res) => {
@@ -48,6 +49,18 @@ export const setSalary = async (req, res) => {
 // ================= GET ALL SALARIES =================
 export const getAllSalaries = async (req, res) => {
   try {
+    const { sortBy = "created_at", sortOrder = "DESC" } = req.query;
+
+    const validSortFields = [
+      "base_salary",
+      "bonus",
+      "allowance",
+      "tax_percentage",
+      "created_at",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "created_at";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
     const salaries = await Salary.findAll({
       include: [
         {
@@ -56,7 +69,7 @@ export const getAllSalaries = async (req, res) => {
           attributes: ["id", "name", "email", "role"],
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [[orderField, orderDir]],
     });
     res.status(200).json({ salaries });
   } catch (error) {
@@ -128,6 +141,47 @@ export const deleteSalary = async (req, res) => {
     res.status(200).json({ message: "Salary deleted successfully" });
   } catch (error) {
     console.error("Error deleting salary:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ================= GET SALARY STATS =================
+export const getSalaryStats = async (req, res) => {
+  try {
+    const rows = await Salary.findAll({
+      attributes: ["base_salary", "bonus", "allowance", "tax_percentage"],
+    });
+
+    //======== Calculate total count, total gross, total net, and average base salary ========//
+
+    const total = rows.length;  //total rows
+    let totalGross = 0;
+    let totalNet = 0;
+
+    for (const r of rows) {
+      const base = Number(r.base_salary);
+      const bonus = Number(r.bonus || 0);
+      const allowance = Number(r.allowance || 0);
+      const taxPct = Number(r.tax_percentage || 0);
+      const gross = base + bonus + allowance;
+      const net = gross - (gross * taxPct) / 100;
+      totalGross += gross;
+      totalNet += net;
+    }
+
+    //======== Calculate average base salary ========//
+    const avgBase =  total > 0
+        ? rows.reduce((sum, r) => sum + Number(r.base_salary), 0) / total
+        : 0;
+
+    res.status(200).json({
+      total,
+      avgBase: Math.round(avgBase * 100) / 100,
+      totalGross: Math.round(totalGross * 100) / 100,
+      totalNet: Math.round(totalNet * 100) / 100,
+    });
+  } catch (error) {
+    console.error("Error fetching salary stats:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

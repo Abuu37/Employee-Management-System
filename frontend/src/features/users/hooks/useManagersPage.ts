@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
-import { useTableQueryParams } from "@/Hook/useTableQueryParams";
+import { useTableQueryParams } from "@/hooks/useTableQueryParams";
 import { userService } from "@/features/users/services/user.service";
 import type {
   AddUserFormValues,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useTableQueryParams } from "@/Hook/useTableQueryParams";
+import { useTableQueryParams } from "@/hooks/useTableQueryParams";
 import { departmentService } from "@/features/departments/services/department.service";
 import type {
   Department,
@@ -198,6 +198,11 @@ export const useDepartmentsPage = () => {
     }
   };
 
+  const closeDelete = () => {
+    setDeleteOpen(false);
+    setSelected(null);
+  };
+
   const handleToggle = async (dept: Department) => {
     try {
       const res = await departmentService.toggleStatus(dept.id);
@@ -239,6 +244,7 @@ export const useDepartmentsPage = () => {
     handleEdit,
     handleDelete,
     confirmDelete,
+    closeDelete,
     handleToggle,
   };
 };

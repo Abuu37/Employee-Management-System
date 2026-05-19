@@ -11,12 +11,32 @@ export default function ViewPayslipModal({
   onClose,
   data,
 }: ViewPayslipModalProps) {
-  if (!isOpen || !data) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-slate-50 p-4 shadow-xl">
-        <PayslipCard data={data} onBack={onClose} />
+    <div
+      className="fixed inset-0 z-50"
+      style={{ pointerEvents: isOpen ? "auto" : "none" }}
+    >
+      {/* Backdrop */}
+      <div
+        className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
+        style={{ pointerEvents: isOpen ? "auto" : "none" }}
+        onClick={onClose}
+      />
+
+      {/* Slide panel */}
+      <div
+        className={`absolute inset-y-0 right-0 w-full max-w-2xl bg-slate-50 shadow-2xl flex flex-col transition-transform duration-300 ease-out overflow-y-auto ${
+          isOpen && data ? "translate-x-0" : "translate-x-full"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {data && (
+          <div className="p-4">
+            <PayslipCard data={data} onBack={onClose} />
+          </div>
+        )}
       </div>
     </div>
   );

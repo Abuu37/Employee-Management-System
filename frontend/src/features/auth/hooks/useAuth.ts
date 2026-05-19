@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
 import { authService } from "@/features/auth/services/auth.service";
+import { setAuthFromLoginResponse } from "@/features/auth/services/authSession";
 import type {
   LoginFormValues,
   LoginFormErrors,
@@ -58,7 +59,7 @@ export const useLogin = () => {
     try {
       const data = await authService.login(values);
       if (data.message === "Login successful") {
-        localStorage.setItem("token", data.token);
+        setAuthFromLoginResponse(data);
         await refetch();
         toast.success("Login successful! Welcome back");
         navigate("/dashboard");

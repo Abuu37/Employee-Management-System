@@ -10,9 +10,21 @@ Project.init(
       allowNull: false,
     },
 
+    code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "code",
+    },
+
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+
+    priority: {
+      type: DataTypes.ENUM("low", "medium", "high"),
+      defaultValue: "medium",
+      allowNull: false,
     },
 
     createdBy: {

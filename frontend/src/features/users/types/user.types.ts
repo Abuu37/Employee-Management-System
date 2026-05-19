@@ -53,6 +53,9 @@ export interface AddUserFormValues {
   employment_type?: string;
   join_date?: string;
   employee_id?: string;
+  office_branch?: string;
+  reports_to?: number;
+  status?: string;
 }
 
 export interface EditUserFormValues {

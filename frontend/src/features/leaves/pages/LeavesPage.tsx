@@ -1,11 +1,12 @@
-﻿import React, { useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import {
   FiXCircle,
   FiCalendar,
   FiCheckCircle,
-  FiClock,
+  FiAlertTriangle,
   FiSlash,
   FiPlus,
 } from "react-icons/fi";
@@ -17,9 +18,13 @@ import Sidebar from "@/layouts/Sidebar";
 import LeavesTable from "@/features/leaves/components/LeavesTable";
 import AllLeavesTable from "@/features/leaves/components/AllLeavesTable";
 import AddLeaveModal from "@/features/leaves/components/AddLeaveModal";
+import type { AddLeaveFormValues } from "@/features/leaves/components/AddLeaveModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import LeaveBalanceCards from "@/features/leaves/components/LeaveBalanceCards";
 import useLeaveBalance from "@/features/leaves/hooks/useLeaveBalance";
 import { useUser } from "@/context/UserContext";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
+import { richTextToPlainText } from "@/utils/richText";
 
 interface Leave {
   id: number;
@@ -46,27 +51,60 @@ interface Leave {
 interface Colleague {
   id: number;
   name: string;
+  role?: string;
+  department_id?: number;
 }
 
+import { getAccessToken } from "@/features/auth/services/authSession";
+
 const authHeader = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
+  Authorization: `Bearer ${getAccessToken() ?? ""}`,
 });
+
+interface LeaveStats {
+  total: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+}
 
 const Leaves: React.FC = () => {
   const { user } = useUser();
   const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") ?? "",
+  );
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  // Admin tabs: "hr_pending" | "all" | "manager"
+  const [editingLeave, setEditingLeave] = useState<Leave | null>(null);
+  const [leaveStats, setLeaveStats] = useState<LeaveStats>({
+    total: 0,
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+  });
+
+  // Sort state — synced to URL
+  const [sortBy, setSortBy] = useState<string>(
+    searchParams.get("sortBy") ?? "createdAt",
+  );
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">(
+    (searchParams.get("sortOrder") as "ASC" | "DESC") ?? "DESC",
+  );
+
+  // Admin tabs: "hr_pending" | "manager"
   const [adminTab, setAdminTab] = useState<"hr_pending" | "manager">(
-    "hr_pending",
+    (searchParams.get("tab") as "hr_pending" | "manager") ?? "hr_pending",
   );
   // Manager tabs: "team" | "my"
-  const [managerTab, setManagerTab] = useState<"team" | "my">("team");
+  const [managerTab, setManagerTab] = useState<"team" | "my">(
+    (searchParams.get("tab") as "team" | "my") ?? "team",
+  );
   const [colleagues, setColleagues] = useState<Colleague[]>([]);
 
   const {
@@ -74,14 +112,47 @@ const Leaves: React.FC = () => {
     loading: balanceLoading,
     error: balanceError,
   } = useLeaveBalance();
+  const deleteConfirmation = useDeleteConfirmation();
 
   const isAdmin = user?.role === "admin";
   const isManager = user?.role === "manager";
 
-  const fetchLeaves = async () => {
+  // Sync sort + tab to URL params
+  useEffect(() => {
+    const params: Record<string, string> = { sortBy, sortOrder };
+    if (searchTerm) params.search = searchTerm;
+    if (isAdmin) params.tab = adminTab;
+    else if (isManager) params.tab = managerTab;
+    setSearchParams(params, { replace: true });
+  }, [sortBy, sortOrder, searchTerm, adminTab, managerTab]);
+
+  // Fetch leave stats based on current tab and role
+  const fetchStats = useCallback(async () => {
+    try {
+      const params: Record<string, string> = {};
+      if (isManager) {
+        params.scope = managerTab;
+      } else if (isAdmin) {
+        params.scope = adminTab;
+      }
+
+      const res = await axios.get("/api/leaves/stats", {
+        headers: authHeader(),
+        params,
+      });
+      setLeaveStats(res.data);
+    } catch {
+      // non-critical
+    }
+  }, [isManager, isAdmin, managerTab, adminTab]);
+
+  // Fetch leaves based on current tab and role
+  const fetchLeaves = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
+      const params: Record<string, string> = { sortBy, sortOrder };
+
       let url = "/api/leaves/my-leaves";
 
       if (isManager) {
@@ -96,25 +167,39 @@ const Leaves: React.FC = () => {
         else if (adminTab === "manager") url = "/api/leaves/manager-leaves";
       }
 
-      const res = await axios.get(url, { headers: authHeader() });
+      const res = await axios.get(url, { headers: authHeader(), params });
       setLeaves(Array.isArray(res.data) ? res.data : (res.data.leaves ?? []));
     } catch (err: any) {
       setError(err.response?.data?.message ?? "Failed to fetch leaves");
     }
     setLoading(false);
-  };
+  }, [user, adminTab, managerTab, sortBy, sortOrder]);
 
-  // Fetch colleagues for backup employee selector
+  //========= Fetch colleagues(team members) for backup employee selector =============
   const fetchColleagues = async () => {
     try {
       const res = await axios.get("/api/user/view-users", {
         headers: authHeader(),
       });
-      const all: Colleague[] = Array.isArray(res.data)
+      const all: any[] = Array.isArray(res.data)
         ? res.data
         : (res.data.users ?? []);
-      // Exclude self
-      setColleagues(all.filter((u: any) => u.id !== user?.id));
+
+      const filtered = all.filter((u: any) => {
+        if (u.id === user?.id) return false;
+
+        if (isManager) {
+          const managerDept = (user as any)?.department_id;
+          return (
+            u.role === "employee" &&
+            (managerDept == null || u.department_id === managerDept)
+          );
+        }
+
+        return true;
+      });
+
+      setColleagues(filtered);
     } catch {
       // non-critical, ignore
     }
@@ -122,38 +207,87 @@ const Leaves: React.FC = () => {
 
   useEffect(() => {
     fetchLeaves();
+    fetchStats();
     // eslint-disable-next-line
-  }, [user, adminTab, managerTab]);
+  }, [fetchLeaves, fetchStats]);
 
   useEffect(() => {
     if (user) fetchColleagues();
     // eslint-disable-next-line
   }, [user]);
 
-  // ---- Employee applies ----
-  const handleApply = async (form: {
-    type: string;
-    startDate: string;
-    endDate: string;
-    reason: string;
-    backupEmployeeId: string;
-    handoverNote: string;
-  }) => {
+  //======= Open apply modal in either add or edit mode ============
+  const openApplyModal = () => {
+    setEditingLeave(null);
+    setShowModal(true);
+  };
+
+  // Close modal and reset edit state
+  const closeLeaveModal = () => {
+    setShowModal(false);
+    setEditingLeave(null);
+  };
+
+  //======= Edit rejected leave (manager only) ============
+  const handleEditRejectedLeave = (leave: Leave) => {
+    setEditingLeave(leave);
+    setShowModal(true);
+  };
+
+  //======= Employee/manager deletes own rejected/approved leave request =============
+  const handleDeleteRequest = async (leave: Leave) => {
+    deleteConfirmation.requestDelete({
+      title: t("common.delete"),
+      message: "Are you sure you want to delete this leave request?",
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      onConfirm: async () => {
+        setError("");
+        try {
+          await axios.delete(`/api/leaves/cancel/${leave.id}`, {
+            headers: authHeader(),
+          });
+          toast.success("Leave request deleted");
+          await Promise.all([fetchLeaves(), fetchStats()]);
+        } catch (err: any) {
+          const message =
+            err.response?.data?.message ?? "Failed to delete leave";
+          toast.error(message);
+          setError(message);
+        }
+      },
+    });
+  };
+
+  // =========== Apply new leave or edit+apply rejected manager leave ==========
+  const handleSaveLeave = async (form: AddLeaveFormValues) => {
     setIsSaving(true);
     setError("");
     try {
-      await axios.post("/api/leaves/apply", form, { headers: authHeader() });
-      toast.success("Leave request submitted successfully");
-      fetchLeaves();
-      setShowModal(false);
+      if (editingLeave && isManager) {
+        await axios.put(`/api/leaves/resend/${editingLeave.id}`, form, {
+          headers: authHeader(),
+        });
+        toast.success(t("leaves.editAppliedSuccess"));
+      } else {
+        await axios.post("/api/leaves/apply", form, { headers: authHeader() });
+        toast.success("Leave request submitted successfully");
+      }
+      await Promise.all([fetchLeaves(), fetchStats()]);
+      closeLeaveModal();
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Failed to apply for leave");
-      setError(err.response?.data?.message ?? "Failed to apply for leave");
+      const message =
+        err.response?.data?.message ??
+        (editingLeave
+          ? "Failed to edit and apply leave"
+          : "Failed to apply for leave");
+      toast.error(message);
+      setError(message);
     }
     setIsSaving(false);
   };
 
-  // ---- Employee cancels own pending leave ----
+  //======== Employee cancels own pending leave ============
   const handleCancel = async (leave: Leave) => {
     setError("");
     try {
@@ -168,7 +302,7 @@ const Leaves: React.FC = () => {
     }
   };
 
-  // ---- Manager stage-1 approve ----
+  //======== Manager stage-1 approve ============
   const handleManagerApprove = async (leave: Leave) => {
     setError("");
     try {
@@ -185,7 +319,7 @@ const Leaves: React.FC = () => {
     }
   };
 
-  // ---- Manager stage-1 reject (requires comment) ----
+  //======== Manager stage-1 reject (requires comment) ============
   const handleManagerReject = async (leave: Leave, comment: string) => {
     setError("");
     try {
@@ -219,7 +353,7 @@ const Leaves: React.FC = () => {
     }
   };
 
-  // ---- HR / Admin stage-2 reject ----
+  //======== HR / Admin stage-2 reject =============
   const handleHrReject = async (leave: Leave, comment: string) => {
     setError("");
     try {
@@ -237,11 +371,25 @@ const Leaves: React.FC = () => {
   };
 
   const filteredLeaves = leaves.filter((leave) =>
-    [leave.type, leave.reason, leave.overallStatus, leave.employeeName]
+    [
+      leave.type,
+      richTextToPlainText(leave.reason),
+      leave.overallStatus,
+      leave.employeeName,
+    ]
       .join(" ")
       .toLowerCase()
       .includes(searchTerm.toLowerCase()),
   );
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
+    } else {
+      setSortBy(column);
+      setSortOrder("DESC");
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -263,7 +411,7 @@ const Leaves: React.FC = () => {
             {!isAdmin && (
               <button
                 type="button"
-                onClick={() => setShowModal(true)}
+                onClick={openApplyModal}
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
                 <FiPlus className="h-4 w-4" />
@@ -276,7 +424,7 @@ const Leaves: React.FC = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               label={t("leaves.totalLeaves")}
-              value={leaves.length}
+              value={leaveStats.total}
               icon={<FiCalendar />}
               color=""
               featured
@@ -284,35 +432,21 @@ const Leaves: React.FC = () => {
             />
             <StatCard
               label={t("leaves.approved")}
-              value={
-                leaves.filter((l) => l.overallStatus === "approved").length
-              }
+              value={leaveStats.approved}
               icon={<FiCheckCircle />}
               color="bg-emerald-100 text-emerald-600"
               subtitle={t("leaves.leavesApproved")}
             />
             <StatCard
               label={t("leaves.pending")}
-              value={
-                leaves.filter(
-                  (l) =>
-                    l.overallStatus === "pending_manager" ||
-                    l.overallStatus === "pending_hr",
-                ).length
-              }
-              icon={<FiClock />}
+              value={leaveStats.pending}
+              icon={<FiAlertTriangle />}
               color="bg-amber-100 text-amber-600"
               subtitle={t("leaves.awaitingApproval")}
             />
             <StatCard
               label={t("leaves.rejected")}
-              value={
-                leaves.filter(
-                  (l) =>
-                    l.overallStatus === "rejected_by_manager" ||
-                    l.overallStatus === "rejected_by_hr",
-                ).length
-              }
+              value={leaveStats.rejected}
               icon={<FiSlash />}
               color="bg-red-100 text-red-500"
               subtitle={t("leaves.leavesDeclined")}
@@ -378,7 +512,11 @@ const Leaves: React.FC = () => {
                       ? "bg-[#1e3a5f] text-white shadow"
                       : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
-                  onClick={() => setAdminTab(key)}
+                  onClick={() => {
+                    setAdminTab(key);
+                    setSortBy("createdAt");
+                    setSortOrder("DESC");
+                  }}
                 >
                   {label}
                 </button>
@@ -402,7 +540,11 @@ const Leaves: React.FC = () => {
                       ? "bg-[#1e3a5f] text-white shadow"
                       : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
-                  onClick={() => setManagerTab(key)}
+                  onClick={() => {
+                    setManagerTab(key);
+                    setSortBy("createdAt");
+                    setSortOrder("DESC");
+                  }}
                 >
                   {label}
                 </button>
@@ -417,6 +559,9 @@ const Leaves: React.FC = () => {
               tab={adminTab}
               onHrApprove={handleHrApprove}
               onHrReject={handleHrReject}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
             />
           ) : (
             <LeavesTable
@@ -426,6 +571,11 @@ const Leaves: React.FC = () => {
               onManagerApprove={handleManagerApprove}
               onManagerReject={handleManagerReject}
               onCancel={handleCancel}
+              onEditRejected={handleEditRejectedLeave}
+              onDeleteRequest={handleDeleteRequest}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
               emptyMessage={
                 loading ? t("leaves.loadingLeaves") : t("leaves.noLeaves")
               }
@@ -434,10 +584,43 @@ const Leaves: React.FC = () => {
 
           <AddLeaveModal
             isOpen={showModal}
-            onClose={() => setShowModal(false)}
-            onSave={handleApply}
+            onClose={closeLeaveModal}
+            onSave={handleSaveLeave}
             isSaving={isSaving}
             colleagues={colleagues}
+            isEditMode={Boolean(editingLeave)}
+            initialValues={
+              editingLeave
+                ? {
+                    type: editingLeave.type,
+                    startDate: editingLeave.startDate,
+                    endDate: editingLeave.endDate,
+                    reason: editingLeave.reason,
+                    backupEmployeeId: editingLeave.backupEmployeeId
+                      ? String(editingLeave.backupEmployeeId)
+                      : "",
+                    handoverNote: editingLeave.handoverNote ?? "",
+                  }
+                : undefined
+            }
+          />
+
+          <DeleteConfirmModal
+            isOpen={deleteConfirmation.isOpen}
+            title={deleteConfirmation.dialog?.title ?? t("common.delete")}
+            message={
+              deleteConfirmation.dialog?.message ??
+              "Are you sure you want to delete this item?"
+            }
+            confirmLabel={
+              deleteConfirmation.dialog?.confirmLabel ?? t("common.delete")
+            }
+            cancelLabel={
+              deleteConfirmation.dialog?.cancelLabel ?? t("common.cancel")
+            }
+            isProcessing={deleteConfirmation.isProcessing}
+            onClose={deleteConfirmation.closeDialog}
+            onConfirm={deleteConfirmation.confirmDelete}
           />
         </div>
       </main>

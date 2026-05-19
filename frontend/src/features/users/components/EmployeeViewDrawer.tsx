@@ -368,6 +368,14 @@ export default function EmployeeViewDrawer({
                         value={drawerData.department ?? "Not assigned"}
                       />
                       <InfoItem label="Manager" value={managerName} />
+                      <InfoItem
+                        label="Office / Branch"
+                        value={
+                          drawerData.office_branch ??
+                          drawerData.officeBranch ??
+                          "Not set"
+                        }
+                      />
                     </div>
                   </PanelCard>
                 </section>

@@ -116,6 +116,16 @@ User.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+
+    refreshTokenHash: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    refreshTokenExpires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize,

@@ -6,6 +6,7 @@ import { useUser } from "@/context/UserContext";
 import { taskService } from "@/features/tasks/services/task.service";
 import { normalizeMyTask } from "@/features/tasks/utils/normalizeTasks";
 import type { TaskItem } from "@/features/tasks/types/task.types";
+import { clearAuthSession } from "@/features/auth/services/authSession";
 
 /**
  * Handles data loading and status mutations for the employee task list.
@@ -35,8 +36,7 @@ export const useTasks = () => {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401 || err.response?.status === 403) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user-role");
+          clearAuthSession();
           navigate("/login");
           return;
         }

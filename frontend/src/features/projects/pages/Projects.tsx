@@ -3,7 +3,7 @@ import {
   FiCheckCircle,
   FiClock,
   FiFolder,
-  FiList,
+  FiAlertTriangle,
   FiPlus,
 } from "react-icons/fi";
 import Header from "@/layouts/Header";
@@ -12,16 +12,19 @@ import StatCard from "@/features/attendance/components/StatCard";
 import ProjectTable from "@/features/projects/components/ProjectTable";
 import ProjectForm from "@/features/projects/components/ProjectForm";
 import ProjectDetails from "@/features/projects/components/ProjectDetails";
-import DeleteProjectModal from "@/features/projects/components/DeleteProjectModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import { useUser } from "@/context/UserContext";
 import { useProjectsPage } from "@/features/projects/hooks/useProjectsPage";
+import type { ProjectItem } from "@/features/projects/types/project.types";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
 
 function Projects() {
   const { t } = useTranslation();
   const { user } = useUser();
+  const deleteConfirmation = useDeleteConfirmation();
   const {
-    displayedProjects,
+    projects,
     managers,
     stats,
     error,
@@ -36,8 +39,16 @@ function Projects() {
     viewOpen,
     editOpen,
     deleteOpen,
-    searchTerm,
-    setSearchTerm,
+    search,
+    statusFilter,
+    sortBy,
+    sortOrder,
+    page,
+    totalPages,
+    setSearch,
+    setStatusFilter,
+    setPage,
+    handleSort,
     handleCreateOpen,
     handleViewOpen,
     handleEditOpen,
@@ -47,9 +58,21 @@ function Projects() {
     handleDelete,
     handleCreateTask,
     handleDeleteTask,
+    handleSwitchToEdit,
     handleCloseModal,
     updateStatus,
   } = useProjectsPage();
+
+  const handleDeleteRequest = (project: ProjectItem) => {
+    handleDeleteOpen(project);
+    deleteConfirmation.requestDelete({
+      title: t("common.delete"),
+      message: `Are you sure you want to delete ${project.name}?`,
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      onConfirm: handleDelete,
+    });
+  };
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
@@ -109,22 +132,36 @@ function Projects() {
               <StatCard
                 label={t("projects.pending")}
                 value={stats.pending}
-                icon={<FiList />}
+                icon={<FiAlertTriangle />}
                 color="bg-amber-100 text-amber-600"
                 subtitle={t("projects.notYetStarted")}
               />
             </div>
 
-            {/* ── Search ──────────────────────────────────────────────── */}
-            <div className="relative w-full max-w-sm">
-              <AnimatedSearchIcon />
-              <input
-                type="text"
-                placeholder={t("projects.searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-              />
+            {/* ── Search + filter ─────────────────────────────────────── */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full max-w-sm">
+                <AnimatedSearchIcon />
+                <input
+                  type="text"
+                  placeholder={t("projects.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              {/* Status filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">{t("projects.pending")}</option>
+                <option value="in_progress">{t("projects.inProgress")}</option>
+                <option value="complete">{t("projects.complete")}</option>
+              </select>
             </div>
 
             {/* ── Alerts ──────────────────────────────────────────────── */}
@@ -154,12 +191,18 @@ function Projects() {
             {/* ── Table ───────────────────────────────────────────────── */}
             <ProjectTable
               title={t("projects.allProjectsTitle")}
-              projects={displayedProjects}
+              projects={projects}
               emptyMessage={t("projects.noProjects")}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
               onAdd={handleCreateOpen}
               onView={handleViewOpen}
               onEdit={handleEditOpen}
-              onDelete={handleDeleteOpen}
+              onDelete={handleDeleteRequest}
               onUpdateStatus={updateStatus}
             />
 
@@ -187,13 +230,27 @@ function Projects() {
               assignees={employeeOptions}
               onCreateTask={handleCreateTask}
               onDeleteTask={handleDeleteTask}
+              onEdit={activeProject ? handleSwitchToEdit : undefined}
             />
-            <DeleteProjectModal
-              isOpen={deleteOpen}
-              onClose={handleCloseModal}
-              onConfirm={handleDelete}
-              project={activeProject}
-              isDeleting={isDeleting}
+            <DeleteConfirmModal
+              isOpen={deleteConfirmation.isOpen}
+              title={deleteConfirmation.dialog?.title ?? t("common.delete")}
+              message={
+                deleteConfirmation.dialog?.message ??
+                "Are you sure you want to delete this project?"
+              }
+              confirmLabel={
+                deleteConfirmation.dialog?.confirmLabel ?? t("common.delete")
+              }
+              cancelLabel={
+                deleteConfirmation.dialog?.cancelLabel ?? t("common.cancel")
+              }
+              isProcessing={isDeleting || deleteConfirmation.isProcessing}
+              onClose={() => {
+                deleteConfirmation.closeDialog();
+                handleCloseModal();
+              }}
+              onConfirm={deleteConfirmation.confirmDelete}
             />
           </div>
         </main>

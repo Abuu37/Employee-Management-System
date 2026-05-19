@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { getAccessToken } from "@/features/auth/services/authSession";
 
 export interface LeaveBalance {
   annual: number;
@@ -22,7 +23,7 @@ export default function useLeaveBalance() {
       try {
         const res = await axios.get("/api/leaves/leave-balance", {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${getAccessToken() ?? ""}`,
           },
         });
         const data = res.data.balance;
@@ -35,9 +36,21 @@ export default function useLeaveBalance() {
           casualTotal: 5,
         });
       } catch (err: any) {
-        setError(
-          err.response?.data?.message || "Failed to fetch leave balance",
-        );
+        if (err.response?.status === 404) {
+          // No balance record yet — show zeros
+          setBalance({
+            annual: 0,
+            sick: 0,
+            casual: 0,
+            annualTotal: 20,
+            sickTotal: 10,
+            casualTotal: 5,
+          });
+        } else {
+          setError(
+            err.response?.data?.message || "Failed to fetch leave balance",
+          );
+        }
       }
       setLoading(false);
     }

@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import {
   FiAlertCircle,
   FiCheckCircle,
-  FiClock,
+  FiAlertTriangle,
   FiFileText,
   FiPlus,
 } from "react-icons/fi";
@@ -11,12 +11,14 @@ import Sidebar from "@/layouts/Sidebar";
 import StatCard from "@/features/attendance/components/StatCard";
 import DocumentTable from "@/features/documents/components/DocumentTable";
 import UploadDocumentModal from "@/features/documents/components/UploadDocumentModal";
-import DeleteDocumentModal from "@/features/documents/components/DeleteDocumentModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import { useDocumentPage } from "@/features/documents/hooks/useDocumentPage";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
 
 export default function DocumentPage() {
   const { t } = useTranslation();
+  const deleteConfirmation = useDeleteConfirmation();
   const {
     role,
     data,
@@ -46,6 +48,17 @@ export default function DocumentPage() {
     handleView,
     handleVerify,
   } = useDocumentPage();
+
+  const handleDeleteRequest = (doc: (typeof data)[number]) => {
+    setDeleteTarget(doc);
+    deleteConfirmation.requestDelete({
+      title: t("common.delete"),
+      message: t("documents.deleteConfirm"),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      onConfirm: handleDeleteConfirm,
+    });
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -97,7 +110,7 @@ export default function DocumentPage() {
             <StatCard
               label={t("documents.pending")}
               value={stats.pending}
-              icon={<FiClock />}
+              icon={<FiAlertTriangle />}
               color="bg-amber-100 text-amber-600"
               subtitle={t("documents.awaitingVerification")}
             />
@@ -167,7 +180,7 @@ export default function DocumentPage() {
             onSort={handleSort}
             role={role}
             onAdd={() => setUploadOpen(true)}
-            onDelete={setDeleteTarget}
+            onDelete={handleDeleteRequest}
             onView={handleView}
             onVerify={
               role === "admin" || role === "manager" ? handleVerify : undefined
@@ -181,12 +194,24 @@ export default function DocumentPage() {
             onSave={handleUpload}
             isSaving={saving}
           />
-          <DeleteDocumentModal
-            isOpen={!!deleteTarget}
-            onClose={() => setDeleteTarget(null)}
-            onConfirm={handleDeleteConfirm}
-            document={deleteTarget}
-            isDeleting={deleting}
+          <DeleteConfirmModal
+            isOpen={deleteConfirmation.isOpen}
+            title={deleteConfirmation.dialog?.title ?? t("common.delete")}
+            message={
+              deleteConfirmation.dialog?.message ?? t("documents.deleteConfirm")
+            }
+            confirmLabel={
+              deleteConfirmation.dialog?.confirmLabel ?? t("common.delete")
+            }
+            cancelLabel={
+              deleteConfirmation.dialog?.cancelLabel ?? t("common.cancel")
+            }
+            isProcessing={deleting || deleteConfirmation.isProcessing}
+            onClose={() => {
+              deleteConfirmation.closeDialog();
+              setDeleteTarget(null);
+            }}
+            onConfirm={deleteConfirmation.confirmDelete}
           />
         </div>
       </main>

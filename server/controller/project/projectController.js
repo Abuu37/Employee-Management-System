@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import Project from "../../models/project.js";
 import User from "../../models/user.js";
 
@@ -75,6 +76,19 @@ const buildProjectPayload = async (body, { partial = false } = {}) => {
     payload.status = status;
   }
 
+  if (body.code !== undefined) {
+    payload.code = String(body.code ?? "").trim() || null;
+  }
+
+  const allowedPriorities = new Set(["low", "medium", "high"]);
+  if (body.priority !== undefined) {
+    const priority = String(body.priority).trim().toLowerCase();
+    if (!allowedPriorities.has(priority)) {
+      return { error: "priority must be one of: low, medium, high" };
+    }
+    payload.priority = priority;
+  }
+
   const effectiveStartDate = payload.startDate;
   const effectiveEndDate = payload.endDate;
   if (
@@ -87,8 +101,6 @@ const buildProjectPayload = async (body, { partial = false } = {}) => {
 
   return { payload };
 };
-
-
 
 //=========== Create project by admin only ===========//
 export const createProject = async (req, res) => {
@@ -117,13 +129,66 @@ export const createProject = async (req, res) => {
 //========================= Get all projects =============================
 export const getProjects = async (req, res) => {
   try {
+    const {
+      search,
+      status,
+      sortBy = "id",
+      sortOrder = "DESC",
+      page,
+      limit,
+    } = req.query;
+
+    // Role-based base filter
     const where = req.user.role === "manager" ? { managerId: req.user.id } : {};
-    const projects = await Project.findAll({
+
+    // Search by project name or description
+    const searchText = typeof search === "string" ? search.trim() : "";
+    if (searchText) {
+      where[Op.or] = [
+        { name: { [Op.iLike]: `%${searchText}%` } },
+        { description: { [Op.iLike]: `%${searchText}%` } },
+      ];
+    }
+
+    // Status filter
+    if (status && status !== "all" && allowedStatuses.has(status)) {
+      where.status = status;
+    }
+
+    // Sort — allowlist maps frontend key → DB column
+    const colMap = { startDate: "start_date", endDate: "end_date" };
+    const allowedCols = ["id", "name", "status", "startDate", "endDate"];
+    const rawCol = allowedCols.includes(sortBy) ? sortBy : "id";
+    const dbCol = colMap[rawCol] ?? rawCol;
+    const finalOrder =
+      String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+    const offset = (pageNum - 1) * limitNum;
+
+    const { count, rows } = await Project.findAndCountAll({
       where,
-      order: [["id", "DESC"]],
+      include: [
+        {
+          model: User,
+          as: "manager",
+          attributes: ["id", "name"],
+          required: false,
+        },
+      ],
+      order: [[dbCol, finalOrder]],
+      limit: limitNum,
+      offset,
     });
 
-    return res.status(200).json(projects);
+    return res.status(200).json({
+      data: rows,
+      page: pageNum,
+      totalPages: Math.max(1, Math.ceil(count / limitNum)),
+      total: count,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Failed to fetch projects" });
@@ -133,7 +198,16 @@ export const getProjects = async (req, res) => {
 //=========== Get single project ===========//
 export const getProjectById = async (req, res) => {
   try {
-    const project = await Project.findByPk(req.params.id);
+    const project = await Project.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: "manager",
+          attributes: ["id", "name"],
+          required: false,
+        },
+      ],
+    });
 
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
@@ -161,6 +235,10 @@ export const updateProject = async (req, res) => {
 
     //=========== If manager, only allow status update ===========//
     if (req.user.role === "manager") {
+      if (project.managerId !== req.user.id) {
+        return res.status(403).json({ message: "Not allowed." });
+      }
+
       const { status } = req.body;
       if (!status || !allowedStatuses.has(status)) {
         return res.status(400).json({ message: "Invalid status value." });

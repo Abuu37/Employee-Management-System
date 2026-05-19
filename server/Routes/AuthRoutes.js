@@ -8,8 +8,16 @@ import {
   forgotPassword,
   resetPassword,
   uploadAvatar,
+  refreshToken,
+  logout,
 } from "../controller/userController.js";
 import { verifyToken } from "../Middlewares/authMiddleware.js";
+import { validateRequest } from "../Middlewares/validateRequest.js";
+import {
+  validateForgotPasswordBody,
+  validateLoginBody,
+  validateResetPasswordBody,
+} from "../validators/authValidators.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +36,11 @@ const avatarUpload = multer({
   storage: avatarStorage,
   limits: { fileSize: 3 * 1024 * 1024 }, // 3 MB
   fileFilter: (req, file, cb) => {
-    if (["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)) {
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedExt = [".jpg", ".jpeg", ".png", ".webp"];
+    const ext = path.extname(file.originalname || "").toLowerCase();
+
+    if (allowedMimes.includes(file.mimetype) && allowedExt.includes(ext)) {
       cb(null, true);
     } else {
       cb(new Error("Only JPEG, PNG and WebP images are allowed"));
@@ -37,15 +49,25 @@ const avatarUpload = multer({
 });
 
 const AuthRoute = express.Router();
-AuthRoute.post("/login", login);
+AuthRoute.post("/login", validateRequest(validateLoginBody), login);
 AuthRoute.get("/me", verifyToken, getMe);
+AuthRoute.post("/refresh", refreshToken);
+AuthRoute.post("/logout", logout);
 AuthRoute.post(
   "/avatar",
   verifyToken,
   avatarUpload.single("avatar"),
   uploadAvatar,
 );
-AuthRoute.post("/forgot-password", forgotPassword);
-AuthRoute.post("/reset-password", resetPassword);
+AuthRoute.post(
+  "/forgot-password",
+  validateRequest(validateForgotPasswordBody),
+  forgotPassword,
+);
+AuthRoute.post(
+  "/reset-password",
+  validateRequest(validateResetPasswordBody),
+  resetPassword,
+);
 
 export { AuthRoute };

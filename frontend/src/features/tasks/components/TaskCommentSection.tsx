@@ -17,7 +17,7 @@ const TaskCommentSection: React.FC<TaskCommentSectionProps> = ({
   return (
     <div className="mt-4">
       <h3 className="font-semibold mb-2">Discussion</h3>
-      <div className="bg-slate-50 rounded-lg p-3 min-h-[120px] mb-2 max-h-60 overflow-y-auto">
+      <div className="bg-slate-50 rounded-lg p-3 min-h-30 mb-2 max-h-60 overflow-y-auto">
         {comments.length === 0 ? (
           <div className="text-slate-400 text-sm">No comments yet.</div>
         ) : (

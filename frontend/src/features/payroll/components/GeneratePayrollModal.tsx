@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
-import { getAllSalaries } from "@/services/salary.service";
+import { getAllSalaries } from "@/features/salary/services/salary.service";
 
 const monthNames = [
   "January",
@@ -48,8 +48,10 @@ export default function GeneratePayrollModal({
     month: 0,
     year: 0,
   });
+  
   const [users, setUsers] = useState<UserOption[]>([]);
 
+  //============== Load users when modal opens =============
   useEffect(() => {
     if (!isOpen) return;
     setFormValues({ user_id: 0, month: 0, year: 0 });
@@ -66,6 +68,9 @@ export default function GeneratePayrollModal({
       .catch(console.error);
   }, [isOpen]);
 
+  
+//==============  handle form changes ===================
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
@@ -75,6 +80,8 @@ export default function GeneratePayrollModal({
       [name]: Number(value),
     }));
   };
+
+  //==============  fuction handle submit ===================
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

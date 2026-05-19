@@ -1,10 +1,17 @@
-﻿import React, { useState } from "react";
-import { usePagination } from "@/Hook/usePagination";
-import { FiEye, FiCheck, FiX, FiCalendar } from "react-icons/fi";
+import React, { useState } from "react";
+import { usePagination } from "@/hooks/usePagination";
+import {
+  FiEye,
+  FiCalendar,
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiXCircle,
+} from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import ViewLeaveModal from "./ViewLeaveModal";
 import RejectLeaveModal from "./RejectLeaveModal";
 import TablePagination from "@/components/common/TablePagination";
+import SortArrow from "@/components/common/SortArrow";
 
 interface Leave {
   id: number;
@@ -31,28 +38,58 @@ interface AllLeavesTableProps {
   tab: "hr_pending" | "all" | "manager";
   onHrApprove: (leave: Leave) => void;
   onHrReject: (leave: Leave, comment: string) => void;
+  sortBy?: string;
+  sortOrder?: "ASC" | "DESC";
+  onSort?: (column: string) => void;
 }
 
+const statusConfig: Record<string, { color: string; icon: React.ReactNode }> = {
+  pending_manager: {
+    color: "bg-yellow-50 text-yellow-700 border border-yellow-200",
+    icon: <FiAlertTriangle className="shrink-0" />,
+  },
+  pending_hr: {
+    color: "bg-yellow-50 text-yellow-700 border border-yellow-200",
+    icon: <FiAlertTriangle className="shrink-0" />,
+  },
+  approved: {
+    color: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    icon: <FiCheckCircle className="shrink-0" />,
+  },
+  rejected: {
+    color: "bg-red-50 text-red-600 border border-red-200",
+    icon: <FiXCircle className="shrink-0" />,
+  },
+  rejected_by_manager: {
+    color: "bg-red-50 text-red-600 border border-red-200",
+    icon: <FiXCircle className="shrink-0" />,
+  },
+  rejected_by_hr: {
+    color: "bg-red-50 text-red-600 border border-red-200",
+    icon: <FiXCircle className="shrink-0" />,
+  },
+};
+
+const statusLabelKey: Record<string, string> = {
+  pending_manager: "leaves.statusLabels.pending_manager",
+  pending_hr: "leaves.statusLabels.pending_hr",
+  approved: "leaves.approved",
+  rejected: "leaves.rejected",
+  rejected_by_manager: "leaves.statusLabels.rejected_by_manager",
+  rejected_by_hr: "leaves.statusLabels.rejected_by_hr",
+};
+
 function statusBadge(status: string, t: (key: string) => string) {
-  const map: Record<string, string> = {
-    pending_manager: "bg-yellow-50 text-yellow-700",
-    pending_hr: "bg-yellow-50 text-yellow-700",
-    approved: "bg-emerald-50 text-emerald-700",
-    rejected_by_manager: "bg-red-50 text-red-600",
-    rejected_by_hr: "bg-red-50 text-red-600",
-  };
-  const labelKey: Record<string, string> = {
-    pending_manager: "leaves.statusLabels.pending_manager",
-    pending_hr: "leaves.statusLabels.pending_hr",
-    approved: "leaves.approved",
-    rejected_by_manager: "leaves.statusLabels.rejected_by_manager",
-    rejected_by_hr: "leaves.statusLabels.rejected_by_hr",
+  const cfg = statusConfig[status] ?? {
+    color: "bg-slate-100 text-slate-600 border border-slate-200",
+    icon: null,
   };
   return (
     <span
-      className={`rounded-full px-2.5 py-1 text-xs font-medium ${map[status] ?? "bg-slate-100 text-slate-600"}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${cfg.color}`}
     >
-      {labelKey[status] ? t(labelKey[status]) : status}
+      {cfg.icon}
+      {statusLabelKey[status] ? t(statusLabelKey[status]) : status}
     </span>
   );
 }
@@ -62,19 +99,29 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
   tab,
   onHrApprove,
   onHrReject,
+  sortBy = "createdAt",
+  sortOrder = "DESC",
+  onSort,
 }) => {
   const { t } = useTranslation();
+  const PAGE_SIZE = 8;
   const {
     page: currentPage,
     setPage: setCurrentPage,
     totalPages,
     paginated,
-  } = usePagination(leaves, 8);
+  } = usePagination(leaves, PAGE_SIZE);
 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewApprove, setViewApprove] = useState<(() => void) | undefined>(
+    undefined,
+  );
+  const [viewReject, setViewReject] = useState<(() => void) | undefined>(
+    undefined,
+  );
 
-  // HR reject modal state
+  // Reject modal state
   const [rejectingLeave, setRejectingLeave] = useState<Leave | null>(null);
 
   const tableTitle =
@@ -99,14 +146,64 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
               <th className="px-5 py-3 font-medium">{t("leaves.employee")}</th>
-              <th className="px-5 py-3 font-medium">{t("leaves.type")}</th>
-              <th className="px-5 py-3 font-medium">{t("leaves.startDate")}</th>
-              <th className="px-5 py-3 font-medium">{t("leaves.endDate")}</th>
-              <th className="px-5 py-3 font-medium">{t("leaves.days")}</th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("type")}
+              >
+                {t("leaves.type")}
+                <SortArrow
+                  column="type"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("startDate")}
+              >
+                {t("leaves.startDate")}
+                <SortArrow
+                  column="startDate"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("endDate")}
+              >
+                {t("leaves.endDate")}
+                <SortArrow
+                  column="endDate"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("days")}
+              >
+                {t("leaves.days")}
+                <SortArrow
+                  column="days"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
               <th className="px-5 py-3 font-medium">
                 {t("leaves.backupPerson")}
               </th>
-              <th className="px-5 py-3 font-medium">{t("leaves.status")}</th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("overallStatus")}
+              >
+                {t("leaves.status")}
+                <SortArrow
+                  column="overallStatus"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
               <th className="px-5 py-3 font-medium text-right">
                 {t("leaves.actions")}
               </th>
@@ -118,7 +215,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                 <React.Fragment key={leave.id}>
                   <tr className="border-t border-slate-100">
                     <td className="px-5 py-4 font-medium text-slate-600">
-                      {(currentPage - 1) * pageSize + idx + 1}
+                      {(currentPage - 1) * PAGE_SIZE + idx + 1}
                     </td>
                     <td className="px-5 py-4 text-slate-600">
                       {leave.employeeName ?? "-"}
@@ -139,45 +236,32 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                     <td className="px-5 py-4">
                       {statusBadge(
                         tab === "manager" &&
-                          leave.overallStatus === "pending_manager"
-                          ? "pending_hr"
+                          leave.overallStatus.startsWith("rejected")
+                          ? "rejected"
                           : leave.overallStatus,
                         t,
                       )}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        {/* HR approve / reject on pending_hr tab or manager tab with pending_hr status */}
-                        {((tab === "hr_pending" &&
-                          leave.overallStatus === "pending_hr") ||
-                          (tab === "manager" &&
-                            (leave.overallStatus === "pending_hr" ||
-                              leave.overallStatus === "pending_manager"))) && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => onHrApprove(leave)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-500 transition hover:text-white"
-                            >
-                              <FiCheck className="h-4 w-4" />
-                              {t("leaves.approve")}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setRejectingLeave(leave)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-500 transition hover:text-white"
-                            >
-                              <FiX className="h-4 w-4" />
-                              {t("leaves.reject")}
-                            </button>
-                          </>
-                        )}
-
-                        {/* View always available */}
+                        {/* View opens the slide panel with approve/reject inside */}
                         <button
                           type="button"
                           onClick={() => {
+                            // Both tabs: HR approves/rejects only when status is pending_hr
+                            const canAct = leave.overallStatus === "pending_hr";
+
                             setSelectedLeave(leave);
+                            setViewApprove(
+                              canAct
+                                ? () => () => onHrApprove(leave)
+                                : undefined,
+                            );
+                            setViewReject(
+                              canAct
+                                ? () => () => setRejectingLeave(leave)
+                                : undefined,
+                            );
                             setIsViewOpen(true);
                           }}
                           className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
@@ -216,6 +300,8 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
         isOpen={isViewOpen}
         onClose={() => setIsViewOpen(false)}
         leave={selectedLeave}
+        onApprove={viewApprove}
+        onReject={viewReject}
       />
 
       <RejectLeaveModal

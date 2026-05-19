@@ -4,7 +4,7 @@ import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
 import { useTranslation } from "react-i18next";
-import { getMyPayslips } from "@/services/payroll.service";
+import { getMyPayslips } from "@/features/payroll/services/payroll.service";
 import { FiFileText, FiEye } from "react-icons/fi";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import TablePagination from "@/components/common/TablePagination";
@@ -32,6 +32,8 @@ const statusClass: Record<string, string> = {
 };
 
 const PAGE_SIZE = 8;
+
+//======================= Component for displaying the user's payslips with search and pagination features =======================
 
 export default function MyPayslipPage() {
   const [data, setData] = useState<any[]>([]);
@@ -76,7 +78,7 @@ export default function MyPayslipPage() {
                 </div>
               </div>
 
-              {/* Search bar */}
+              {/*============== Search bar================== */}
               <div className="relative w-full max-w-sm">
                 <AnimatedSearchIcon />
                 <input

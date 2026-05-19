@@ -17,11 +17,13 @@ import SortArrow from "@/components/common/SortArrow";
 import AddDepartmentModal from "@/features/departments/components/AddDepartmentModal";
 import EditDepartmentModal from "@/features/departments/components/EditDepartmentModal";
 import ViewDepartmentModal from "@/features/departments/components/ViewDepartmentModal";
-import DeleteDepartmentModal from "@/features/departments/components/DeleteDepartmentModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import { useDepartmentsPage } from "@/features/departments/hooks/useDepartmentsPage";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
 
 export default function DepartmentsPage() {
   const { t } = useTranslation();
+  const deleteConfirmation = useDeleteConfirmation();
   const {
     departments,
     stats,
@@ -35,7 +37,6 @@ export default function DepartmentsPage() {
     handleSort,
     addOpen,
     editOpen,
-    deleteOpen,
     selected,
     viewId,
     setAddOpen,
@@ -48,8 +49,20 @@ export default function DepartmentsPage() {
     handleEdit,
     handleDelete,
     confirmDelete,
+    closeDelete,
     handleToggle,
   } = useDepartmentsPage();
+
+  const handleDeleteRequest = (dept: NonNullable<typeof selected>) => {
+    handleDelete(dept);
+    deleteConfirmation.requestDelete({
+      title: t("common.delete"),
+      message: t("departments.deleteConfirm", { name: dept.name }),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      onConfirm: confirmDelete,
+    });
+  };
 
   const statCards = [
     {
@@ -94,7 +107,7 @@ export default function DepartmentsPage() {
         <Header searchTerm="" onSearchChange={() => {}} />
 
         <div className="p-6 space-y-5">
-          {/* ── Page header ──────────────────────────────────────────── */}
+          {/*===================== Page header ===================== */}
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
@@ -113,7 +126,7 @@ export default function DepartmentsPage() {
             </button>
           </div>
 
-          {/* ── Stat cards ───────────────────────────────────────────── */}
+          {/*===================== Stat cards ===================== */}
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
             {statCards.map((card, idx) => {
               const Icon = card.icon;
@@ -165,7 +178,7 @@ export default function DepartmentsPage() {
             })}
           </div>
 
-          {/* ── Filters ──────────────────────────────────────────────── */}
+          {/*===================== Filters ===================== */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full max-w-sm">
               <AnimatedSearchIcon />
@@ -339,7 +352,7 @@ export default function DepartmentsPage() {
                               {t("common.edit")}
                             </button>
                             <button
-                              onClick={() => handleDelete(dept)}
+                              onClick={() => handleDeleteRequest(dept)}
                               className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
                             >
                               <FiTrash2 className="h-3.5 w-3.5" />
@@ -374,12 +387,25 @@ export default function DepartmentsPage() {
             onClose={closeView}
             department={selected}
           />
-          <DeleteDepartmentModal
-            isOpen={deleteOpen}
-            onClose={() => {}}
-            onConfirm={confirmDelete}
-            department={selected}
-            isDeleting={isDeleting}
+          <DeleteConfirmModal
+            isOpen={deleteConfirmation.isOpen}
+            title={deleteConfirmation.dialog?.title ?? t("common.delete")}
+            message={
+              deleteConfirmation.dialog?.message ??
+              "Are you sure you want to delete this department?"
+            }
+            confirmLabel={
+              deleteConfirmation.dialog?.confirmLabel ?? t("common.delete")
+            }
+            cancelLabel={
+              deleteConfirmation.dialog?.cancelLabel ?? t("common.cancel")
+            }
+            isProcessing={isDeleting || deleteConfirmation.isProcessing}
+            onClose={() => {
+              deleteConfirmation.closeDialog();
+              closeDelete();
+            }}
+            onConfirm={deleteConfirmation.confirmDelete}
           />
         </div>
       </main>

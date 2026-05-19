@@ -3,6 +3,7 @@ import axios from "axios";
 import ModalShell from "@/features/users/components/ModalShell";
 import { FiUploadCloud } from "react-icons/fi";
 import { useUser } from "@/context/UserContext";
+import { getAccessToken } from "@/features/auth/services/authSession";
 
 interface UserOption {
   id: number;
@@ -78,10 +79,10 @@ export default function UploadDocumentModal({
     if (role === "manager") {
       setVisibility("private");
       // Pre-fetch team members for the private-scope employee dropdown
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
       axios
         .get("http://localhost:5000/api/user/view-users", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token ?? ""}` },
         })
         .then((res) => {
           const list = Array.isArray(res.data)
@@ -98,10 +99,10 @@ export default function UploadDocumentModal({
 
     // Admin: fetch all users for dropdown
     setVisibility("private");
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     axios
       .get("http://localhost:5000/api/user/view-users", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       .then((res) => {
         const list = Array.isArray(res.data)

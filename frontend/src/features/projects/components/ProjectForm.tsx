@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
+import RichTextEditor from "@/components/editor/RichTextEditor";
 import type {
   ManagerOption,
   ProjectFormValues,
@@ -42,39 +43,45 @@ function ProjectForm({
   const { t } = useTranslation();
   const [formValues, setFormValues] = useState<ProjectFormValues>({
     name: "",
+    code: "",
     description: "",
     managerId: 0,
     startDate: "",
     endDate: "",
+    status: "pending",
+    priority: "medium",
   });
 
   useEffect(() => {
     if (project) {
       setFormValues({
         name: project.name,
+        code: project.code ?? "",
         description: project.description,
         managerId: project.managerId,
         startDate: toDateInputValue(project.startDate),
         endDate: toDateInputValue(project.endDate),
         status: project.status,
+        priority: project.priority ?? "medium",
       });
       return;
     }
 
     setFormValues({
       name: "",
+      code: "",
       description: "",
       managerId: managers[0]?.id ?? 0,
       startDate: "",
       endDate: "",
+      status: "pending",
+      priority: "medium",
     });
   }, [project, managers, isOpen]);
 
   // Handle changes to form fields and update local state accordingly
   const handleChange = (
-    event: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
 
@@ -110,33 +117,55 @@ function ProjectForm({
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-4">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              {t("projects.projectName")}
-            </span>
-            <input
-              type="text"
-              name="name"
-              value={formValues.name}
-              onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-              required
-            />
-          </label>
+          {/* Row 1: Project Name + Project Code */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                {t("projects.projectName")}
+              </span>
+              <input
+                type="text"
+                name="name"
+                value={formValues.name}
+                onChange={handleChange}
+                placeholder="e.g. Sokoni App"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                required
+              />
+            </label>
 
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Project Code
+              </span>
+              <input
+                type="text"
+                name="code"
+                value={formValues.code ?? ""}
+                onChange={handleChange}
+                placeholder="e.g. PRJ-001"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              />
+            </label>
+          </div>
+
+          {/* Description */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
               {t("projects.description")}
             </span>
-            <textarea
-              name="description"
+            <RichTextEditor
               value={formValues.description}
-              onChange={handleChange}
-              rows={3}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              onChange={(content) =>
+                setFormValues((prev) => ({ ...prev, description: content }))
+              }
+              placeholder="Brief project description..."
+              height="120px"
+              simple
             />
           </label>
 
+          {/* Row 3: Manager */}
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
               {t("projects.manager")}
@@ -159,6 +188,42 @@ function ProjectForm({
             </select>
           </label>
 
+          {/* Row 4: Status + Priority */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                {t("projects.status")}
+              </span>
+              <select
+                name="status"
+                value={formValues.status ?? "pending"}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              >
+                <option value="pending">{t("projects.pending")}</option>
+                <option value="in_progress">{t("projects.inProgress")}</option>
+                <option value="complete">{t("projects.complete")}</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Priority
+              </span>
+              <select
+                name="priority"
+                value={formValues.priority ?? "medium"}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+          </div>
+
+          {/* Row 5: Start Date + End Date */}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
@@ -187,24 +252,6 @@ function ProjectForm({
               />
             </label>
           </div>
-
-          {project ? (
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                {t("projects.status")}
-              </span>
-              <select
-                name="status"
-                value={formValues.status || "pending"}
-                onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-              >
-                <option value="pending">{t("projects.pending")}</option>
-                <option value="in_progress">{t("projects.inProgress")}</option>
-                <option value="complete">{t("projects.complete")}</option>
-              </select>
-            </label>
-          ) : null}
         </div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

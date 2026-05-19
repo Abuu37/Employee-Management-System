@@ -1,6 +1,7 @@
 import Payroll from "../models/payroll.js";
 import Salary from "../models/salary.js";
 import User from "../models/user.js";
+import { Op } from "sequelize";
 import { sequelize } from "../config/db.js";
 
 // ================= GENERATE PAYROLL =================
@@ -9,6 +10,27 @@ export const generatePayroll = async (req, res) => {
 
   try {
     const { user_id, month, year } = req.body; // Get salary details for the user
+    if (req.user.role === "manager") {
+      const [manager, employee] = await Promise.all([
+        User.findByPk(req.user.id, { transaction: t }),
+        User.findByPk(user_id, {
+          attributes: ["id", "role", "department_id"],
+          transaction: t,
+        }),
+      ]);
+
+      if (
+        !manager ||
+        !employee ||
+        employee.role !== "employee" ||
+        manager.department_id !== employee.department_id
+      ) {
+        await t.rollback();
+        return res.status(403).json({
+          message: "Managers can only generate payroll for their team members",
+        });
+      }
+    }
 
     if (!user_id || !month || !year) {
       await t.rollback();
@@ -89,7 +111,40 @@ export const generatePayroll = async (req, res) => {
 // ================= GET ALL PAYROLL (ADMIN)  =================
 export const getPayrollDetails = async (req, res) => {
   try {
+    const { status, sortBy = "created_at", sortOrder = "DESC" } = req.query;
+
+    const validSortFields = [
+      "month",
+      "year",
+      "base_salary",
+      "net_salary",
+      "status",
+      "created_at",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "created_at";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    const where = {};
+    if (req.user.role === "manager") {
+      const manager = await User.findByPk(req.user.id, {
+        attributes: ["department_id"],
+      });
+      const employees = await User.findAll({
+        where: { department_id: manager?.department_id, role: "employee" },
+        attributes: ["id"],
+      });
+      const employeeIds = employees.map((u) => u.id);
+      where.user_id = employeeIds.length > 0 ? { [Op.in]: employeeIds } : -1;
+    }
+
+    if (req.user.role === "employee") {
+      where.user_id = req.user.id;
+    }
+
+    if (status) where.status = status;
+
     const payrolls = await Payroll.findAll({
+      where,
       include: [
         {
           model: User,
@@ -97,7 +152,7 @@ export const getPayrollDetails = async (req, res) => {
           attributes: ["id", "name", "email", "role"],
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [[orderField, orderDir]],
     });
     res.status(200).json({
       message: "Payroll details fetched successfully",
@@ -114,8 +169,20 @@ export const getPayrollDetails = async (req, res) => {
 //================== GET PAYROLL (MANAGER)  =================
 export const getTeamPayroll = async (req, res) => {
   try {
+    const { status, sortBy = "created_at", sortOrder = "DESC" } = req.query;
+
+    const validSortFields = [
+      "month",
+      "year",
+      "base_salary",
+      "net_salary",
+      "status",
+      "created_at",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "created_at";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
     const manager = await User.findByPk(req.user.id);
-    // Only employees in the manager's department (exclude manager)
     const users = await User.findAll({
       where: {
         department_id: manager.department_id,
@@ -125,10 +192,11 @@ export const getTeamPayroll = async (req, res) => {
     });
 
     const employeeIds = users.map((u) => u.id);
+    const where = { user_id: employeeIds };
+    if (status) where.status = status;
+
     const payrolls = await Payroll.findAll({
-      where: {
-        user_id: employeeIds,
-      },
+      where,
       include: [
         {
           model: User,
@@ -136,7 +204,7 @@ export const getTeamPayroll = async (req, res) => {
           attributes: ["id", "name", "email", "role"],
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [[orderField, orderDir]],
     });
 
     res.status(200).json({
@@ -154,10 +222,23 @@ export const getTeamPayroll = async (req, res) => {
 export const getMyPayroll = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { sortBy = "year", sortOrder = "DESC" } = req.query;
+
+    const validSortFields = [
+      "month",
+      "year",
+      "base_salary",
+      "net_salary",
+      "status",
+      "created_at",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "year";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
     const payrolls = await Payroll.findAll({
       where: { user_id: userId },
       order: [
-        ["year", "DESC"],
+        [orderField, orderDir],
         ["month", "DESC"],
       ],
     });
@@ -170,6 +251,44 @@ export const getMyPayroll = async (req, res) => {
     res.status(500).json({
       error: "Internal server error",
     });
+  }
+};
+
+// ================= GET PAYROLL STATS =================
+export const getPayrollStats = async (req, res) => {
+  try {
+    const role = req.user.role;
+    const userId = req.user.id;
+
+    let where = {};
+
+    if (role === "employee") {
+      where.user_id = userId;
+    } else if (role === "manager") {
+      const manager = await User.findByPk(userId);
+      const employees = await User.findAll({
+        where: { department_id: manager.department_id, role: "employee" },
+        attributes: ["id"],
+      });
+      const employeeIds = employees.map((e) => e.id);
+      if (!employeeIds.length) {
+        return res.json({ total: 0, pending: 0, approved: 0, paid: 0 });
+      }
+      where.user_id = { [Op.in]: employeeIds };
+    }
+    // admin: no filter
+
+    const [total, pending, approved, paid] = await Promise.all([
+      Payroll.count({ where }),
+      Payroll.count({ where: { ...where, status: "pending" } }),
+      Payroll.count({ where: { ...where, status: "approved" } }),
+      Payroll.count({ where: { ...where, status: "paid" } }),
+    ]);
+
+    res.status(200).json({ total, pending, approved, paid });
+  } catch (error) {
+    console.error("Error fetching payroll stats:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -219,14 +338,10 @@ export const approvePayroll = async (req, res) => {
       });
     }
 
-    // for status flow control: pending -> approved -> paid
+    // Status flow control: pending -> approved
     payroll.status = "approved";
     payroll.approved_by = req.user.id;
     payroll.approvedAt = new Date();
-
-    payroll.status = "paid";
-    payroll.paidBy = req.user.id;
-    payroll.paidAt = new Date();
 
     await payroll.save();
 

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -10,16 +10,19 @@ import type {
   ManagerOption,
   ProjectFormValues,
   ProjectItem,
-  RawProject,
+  ProjectQueryParams,
   RawUser,
 } from "@/features/projects/types/project.types";
 import { useProjectStats } from "@/features/projects/hooks/useProjectStats";
+import { clearAuthSession } from "@/features/auth/services/authSession";
 
 export const useProjects = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [managers, setManagers] = useState<ManagerOption[]>([]);
   const [users, setUsers] = useState<RawUser[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -27,9 +30,14 @@ export const useProjects = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { stats, setStats, refreshStats } = useProjectStats();
 
+  // Cached user map — kept in a ref so fetchProjects can use it without it
+  // appearing as a dependency (users are loaded once on mount)
+  const userNameByIdRef = useRef<Map<number, string>>(new Map());
+
   const userNameById = useMemo(() => {
     const map = new Map<number, string>();
     users.forEach((u) => map.set(u.id, u.name));
+    userNameByIdRef.current = map;
     return map;
   }, [users]);
 
@@ -41,16 +49,9 @@ export const useProjects = () => {
     [users],
   );
 
-  //====== Load projects, users, and stats when the component mounts=====
-  const loadProjects = useCallback(async () => {
-    // Fetch users, projects, and stats in parallel to optimize loading time
-    const [rawUsers, rawProjects, statsPayload] = await Promise.all([
-      projectService.getUsers(),
-      projectService.getProjects(),
-      refreshStats(),
-    ]);
-
-    // Normalize and set users, managers, projects, and stats in state
+  // ─── Load users + managers once on mount ────────────────────────────────
+  const loadUsers = useCallback(async () => {
+    const rawUsers = await projectService.getUsers();
     const usersData = normalizeUsers(rawUsers);
     setUsers(usersData);
     setManagers(
@@ -58,57 +59,72 @@ export const useProjects = () => {
         .filter((u) => u.role === "manager")
         .map((m) => ({ id: m.id, name: m.name })),
     );
+    const map = new Map<number, string>(usersData.map((u) => [u.id, u.name]));
+    userNameByIdRef.current = map;
+    return map;
+  }, []);
 
-    const freshNameById = new Map<number, string>(
-      usersData.map((u) => [u.id, u.name]),
-    );
-    const projectsPayload = Array.isArray(rawProjects)
-      ? (rawProjects as RawProject[])
-      : [];
-    setProjects(normalizeProjects(projectsPayload, freshNameById));
-    setStats(
-      statsPayload ?? {
-        total: projectsPayload.length,
-        inProgress: projectsPayload.filter((p) => p.status === "in_progress")
-          .length,
-        completed: projectsPayload.filter((p) => p.status === "complete")
-          .length,
-        pending: projectsPayload.filter((p) => p.status === "pending").length,
-      },
-    );
-  }, [refreshStats, setStats]);
+  // ─── Fetch projects with server-side filter/sort/page params ────────────
+  const fetchProjects = useCallback(
+    async (params: ProjectQueryParams, nameMap?: Map<number, string>) => {
+      setLoading(true);
+      try {
+        const response = await projectService.getProjects(params);
+        const map = nameMap ?? userNameByIdRef.current;
+        setProjects(normalizeProjects(response.data, map));
+        setTotalPages(response.totalPages);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
+  // ─── Initial load: users + stats + first page of projects ───────────────
   const loadInitial = useCallback(async () => {
     try {
-      await loadProjects();
+      const [nameMap, statsPayload] = await Promise.all([
+        loadUsers(),
+        refreshStats(),
+      ]);
+      await fetchProjects(
+        { page: 1, limit: 10, sortBy: "id", sortOrder: "DESC" },
+        nameMap,
+      );
+      if (statsPayload) setStats(statsPayload);
       setError("");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401 || err.response?.status === 400) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user-role");
+          clearAuthSession();
           navigate("/login");
           return;
         }
-
         const msg = err.response?.data?.message || "Failed to load projects";
         setError(msg);
         toast.error(msg);
         return;
       }
-
       setError("Failed to load projects");
       toast.error("Failed to load projects");
     }
-  }, [loadProjects, navigate]);
+  }, [loadUsers, fetchProjects, refreshStats, setStats, navigate]);
 
+  // ─── Re-fetch projects (after CUD) with current params ──────────────────
+  const reloadProjects = useCallback(
+    async (params: ProjectQueryParams) => {
+      await fetchProjects(params);
+      await refreshStats();
+    },
+    [fetchProjects, refreshStats],
+  );
   const createProject = useCallback(
-    async (formValues: ProjectFormValues) => {
+    async (formValues: ProjectFormValues, params: ProjectQueryParams = {}) => {
       try {
         setIsCreating(true);
         setFeedback(null);
         await projectService.createProject(formValues);
-        await loadProjects();
+        await reloadProjects(params);
         setFeedback({
           type: "success",
           message: `${formValues.name} created successfully.`,
@@ -126,21 +142,21 @@ export const useProjects = () => {
         setIsCreating(false);
       }
     },
-    [loadProjects],
+    [reloadProjects],
   );
 
   const editProject = useCallback(
     async (
       activeProject: ProjectItem | null,
       formValues: ProjectFormValues,
+      params: ProjectQueryParams = {},
     ) => {
       if (!activeProject) return false;
-
       try {
         setIsSaving(true);
         setFeedback(null);
         await projectService.updateProject(activeProject.id, formValues);
-        await loadProjects();
+        await reloadProjects(params);
         setFeedback({
           type: "success",
           message: `${formValues.name} updated successfully.`,
@@ -158,26 +174,25 @@ export const useProjects = () => {
         setIsSaving(false);
       }
     },
-    [loadProjects],
+    [reloadProjects],
   );
 
   const removeProject = useCallback(
-    async (activeProject: ProjectItem | null) => {
+    async (
+      activeProject: ProjectItem | null,
+      params: ProjectQueryParams = {},
+    ) => {
       if (!activeProject) return false;
-
       try {
         setIsDeleting(true);
         setFeedback(null);
         await projectService.deleteProject(activeProject.id);
-        setProjects((current) =>
-          current.filter((p) => p.id !== activeProject.id),
-        );
         setFeedback({
           type: "success",
           message: `${activeProject.name} deleted successfully.`,
         });
         toast.success(`${activeProject.name} deleted successfully`);
-        await refreshStats();
+        await reloadProjects(params);
         return true;
       } catch (err) {
         const msg = axios.isAxiosError(err)
@@ -190,14 +205,18 @@ export const useProjects = () => {
         setIsDeleting(false);
       }
     },
-    [refreshStats],
+    [reloadProjects],
   );
 
   const updateStatus = useCallback(
-    async (project: ProjectItem, status: string) => {
+    async (
+      project: ProjectItem,
+      status: string,
+      params: ProjectQueryParams = {},
+    ) => {
       try {
         await projectService.updateProjectStatus(project.id, status);
-        await loadProjects();
+        await reloadProjects(params);
         setFeedback({
           type: "success",
           message: `Status updated for ${project.name}.`,
@@ -211,24 +230,26 @@ export const useProjects = () => {
         toast.error(msg);
       }
     },
-    [loadProjects],
+    [reloadProjects],
   );
 
   return {
     projects,
     managers,
-    users,
     stats,
     error,
     feedback,
+    loading,
     isCreating,
     isSaving,
     isDeleting,
+    totalPages,
     userNameById,
     employeeOptions,
     setFeedback,
     loadInitial,
-    loadProjects,
+    fetchProjects,
+    reloadProjects,
     createProject,
     editProject,
     removeProject,

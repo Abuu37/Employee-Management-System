@@ -42,7 +42,19 @@ const fileFilter = (req, file, cb) => {
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ];
-  if (allowedMimes.includes(file.mimetype)) {
+  const allowedExt = [
+    ".pdf",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+  ];
+  const ext = path.extname(file.originalname || "").toLowerCase();
+
+  if (allowedMimes.includes(file.mimetype) && allowedExt.includes(ext)) {
     cb(null, true);
   } else {
     cb(

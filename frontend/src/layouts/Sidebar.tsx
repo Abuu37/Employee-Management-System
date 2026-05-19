@@ -54,8 +54,8 @@ function Sidebar() {
   const navigate = useNavigate();
   const { user, logout } = useUser();
   const { t } = useTranslation();
-  // Use context role when loaded, fall back to localStorage so nav renders correctly immediately
-  const role = user?.role ?? localStorage.getItem("user-role");
+  // Only trust role from authenticated user state
+  const role = user?.role ?? null;
   const navItems = getNavItemsByRole(role);
   const [reportsOpen, setReportsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import Lottie from "lottie-react";
 import loadingIcon from "@/assets/icons/loading.json";
 import searchIcon from "@/assets/icons/search.json";
@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import { useUser } from "@/context/UserContext";
+import { getAccessToken } from "@/features/auth/services/authSession";
 import CheckOutModel from "@/features/attendance/components/CheckOutModel";
 import {
   FiUsers,
@@ -157,6 +158,71 @@ function Sk({ cls }: { cls: string }) {
   return <div className={`animate-pulse rounded-2xl bg-slate-200 ${cls}`} />;
 }
 
+type KpiIconTone = "blue" | "cyan" | "emerald" | "amber";
+
+const KPI_ICON_TONE_CLASSES: Record<KpiIconTone, string> = {
+  blue: "bg-blue-600 text-white ring-2 ring-blue-200 shadow-md shadow-blue-200/60",
+  cyan: "bg-cyan-600 text-white ring-2 ring-cyan-200 shadow-md shadow-cyan-200/60",
+  emerald:
+    "bg-emerald-600 text-white ring-2 ring-emerald-200 shadow-md shadow-emerald-200/60",
+  amber:
+    "bg-amber-500 text-white ring-2 ring-amber-200 shadow-md shadow-amber-200/60",
+};
+
+function KpiIcon({
+  icon,
+  tone = "blue",
+  inverted = false,
+}: {
+  icon: ReactNode;
+  tone?: KpiIconTone;
+  inverted?: boolean;
+}) {
+  return (
+    <span
+      className={`flex h-11 w-11 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105 ${
+        inverted
+          ? "bg-white/20 text-white ring-2 ring-white/35 shadow-md shadow-black/15"
+          : KPI_ICON_TONE_CLASSES[tone]
+      }`}
+    >
+      {icon}
+    </span>
+  );
+}
+
+const KPI_CARD_BASE =
+  "group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5";
+const KPI_CARD_LIGHT = `${KPI_CARD_BASE} bg-white shadow-none border border-slate-200 hover:shadow-xl`;
+const KPI_CARD_DARK = `${KPI_CARD_BASE} text-white shadow-none hover:shadow-xl`;
+
+function KpiAccent({ tone }: { tone: "blue" | "cyan" | "emerald" | "amber" }) {
+  const toneClass =
+    tone === "cyan"
+      ? "bg-cyan-300/80"
+      : tone === "emerald"
+        ? "bg-emerald-300/80"
+        : tone === "amber"
+          ? "bg-amber-300/80"
+          : "bg-blue-300/80";
+
+  return (
+    <>
+      <span
+        className={`pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full blur-2xl ${toneClass}`}
+      />
+    </>
+  );
+}
+
+function KpiAccentDark() {
+  return (
+    <>
+      <span className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/30 blur-2xl" />
+    </>
+  );
+}
+
 // ================== Dashboard ======================
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -171,7 +237,7 @@ export default function Dashboard() {
 
   const { user } = useUser();
   const { t } = useTranslation();
-  const token = localStorage.getItem("token") ?? "";
+  const token = getAccessToken() ?? "";
   const userName = user?.name ?? "User";
   const userRole = user?.role ?? "";
   const isManager = userRole === "manager";
@@ -407,268 +473,281 @@ export default function Dashboard() {
           ) : (
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
               {/* Card 1 — navy */}
-              <div
-                className="rounded-2xl p-5 text-white shadow-md"
-                style={{ background: NAVY }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">
+              <div className={KPI_CARD_DARK} style={{ background: NAVY }}>
+                <KpiAccentDark />
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-3">
+                    <p className="text-xs font-semibold text-blue-100 uppercase tracking-wider">
+                      {isEmployee
+                        ? t("dashboard.myTasks")
+                        : isManager
+                          ? t("dashboard.totalTeamMembers")
+                          : t("dashboard.totalEmployees")}
+                    </p>
+                    <KpiIcon
+                      inverted
+                      icon={
+                        isEmployee ? (
+                          <FiClipboard className="h-4 w-4" />
+                        ) : (
+                          <FiUsers className="h-4 w-4" />
+                        )
+                      }
+                    />
+                  </div>
+                  <p className="text-4xl font-black leading-none tabular-nums">
                     {isEmployee
-                      ? t("dashboard.myTasks")
-                      : isManager
-                        ? t("dashboard.totalTeamMembers")
-                        : t("dashboard.totalEmployees")}
+                      ? (summary?.tasks.pending ?? 0) +
+                        (summary?.tasks.in_progress ?? 0) +
+                        (summary?.tasks.completed ?? 0)
+                      : (summary?.totalEmployees ?? 0)}
                   </p>
-                  <span
-                    className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                    style={{ background: BLUE }}
-                  >
-                    {isEmployee ? (
-                      <FiClipboard className="h-3.5 w-3.5 text-white" />
-                    ) : (
-                      <FiUsers className="h-3.5 w-3.5 text-white" />
-                    )}
-                  </span>
+                  <p className="text-xs text-blue-200 mt-2">
+                    {isEmployee
+                      ? t("dashboard.tasksAssigned")
+                      : isManager
+                        ? t("dashboard.teamMembers")
+                        : t("dashboard.companyStaff")}
+                  </p>
                 </div>
-                <p className="text-4xl font-black leading-none">
-                  {isEmployee
-                    ? (summary?.tasks.pending ?? 0) +
-                      (summary?.tasks.in_progress ?? 0) +
-                      (summary?.tasks.completed ?? 0)
-                    : (summary?.totalEmployees ?? 0)}
-                </p>
-                <p className="text-xs text-blue-300 mt-2">
-                  {isEmployee
-                    ? t("dashboard.tasksAssigned")
-                    : isManager
-                      ? t("dashboard.teamMembers")
-                      : t("dashboard.companyStaff")}
-                </p>
               </div>
 
               {/*====================== Card 2 =====================*/}
               {isEmployee ? (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.myProjects")}
+                <div className={KPI_CARD_LIGHT}>
+                  <KpiAccent tone="blue" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {t("dashboard.myProjects")}
+                      </p>
+                      <KpiIcon
+                        icon={<FiFolder className="h-4 w-4" />}
+                        tone="blue"
+                      />
+                    </div>
+                    <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
+                      {summary?.totalProjects ?? 0}
                     </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      <FiFolder className="h-3.5 w-3.5 text-white" />
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t("dashboard.yourProjects")}
+                    </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 leading-none">
-                    {summary?.totalProjects ?? 0}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {t("dashboard.yourProjects")}
-                  </p>
                 </div>
               ) : isManager ? (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.totalProjects")}
+                <div className={KPI_CARD_LIGHT}>
+                  <KpiAccent tone="blue" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {t("dashboard.totalProjects")}
+                      </p>
+                      <KpiIcon
+                        icon={<FiFolder className="h-4 w-4" />}
+                        tone="blue"
+                      />
+                    </div>
+                    <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
+                      {summary?.totalProjects ?? 0}
                     </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      <FiFolder className="h-3.5 w-3.5 text-white" />
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t("dashboard.yourProjects")}
+                    </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 leading-none">
-                    {summary?.totalProjects ?? 0}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {t("dashboard.yourProjects")}
-                  </p>
                 </div>
               ) : (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.totalManagers")}
+                <div className={KPI_CARD_LIGHT}>
+                  <KpiAccent tone="emerald" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {t("dashboard.totalManagers")}
+                      </p>
+                      <KpiIcon
+                        icon={<FiUserCheck className="h-4 w-4" />}
+                        tone="emerald"
+                      />
+                    </div>
+                    <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
+                      {summary?.totalManagers ?? 0}
                     </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      <FiUserCheck className="h-3.5 w-3.5 text-white" />
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t("dashboard.companyManagers")}
+                    </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 leading-none">
-                    {summary?.totalManagers ?? 0}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {t("dashboard.companyManagers")}
-                  </p>
                 </div>
               )}
 
               {/* Card 3 */}
               {isEmployee ? (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.myLeaves")}
+                <div className={KPI_CARD_LIGHT}>
+                  <KpiAccent tone="amber" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {t("dashboard.myLeaves")}
+                      </p>
+                      <KpiIcon
+                        icon={<FiClock className="h-4 w-4" />}
+                        tone="amber"
+                      />
+                    </div>
+                    <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
+                      {totalLeaves}
                     </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      <FiClock className="h-3.5 w-3.5 text-white" />
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t("dashboard.totalLeaveRequests")}
+                    </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 leading-none">
-                    {totalLeaves}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {t("dashboard.totalLeaveRequests")}
-                  </p>
                 </div>
               ) : isManager ? (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.totalTasks")}
+                <div className={KPI_CARD_LIGHT}>
+                  <KpiAccent tone="cyan" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {t("dashboard.totalTasks")}
+                      </p>
+                      <KpiIcon
+                        icon={<FiClipboard className="h-4 w-4" />}
+                        tone="cyan"
+                      />
+                    </div>
+                    <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
+                      {(summary?.tasks.pending ?? 0) +
+                        (summary?.tasks.in_progress ?? 0) +
+                        (summary?.tasks.completed ?? 0)}
                     </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      <FiClipboard className="h-3.5 w-3.5 text-white" />
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t("dashboard.teamTasks")}
+                    </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 leading-none">
-                    {(summary?.tasks.pending ?? 0) +
-                      (summary?.tasks.in_progress ?? 0) +
-                      (summary?.tasks.completed ?? 0)}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {t("dashboard.teamTasks")}
-                  </p>
                 </div>
               ) : (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.totalProjects")}
+                <div className={KPI_CARD_LIGHT}>
+                  <KpiAccent tone="blue" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {t("dashboard.totalProjects")}
+                      </p>
+                      <KpiIcon
+                        icon={<FiFolder className="h-4 w-4" />}
+                        tone="blue"
+                      />
+                    </div>
+                    <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
+                      {summary?.totalProjects ?? 0}
                     </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      <FiFolder className="h-3.5 w-3.5 text-white" />
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t("dashboard.allProjects")}
+                    </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 leading-none">
-                    {summary?.totalProjects ?? 0}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {t("dashboard.allProjects")}
-                  </p>
                 </div>
               )}
 
               {/*==================== Card 4 — Attendance (manager+employee) / Tasks (admin)================ */}
               {isEmployee || isManager ? (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
-                  <div className="flex items-start justify-between mb-2">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.myAttendance")}
-                    </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      {todayRecord?.check_in ? (
-                        <FiLogOut className="h-3.5 w-3.5 text-white" />
-                      ) : (
-                        <FiLogIn className="h-3.5 w-3.5 text-white" />
+                <div
+                  className={`${KPI_CARD_LIGHT} flex flex-col justify-between`}
+                >
+                  <KpiAccent tone="cyan" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        {t("dashboard.myAttendance")}
+                      </p>
+                      <KpiIcon
+                        tone="cyan"
+                        icon={
+                          todayRecord?.check_in ? (
+                            <FiLogOut className="h-4 w-4" />
+                          ) : (
+                            <FiLogIn className="h-4 w-4" />
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5 mb-2">
+                      <p className="text-[11px] text-slate-500">
+                        {t("dashboard.checkInLabel")}:{" "}
+                        <span className="font-bold text-slate-700">
+                          {todayRecord?.check_in
+                            ? todayRecord.check_in.slice(0, 5)
+                            : "—"}
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {t("dashboard.checkOutLabel")}:{" "}
+                        <span className="font-bold text-slate-700">
+                          {todayRecord?.check_out
+                            ? todayRecord.check_out.slice(0, 5)
+                            : "—"}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {!todayRecord?.check_in && (
+                        <button
+                          disabled={attendanceLoading}
+                          onClick={handleCheckIn}
+                          className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition"
+                          style={{ background: NAVY }}
+                        >
+                          <FiLogIn className="h-4 w-4" />{" "}
+                          {t("dashboard.checkIn")}
+                        </button>
                       )}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1.5 mb-2">
-                    <p className="text-[11px] text-slate-500">
-                      {t("dashboard.checkInLabel")}:{" "}
-                      <span className="font-bold text-slate-700">
-                        {todayRecord?.check_in
-                          ? todayRecord.check_in.slice(0, 5)
-                          : "—"}
-                      </span>
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      {t("dashboard.checkOutLabel")}:{" "}
-                      <span className="font-bold text-slate-700">
-                        {todayRecord?.check_out
-                          ? todayRecord.check_out.slice(0, 5)
-                          : "—"}
-                      </span>
-                    </p>
-                  </div>
 
-                  <div className="flex gap-2">
-                    {!todayRecord?.check_in && (
-                      <button
-                        disabled={attendanceLoading}
-                        onClick={handleCheckIn}
-                        className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition"
-                        style={{ background: NAVY }}
-                      >
-                        <FiLogIn className="h-4 w-4" /> {t("dashboard.checkIn")}
-                      </button>
-                    )}
+                      {todayRecord?.check_in && !todayRecord?.check_out && (
+                        <button
+                          disabled={attendanceLoading}
+                          onClick={() => setShowCheckOutModal(true)}
+                          className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition"
+                          style={{ background: NAVY }}
+                        >
+                          <FiLogOut className="h-4 w-4" />{" "}
+                          {t("dashboard.checkOut")}
+                        </button>
+                      )}
 
-                    {todayRecord?.check_in && !todayRecord?.check_out && (
-                      <button
-                        disabled={attendanceLoading}
-                        onClick={() => setShowCheckOutModal(true)}
-                        className="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition"
-                        style={{ background: NAVY }}
-                      >
-                        <FiLogOut className="h-4 w-4" />{" "}
-                        {t("dashboard.checkOut")}
-                      </button>
-                    )}
+                      {todayRecord?.check_in && todayRecord?.check_out && (
+                        <p className="text-xs font-semibold text-green-600 text-center w-full">
+                          ✓ Attendance completed for today
+                        </p>
+                      )}
+                    </div>
 
-                    {todayRecord?.check_in && todayRecord?.check_out && (
-                      <p className="text-xs font-semibold text-green-600 text-center w-full">
-                        ✓ Attendance completed for today
+                    {attendanceMsg && (
+                      <p className="text-[10px] text-center mt-1 text-slate-500">
+                        {attendanceMsg}
                       </p>
                     )}
                   </div>
-
-                  {attendanceMsg && (
-                    <p className="text-[10px] text-center mt-1 text-slate-500">
-                      {attendanceMsg}
-                    </p>
-                  )}
                 </div>
               ) : (
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                      {t("dashboard.totalTasks")}
+                <div className={KPI_CARD_LIGHT}>
+                  <KpiAccent tone="cyan" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        {t("dashboard.totalTasks")}
+                      </p>
+                      <KpiIcon
+                        icon={<FiClipboard className="h-4 w-4" />}
+                        tone="cyan"
+                      />
+                    </div>
+                    <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
+                      {(summary?.tasks.pending ?? 0) +
+                        (summary?.tasks.in_progress ?? 0) +
+                        (summary?.tasks.completed ?? 0)}
                     </p>
-                    <span
-                      className="rounded-full w-7 h-7 flex items-center justify-center shadow"
-                      style={{ background: BLUE }}
-                    >
-                      <FiClipboard className="h-3.5 w-3.5 text-white" />
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {t("dashboard.allTasks")}
+                    </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 leading-none">
-                    {(summary?.tasks.pending ?? 0) +
-                      (summary?.tasks.in_progress ?? 0) +
-                      (summary?.tasks.completed ?? 0)}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {t("dashboard.allTasks")}
-                  </p>
                 </div>
               )}
             </div>

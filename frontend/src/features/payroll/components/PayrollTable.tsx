@@ -1,10 +1,11 @@
-import { usePagination } from "@/Hook/usePagination";
+import { usePagination } from "@/hooks/usePagination";
 import toast from "react-hot-toast";
 import { FiPlus, FiEye, FiCreditCard } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import { approvePayroll, markAsPaid } from "@/services/payroll.service";
+import { approvePayroll, markAsPaid } from "../services/payroll.service";
 import { useUser } from "@/context/UserContext";
 import TablePagination from "@/components/common/TablePagination";
+import SortArrow from "@/components/common/SortArrow";
 
 const PAGE_SIZE = 8;
 
@@ -50,12 +51,19 @@ export default function PayrollTable({
   onRefresh,
   onAdd,
   onView,
+  sortBy = "created_at",
+  sortOrder = "DESC",
+  onSort,
 }: {
   data: PayrollRecord[];
   onRefresh: () => void;
   onAdd: () => void;
   onView?: (record: PayrollRecord) => void;
+  sortBy?: string;
+  sortOrder?: "ASC" | "DESC";
+  onSort?: (column: string) => void;
 }) {
+  //==============  handle approve and mark as paid actions ===================
   const handleApprove = async (id: number) => {
     try {
       await approvePayroll(id);
@@ -66,6 +74,7 @@ export default function PayrollTable({
     }
   };
 
+  //==============  handle approve and mark as paid actions ===================
   const handlePay = async (id: number) => {
     try {
       await markAsPaid(id);
@@ -76,12 +85,12 @@ export default function PayrollTable({
     }
   };
 
-  const { user } = useUser();
-  const { t } = useTranslation();
+  const { user } = useUser(); // for role-based action buttons
+  const { t } = useTranslation(); // for translations
   const { page, setPage, totalPages, paginated } = usePagination(
     data,
     PAGE_SIZE,
-  );
+  ); // pagination logic
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -102,9 +111,27 @@ export default function PayrollTable({
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
               <th className="px-5 py-3 font-medium">{t("payroll.employee")}</th>
-              <th className="px-5 py-3 font-medium">{t("payroll.period")}</th>
-              <th className="px-5 py-3 font-medium">
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("year")}
+              >
+                {t("payroll.period")}
+                <SortArrow
+                  column="year"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("base_salary")}
+              >
                 {t("payroll.baseSalary")}
+                <SortArrow
+                  column="base_salary"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
               </th>
               <th className="px-5 py-3 font-medium">{t("payroll.bonus")}</th>
               <th className="px-5 py-3 font-medium">
@@ -114,8 +141,28 @@ export default function PayrollTable({
                 {t("payroll.deductions")}
               </th>
               <th className="px-5 py-3 font-medium">{t("payroll.tax")}</th>
-              <th className="px-5 py-3 font-medium">{t("payroll.netPay")}</th>
-              <th className="px-5 py-3 font-medium">{t("payroll.status")}</th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("net_salary")}
+              >
+                {t("payroll.netPay")}
+                <SortArrow
+                  column="net_salary"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
+              <th
+                className="px-5 py-3 font-medium cursor-pointer select-none"
+                onClick={() => onSort?.("status")}
+              >
+                {t("payroll.status")}
+                <SortArrow
+                  column="status"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                />
+              </th>
               <th className="px-5 py-3 font-medium">{t("payroll.actions")}</th>
             </tr>
           </thead>

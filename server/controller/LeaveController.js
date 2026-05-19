@@ -155,8 +155,180 @@ export const applyForLeave = async (req, res) => {
   }
 };
 
+// ================= MANAGER: EDIT + APPLY REJECTED OWN LEAVE =================
+export const managerResendRejectedLeave = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, startDate, endDate, reason, backupEmployeeId, handoverNote } =
+      req.body;
+    const userId = req.user.id;
+
+    const leave = await Leave.findByPk(id);
+    if (!leave) return res.status(404).json({ message: "Leave not found" });
+
+    const [actor, owner] = await Promise.all([
+      User.findByPk(userId, {
+        attributes: ["id", "role", "department_id", "name"],
+      }),
+      User.findByPk(leave.userId, {
+        attributes: ["id", "role", "department_id", "name"],
+      }),
+    ]);
+
+    const isOwner = leave.userId === userId;
+    const isManagerEditingTeamRejected =
+      actor?.role === "manager" &&
+      owner?.role === "employee" &&
+      actor.department_id != null &&
+      owner?.department_id === actor.department_id;
+
+    if (!isOwner && !isManagerEditingTeamRejected) {
+      return res.status(403).json({ message: "Forbidden: not your leave" });
+    }
+
+    if (isOwner && leave.overallStatus !== "rejected_by_hr") {
+      return res.status(400).json({
+        message: "Only HR rejected requests can be edited and applied again",
+      });
+    }
+
+    if (
+      isManagerEditingTeamRejected &&
+      !leave.overallStatus.startsWith("rejected")
+    ) {
+      return res.status(400).json({
+        message:
+          "Only rejected team leave requests can be edited and re-applied",
+      });
+    }
+
+    const validTypes = ["annual", "sick", "casual", "emergency", "unpaid"];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ message: "Invalid leave type" });
+    }
+
+    if (!startDate || !endDate) {
+      return res
+        .status(400)
+        .json({ message: "Start and end dates are required" });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start) || isNaN(end)) {
+      return res.status(400).json({ message: "Invalid date format" });
+    }
+
+    if (end < start) {
+      return res
+        .status(400)
+        .json({ message: "End date must be after start date" });
+    }
+
+    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+    const overlapping = await Leave.findOne({
+      where: {
+        userId,
+        id: { [Op.ne]: leave.id },
+        overallStatus: {
+          [Op.in]: ["pending_manager", "pending_hr", "approved"],
+        },
+        [Op.and]: [
+          { startDate: { [Op.lte]: endDate } },
+          { endDate: { [Op.gte]: startDate } },
+        ],
+      },
+    });
+
+    if (overlapping) {
+      return res.status(400).json({
+        message: "You already have a leave request in this date range",
+      });
+    }
+
+    let normalizedBackupEmployeeId = backupEmployeeId || null;
+    if (normalizedBackupEmployeeId) {
+      const [manager, backup] = await Promise.all([
+        User.findByPk(userId, { attributes: ["role", "department_id"] }),
+        User.findByPk(normalizedBackupEmployeeId, {
+          attributes: ["id", "role", "department_id"],
+        }),
+      ]);
+
+      if (!backup) {
+        return res.status(400).json({ message: "Backup person not found" });
+      }
+
+      if (
+        manager?.role === "manager" &&
+        (backup.role !== "employee" ||
+          backup.department_id !== manager.department_id)
+      ) {
+        return res.status(400).json({
+          message: "Backup person must be from your team",
+        });
+      }
+    }
+
+    leave.type = type;
+    leave.startDate = startDate;
+    leave.endDate = endDate;
+    leave.days = days;
+    leave.reason = reason;
+    leave.backupEmployeeId = normalizedBackupEmployeeId;
+    leave.handoverNote = handoverNote || null;
+
+    // Manager's own leave and manager-edited team rejected leave both proceed to HR queue.
+    leave.managerStatus = "approved";
+    leave.managerComment = null;
+    leave.managerApprovedAt = new Date();
+    leave.hrStatus = "pending";
+    leave.hrComment = null;
+    leave.hrApprovedAt = null;
+    leave.overallStatus = "pending_hr";
+    await leave.save();
+
+    const savedLeave = await Leave.findByPk(leave.id, {
+      include: leaveIncludes,
+    });
+
+    res.json({
+      message: "Leave request updated and applied successfully",
+      leave: mapLeave(savedLeave),
+    });
+
+    const requesterName = actor?.name ?? "A manager";
+    const admins = await User.findAll({
+      where: { role: "admin" },
+      attributes: ["id"],
+    });
+
+    for (const admin of admins) {
+      await createNotification({
+        userId: admin.id,
+        title: "Leave Request Updated",
+        message: `${requesterName} edited and re-applied a ${type} leave request for ${days} day(s).`,
+        type: "leave",
+        refId: leave.id,
+      });
+    }
+  } catch (error) {
+    console.error("Error in managerResendRejectedLeave:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const getTeamLeaves = async (req, res) => {
   try {
+    const {
+      type,
+      status,
+      sortBy = "createdAt",
+      sortOrder = "DESC",
+    } = req.query;
+
     const manager = await User.findByPk(req.user.id);
     if (!manager) return res.status(404).json({ message: "Manager not found" });
 
@@ -168,10 +340,25 @@ export const getTeamLeaves = async (req, res) => {
     const employeeIds = employees.map((e) => e.id);
     if (!employeeIds.length) return res.json([]);
 
+    const validSortFields = [
+      "type",
+      "startDate",
+      "endDate",
+      "days",
+      "overallStatus",
+      "createdAt",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    const where = { userId: { [Op.in]: employeeIds } };
+    if (type) where.type = type;
+    if (status) where.overallStatus = status;
+
     const leaves = await Leave.findAll({
-      where: { userId: { [Op.in]: employeeIds } },
+      where,
       include: leaveIncludes,
-      order: [["createdAt", "DESC"]],
+      order: [[orderField, orderDir]],
     });
 
     res.json(leaves.map(mapLeave));
@@ -295,12 +482,40 @@ export const managerRejectLeave = async (req, res) => {
   }
 };
 
+// ================= HR: GET PENDING LEAVES (stage 2) =================
 export const getHrPendingLeaves = async (req, res) => {
   try {
+    const { type, sortBy = "createdAt", sortOrder = "DESC" } = req.query;
+
+    const validSortFields = [
+      "type",
+      "startDate",
+      "endDate",
+      "days",
+      "overallStatus",
+      "createdAt",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    // Only employee-submitted leaves awaiting HR approval.
+    // Manager-submitted leaves are handled via the "Manager Leaves" tab.
+    const employees = await User.findAll({
+      where: { role: "employee" },
+      attributes: ["id"],
+    });
+    const employeeIds = employees.map((e) => e.id);
+
+    const where = {
+      overallStatus: "pending_hr",
+      userId: { [Op.in]: employeeIds },
+    };
+    if (type) where.type = type;
+
     const leaves = await Leave.findAll({
-      where: { overallStatus: "pending_hr" },
+      where,
       include: leaveIncludes,
-      order: [["createdAt", "DESC"]],
+      order: [[orderField, orderDir]],
     });
     res.json(leaves.map(mapLeave));
   } catch (error) {
@@ -440,16 +655,39 @@ export const getManagerLeaves = async (req, res) => {
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Forbidden" });
     }
+
+    const {
+      type,
+      status,
+      sortBy = "createdAt",
+      sortOrder = "DESC",
+    } = req.query;
+
+    const validSortFields = [
+      "type",
+      "startDate",
+      "endDate",
+      "days",
+      "overallStatus",
+      "createdAt",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
     const managers = await User.findAll({
       where: { role: "manager" },
       attributes: ["id"],
     });
     const managerIds = managers.map((m) => m.id);
 
+    const where = { userId: { [Op.in]: managerIds } };
+    if (type) where.type = type;
+    if (status) where.overallStatus = status;
+
     const leaves = await Leave.findAll({
-      where: { userId: { [Op.in]: managerIds } },
+      where,
       include: leaveIncludes,
-      order: [["createdAt", "DESC"]],
+      order: [[orderField, orderDir]],
     });
     res.json(leaves.map(mapLeave));
   } catch (error) {
@@ -461,10 +699,32 @@ export const getManagerLeaves = async (req, res) => {
 // ================= GET MY LEAVES =================
 export const getMyLeaves = async (req, res) => {
   try {
+    const {
+      type,
+      status,
+      sortBy = "createdAt",
+      sortOrder = "DESC",
+    } = req.query;
+
+    const validSortFields = [
+      "type",
+      "startDate",
+      "endDate",
+      "days",
+      "overallStatus",
+      "createdAt",
+    ];
+    const orderField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const orderDir = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    const where = { userId: req.user.id };
+    if (type) where.type = type;
+    if (status) where.overallStatus = status;
+
     const leaves = await Leave.findAll({
-      where: { userId: req.user.id },
+      where,
       include: leaveIncludes,
-      order: [["createdAt", "DESC"]],
+      order: [[orderField, orderDir]],
     });
     res.json(leaves.map(mapLeave));
   } catch (error) {
@@ -473,21 +733,148 @@ export const getMyLeaves = async (req, res) => {
   }
 };
 
+// ================= GET LEAVE STATS =================
+export const getLeaveStats = async (req, res) => {
+  try {
+    const role = req.user.role;
+    const userId = req.user.id;
+    const scope = String(req.query.scope || "").toLowerCase();
+
+    let where = {};
+
+    if (role === "employee") {
+      where.userId = userId;
+    } else if (role === "manager") {
+      const manager = await User.findByPk(userId);
+      if (!manager) {
+        return res.status(404).json({ message: "Manager not found" });
+      }
+
+      const employees = await User.findAll({
+        where: { department_id: manager.department_id, role: "employee" },
+        attributes: ["id"],
+      });
+
+      const employeeIds = employees.map((e) => e.id);
+      if (scope === "team") {
+        where.userId = { [Op.in]: employeeIds.length ? employeeIds : [-1] };
+      } else if (scope === "my") {
+        where.userId = userId;
+      } else {
+        // Default manager scope: all leave requests visible to manager
+        // (own leaves + department employee leaves).
+        const visibleUserIds = [userId, ...employeeIds];
+        where.userId = { [Op.in]: visibleUserIds };
+      }
+    } else if (role === "admin") {
+      if (scope === "hr_pending") {
+        const employees = await User.findAll({
+          where: { role: "employee" },
+          attributes: ["id"],
+        });
+        const employeeIds = employees.map((e) => e.id);
+        where.userId = { [Op.in]: employeeIds.length ? employeeIds : [-1] };
+      } else if (scope === "manager") {
+        const managers = await User.findAll({
+          where: { role: "manager" },
+          attributes: ["id"],
+        });
+        const managerIds = managers.map((m) => m.id);
+        where.userId = { [Op.in]: managerIds.length ? managerIds : [-1] };
+      }
+    }
+    // admin: no userId filter → all leaves
+
+    const [total, approved, pending, rejected] = await Promise.all([
+      Leave.count({ where }),
+      Leave.count({ where: { ...where, overallStatus: "approved" } }),
+      Leave.count({
+        where: {
+          ...where,
+          overallStatus: { [Op.in]: ["pending_manager", "pending_hr"] },
+        },
+      }),
+      Leave.count({
+        where: {
+          ...where,
+          overallStatus: { [Op.in]: ["rejected_by_manager", "rejected_by_hr"] },
+        },
+      }),
+    ]);
+
+    res.json({ total, approved, pending, rejected });
+  } catch (error) {
+    console.error("Error fetching leave stats:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // ================= GET LEAVE BALANCE =================
 export const getLeaveBalance = async (req, res) => {
   try {
-    const leaveBalance = await LeaveBalance.findOne({
+    const DEFAULT_BALANCE = {
+      annual: 20,
+      sick: 10,
+      casual: 5,
+    };
+
+    let leaveBalance = await LeaveBalance.findOne({
       where: { userId: req.user.id },
     });
-    if (!leaveBalance)
-      return res.status(404).json({ message: "Leave balance not found" });
+
+    // Auto-create a default balance record if none exists
+    if (!leaveBalance) {
+      leaveBalance = await LeaveBalance.create({
+        userId: req.user.id,
+        annual: DEFAULT_BALANCE.annual,
+        sick: DEFAULT_BALANCE.sick,
+        casual: DEFAULT_BALANCE.casual,
+      });
+    }
+
+    // Self-heal balance based on currently approved leaves only.
+    // This guarantees pending/rejected leaves do not affect remaining balance.
+    const approvedLeaves = await Leave.findAll({
+      where: {
+        userId: req.user.id,
+        overallStatus: "approved",
+      },
+      attributes: ["type", "days"],
+    });
+
+    //====== Calculate used days by type and adjust balance accordingly ======//
+    const used = { annual: 0, sick: 0, casual: 0 };
+    for (const leave of approvedLeaves) {
+      if (leave.type === "annual") used.annual += leave.days;
+      else if (leave.type === "sick") used.sick += leave.days;
+      else if (leave.type === "casual") used.casual += leave.days;
+    }
+
+    //==== Recalculate available balance based on status changes====//
+
+    const recalculated = {
+      annual: Math.max(0, DEFAULT_BALANCE.annual - used.annual),
+      sick: Math.max(0, DEFAULT_BALANCE.sick - used.sick),
+      casual: Math.max(0, DEFAULT_BALANCE.casual - used.casual),
+    };
+
+    if (
+      leaveBalance.annual !== recalculated.annual ||
+      leaveBalance.sick !== recalculated.sick ||
+      leaveBalance.casual !== recalculated.casual
+    ) {
+      leaveBalance.annual = recalculated.annual;
+      leaveBalance.sick = recalculated.sick;
+      leaveBalance.casual = recalculated.casual;
+      await leaveBalance.save();
+    }
 
     res.json({
       message: "Leave balance fetched successfully",
       balance: {
-        annual: leaveBalance.annual,
-        sick: leaveBalance.sick,
-        casual: leaveBalance.casual,
+        annual: recalculated.annual,
+        sick: recalculated.sick,
+        casual: recalculated.casual,
       },
     });
   } catch (error) {
@@ -498,26 +885,94 @@ export const getLeaveBalance = async (req, res) => {
 
 // ================= CANCEL LEAVE =================
 export const cancelLeave = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
-    const leave = await Leave.findOne({ where: { id, userId: req.user.id } });
+    const leave = await Leave.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "role", "department_id"],
+        },
+      ],
+      transaction: t,
+    });
 
-    if (!leave) return res.status(404).json({ message: "Leave not found" });
+    if (!leave) {
+      await t.rollback();
+      return res.status(404).json({ message: "Leave not found" });
+    }
 
-    // Employees can cancel pending_manager; managers can cancel pending_hr (they skip manager stage)
-    const cancellable =
-      leave.overallStatus === "pending_manager" ||
-      (req.user.role === "manager" && leave.overallStatus === "pending_hr");
+    const actor = await User.findByPk(req.user.id, {
+      attributes: ["id", "role", "department_id"],
+      transaction: t,
+    });
+
+    const isOwner = leave.userId === req.user.id;
+    const isManagerDeletingTeamRejected =
+      actor?.role === "manager" &&
+      leave.user?.role === "employee" &&
+      actor.department_id != null &&
+      leave.user?.department_id === actor.department_id;
+
+    if (!isOwner && !isManagerDeletingTeamRejected) {
+      await t.rollback();
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // Pending and rejected leaves can be deleted without balance changes.
+    // Approved leaves can be cancelled with balance restoration.
+    const cancellable = isOwner
+      ? leave.overallStatus === "pending_manager" ||
+        leave.overallStatus === "pending_hr" ||
+        leave.overallStatus === "approved" ||
+        leave.overallStatus === "rejected_by_manager" ||
+        leave.overallStatus === "rejected_by_hr"
+      : leave.overallStatus.startsWith("rejected");
 
     if (!cancellable) {
+      await t.rollback();
       return res.status(400).json({
-        message: "Only leaves that are pending approval can be cancelled",
+        message: isOwner
+          ? "Only pending, approved, or rejected leaves can be deleted."
+          : "Only rejected team leave requests can be deleted.",
       });
     }
 
-    await leave.destroy();
-    res.json({ message: "Leave cancelled successfully" });
+    if (leave.overallStatus === "approved") {
+      const leaveBalance = await LeaveBalance.findOne({
+        where: { userId: leave.userId },
+        transaction: t,
+      });
+
+      if (!leaveBalance) {
+        await t.rollback();
+        return res
+          .status(400)
+          .json({ message: "Leave balance not found for employee" });
+      }
+
+      if (leave.type === "annual") leaveBalance.annual += leave.days;
+      else if (leave.type === "sick") leaveBalance.sick += leave.days;
+      else if (leave.type === "casual") leaveBalance.casual += leave.days;
+
+      await leaveBalance.save({ transaction: t });
+    }
+
+    await leave.destroy({ transaction: t });
+    await t.commit();
+
+    res.json({
+      message:
+        leave.overallStatus === "approved"
+          ? "Approved leave cancelled and balance restored successfully"
+          : leave.overallStatus.startsWith("rejected")
+            ? "Rejected leave deleted successfully"
+            : "Leave cancelled successfully",
+    });
   } catch (error) {
+    await t.rollback();
     console.error("Error cancelling leave:", error);
     res.status(500).json({ message: "Internal server error" });
   }

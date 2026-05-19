@@ -7,6 +7,7 @@ import type {
   AddUserFormValues,
 } from "@/features/users/types/user.types";
 import { useUser } from "@/context/UserContext";
+import { getAccessToken } from "@/features/auth/services/authSession";
 import { FiBriefcase, FiUser } from "react-icons/fi";
 
 interface AddUserModalProps {
@@ -67,7 +68,7 @@ const AddUserModal = ({
   const [employeeTab, setEmployeeTab] = useState<EmployeeTab>("personal");
 
   const inputClassName =
-    "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white";
+    "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white";
 
   useEffect(() => {
     if (
@@ -77,10 +78,10 @@ const AddUserModal = ({
     ) {
       setLoadingManagers(true);
       setManagerError("");
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
       axios
         .get("http://localhost:5000/api/user/view-users", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token ?? ""}` },
         })
         .then((res) => {
           const managersList = Array.isArray(res.data)
@@ -100,10 +101,10 @@ const AddUserModal = ({
     }
 
     if (isOpen && currentUserRole === "admin") {
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
       axios
         .get("http://localhost:5000/api/departments", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token ?? ""}` },
         })
         .then((res) => {
           setDepartments(
@@ -117,7 +118,7 @@ const AddUserModal = ({
 
       axios
         .get("http://localhost:5000/api/user/view-users", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${getAccessToken() ?? ""}` },
         })
         .then((res) => {
           setSupervisors(
@@ -217,14 +218,21 @@ const AddUserModal = ({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={isManagerMode ? "Add Manager" : "Add Employee"}
-      maxWidth="max-w-4xl"
+      title={
+        <span className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+            <FiUser className="h-4 w-4" />
+          </span>
+          {isManagerMode ? "Add Manager" : "Add Employee"}
+        </span>
+      }
+      maxWidth="max-w-2xl"
       panelClassName="overflow-hidden"
     >
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-3" onSubmit={handleSubmit}>
         {isManagerMode ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6">
-            <section className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <section className="space-y-3">
               {/* Sliding tab switcher */}
               <div className="relative flex rounded-full border border-slate-200 bg-slate-100 p-1">
                 <div
@@ -277,8 +285,8 @@ const AddUserModal = ({
               </div>
 
               {employeeTab === "personal" ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-                  <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3">
+                  <div className="mb-2 flex items-center gap-2">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
                       <FiUser className="h-4 w-4" />
                     </div>
@@ -295,10 +303,10 @@ const AddUserModal = ({
                     <table className="min-w-full border-collapse text-sm">
                       <tbody>
                         <tr className="border-b border-slate-200">
-                          <td className="w-52 px-2 py-3 font-medium text-slate-700">
+                          <td className="w-36 px-2 py-1.5 text-sm font-medium text-slate-700">
                             {t("employees.fullName")}
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="name"
@@ -311,10 +319,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             {t("employees.emailAddress")}
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="email"
                               name="email"
@@ -327,10 +335,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Phone Number
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="tel"
                               name="phone"
@@ -342,10 +350,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Gender
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="gender"
                               value={formValues.gender ?? ""}
@@ -363,10 +371,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Date of Birth (optional)
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="date"
                               name="date_of_birth"
@@ -377,10 +385,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Address
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="address"
@@ -392,10 +400,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr>
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Emergency Contact
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="emergency_contact"
@@ -413,8 +421,8 @@ const AddUserModal = ({
               ) : null}
 
               {employeeTab === "work" ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-                  <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3">
+                  <div className="mb-2 flex items-center gap-2">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
                       <FiBriefcase className="h-4 w-4" />
                     </div>
@@ -431,10 +439,10 @@ const AddUserModal = ({
                     <table className="min-w-full border-collapse text-sm">
                       <tbody>
                         <tr className="border-b border-slate-200">
-                          <td className="w-52 px-2 py-3 font-medium text-slate-700">
+                          <td className="w-36 px-2 py-1.5 text-sm font-medium text-slate-700">
                             {t("employees.department")}
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="department_id"
                               value={formValues.department_id ?? ""}
@@ -454,10 +462,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             {t("employees.position")}
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="position"
@@ -469,10 +477,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Employment Type
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="employment_type"
                               value={formValues.employment_type ?? "full_time"}
@@ -487,10 +495,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Reports To
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="reports_to"
                               value={formValues.reports_to ?? ""}
@@ -507,25 +515,25 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Office / Branch
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="office_branch"
                               value={formValues.office_branch ?? ""}
                               onChange={handleChange}
                               className={inputClassName}
-                              placeholder="e.g. New York HQ"
+                              placeholder="e.g. HQ Office / Samora Branch"
                             />
                           </td>
                         </tr>
                         <tr>
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Status
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="status"
                               value={formValues.status ?? "active"}
@@ -550,8 +558,8 @@ const AddUserModal = ({
             </section>
           </div>
         ) : (
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6">
-            <section className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <section className="space-y-3">
               {/* Sliding tab switcher */}
               <div className="relative flex rounded-full border border-slate-200 bg-slate-100 p-1">
                 {/* Sliding pill */}
@@ -605,8 +613,8 @@ const AddUserModal = ({
               </div>
 
               {employeeTab === "personal" ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-                  <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3">
+                  <div className="mb-2 flex items-center gap-2">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
                       <FiUser className="h-4 w-4" />
                     </div>
@@ -623,10 +631,10 @@ const AddUserModal = ({
                     <table className="min-w-full border-collapse text-sm">
                       <tbody>
                         <tr className="border-b border-slate-200">
-                          <td className="w-52 px-2 py-3 font-medium text-slate-700">
+                          <td className="w-36 px-2 py-1.5 text-sm font-medium text-slate-700">
                             {t("employees.fullName")}
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="name"
@@ -639,10 +647,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             {t("employees.emailAddress")}
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="email"
                               name="email"
@@ -655,10 +663,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Phone Number
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="tel"
                               name="phone"
@@ -670,10 +678,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Gender
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="gender"
                               value={formValues.gender ?? ""}
@@ -691,10 +699,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Date of Birth (optional)
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="date"
                               name="date_of_birth"
@@ -705,10 +713,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Address
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="address"
@@ -720,10 +728,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr>
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Emergency Contact
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="emergency_contact"
@@ -741,8 +749,8 @@ const AddUserModal = ({
               ) : null}
 
               {employeeTab === "work" ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-                  <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3">
+                  <div className="mb-2 flex items-center gap-2">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
                       <FiBriefcase className="h-4 w-4" />
                     </div>
@@ -760,25 +768,10 @@ const AddUserModal = ({
                     <table className="min-w-full border-collapse text-sm">
                       <tbody>
                         <tr className="border-b border-slate-200">
-                          <td className="w-52 px-2 py-3 font-medium text-slate-700">
-                            Employee ID
-                          </td>
-                          <td className="px-2 py-3">
-                            <input
-                              type="text"
-                              name="employee_id"
-                              value={formValues.employee_id ?? ""}
-                              disabled
-                              className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500 outline-none cursor-not-allowed"
-                              placeholder="Auto-generated by system"
-                            />
-                          </td>
-                        </tr>
-                        <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Department
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="department_id"
                               value={formValues.department_id ?? ""}
@@ -798,10 +791,10 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             {t("employees.position")}
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
                               name="position"
@@ -817,10 +810,10 @@ const AddUserModal = ({
 
                         {currentUserRole === "admin" && (
                           <tr className="border-b border-slate-200">
-                            <td className="px-2 py-3 font-medium text-slate-700">
+                            <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                               {t("employees.assignManager")}
                             </td>
-                            <td className="px-2 py-3">
+                            <td className="px-2 py-1">
                               {loadingManagers ? (
                                 <div className="text-xs text-slate-500">
                                   {t("employees.loadingManagers")}
@@ -853,10 +846,10 @@ const AddUserModal = ({
                           </tr>
                         )}
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Employment Type
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="employment_type"
                               value={formValues.employment_type ?? "full_time"}
@@ -871,25 +864,25 @@ const AddUserModal = ({
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="px-2 py-3 font-medium text-slate-700">
-                            Join Date
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
+                            Office / Branch
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <input
                               type="text"
-                              name="join_date"
-                              value={formValues.join_date ?? ""}
-                              disabled
-                              className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500 outline-none cursor-not-allowed"
-                              placeholder="Auto-generated by system"
+                              name="office_branch"
+                              value={formValues.office_branch ?? ""}
+                              onChange={handleChange}
+                              className={inputClassName}
+                              placeholder="e.g. HQ Office / Samora Branch"
                             />
                           </td>
                         </tr>
                         <tr>
-                          <td className="px-2 py-3 font-medium text-slate-700">
+                          <td className="px-2 py-1.5 text-sm font-medium text-slate-700">
                             Status
                           </td>
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-1">
                             <select
                               name="status"
                               value={formValues.status ?? "active"}

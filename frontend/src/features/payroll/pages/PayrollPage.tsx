@@ -1,6 +1,6 @@
 // For Admin / HR manage payroll
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
@@ -11,17 +11,13 @@ import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
 import StatCard from "@/features/attendance/components/StatCard";
 import type { PayrollFormValues } from "@/features/payroll/components/GeneratePayrollModal";
 import { useUser } from "@/context/UserContext";
-import {
-  getAllPayroll,
-  generatePayroll,
-  getTeamPayroll,
-  getMyPayslips,
-} from "@/services/payroll.service";
+import { usePayroll } from "@/features/payroll/hooks/usePayroll";
+import { generatePayroll } from "../services/payroll.service";
 
 import {
   FiDollarSign,
   FiCheckCircle,
-  FiClock,
+  FiAlertTriangle,
   FiAward,
   FiPlus,
 } from "react-icons/fi";
@@ -30,37 +26,22 @@ import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 export default function PayrollPage() {
   const { user } = useUser();
   const { t } = useTranslation();
-  const [data, setData] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
+  const {
+    filteredData,
+    stats,
+    search,
+    setSearch,
+    sortBy,
+    sortOrder,
+    handleSort,
+    refetch,
+    refetchStats,
+  } = usePayroll(user?.role);
   const [formOpen, setFormOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [viewSlip, setViewSlip] = useState<any | null>(null);
 
-  const fetchPayroll = async () => {
-    try {
-      let payroll = [];
-
-      if (user?.role === "admin") {
-        payroll = await getAllPayroll();
-      } else if (user?.role === "manager") {
-        payroll = await getTeamPayroll();
-      } else {
-        payroll = await getMyPayslips();
-      }
-
-      setData(payroll);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load payroll records");
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchPayroll();
-    }
-  }, [user]);
-
+  //=============  handle payroll generation ===================
   const handleGenerate = async (values: PayrollFormValues) => {
     setGenerating(true);
     try {
@@ -71,7 +52,8 @@ export default function PayrollPage() {
       });
       toast.success("Payroll generated successfully");
       setFormOpen(false);
-      fetchPayroll();
+      refetch();
+      refetchStats();
     } catch (err: any) {
       console.error(err);
       toast.error(err?.response?.data?.message ?? "Failed to generate payroll");
@@ -88,7 +70,7 @@ export default function PayrollPage() {
         <Header searchTerm="" onSearchChange={() => {}} />
 
         <div className="p-6 space-y-5">
-          {/* Page header */}
+          {/*============= Page header================== */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
@@ -112,11 +94,11 @@ export default function PayrollPage() {
             )}
           </div>
 
-          {/* Stat cards */}
+          {/*============== Stat cards =================== */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               label={t("payroll.totalRecords")}
-              value={data.length}
+              value={stats.total}
               icon={<FiDollarSign />}
               color=""
               featured
@@ -124,28 +106,28 @@ export default function PayrollPage() {
             />
             <StatCard
               label={t("payroll.paid")}
-              value={data.filter((d) => d.status === "paid").length}
+              value={stats.paid}
               icon={<FiAward />}
               color="bg-emerald-100 text-emerald-600"
               subtitle={t("payroll.disbursedPayments")}
             />
             <StatCard
               label={t("payroll.approved")}
-              value={data.filter((d) => d.status === "approved").length}
+              value={stats.approved}
               icon={<FiCheckCircle />}
               color="bg-blue-100 text-blue-600"
               subtitle={t("payroll.readyToPay")}
             />
             <StatCard
               label={t("payroll.pending")}
-              value={data.filter((d) => d.status === "pending").length}
-              icon={<FiClock />}
+              value={stats.pending}
+              icon={<FiAlertTriangle />}
               color="bg-amber-100 text-amber-600"
               subtitle={t("payroll.awaitingApproval")}
             />
           </div>
 
-          {/* Search bar */}
+          {/*============== Search bar =================== */}
           <div className="relative w-full max-w-sm">
             <AnimatedSearchIcon />
             <input
@@ -165,21 +147,16 @@ export default function PayrollPage() {
 
           <div className="space-y-6">
             <PayrollTable
-              data={
-                search
-                  ? data.filter(
-                      (d) =>
-                        (d.user?.name ?? "")
-                          .toLowerCase()
-                          .includes(search.toLowerCase()) ||
-                        String(d.year).includes(search) ||
-                        String(d.month).includes(search),
-                    )
-                  : data
-              }
-              onRefresh={fetchPayroll}
+              data={filteredData}
+              onRefresh={() => {
+                refetch();
+                refetchStats();
+              }}
               onAdd={() => setFormOpen(true)}
               onView={setViewSlip}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
             />
           </div>
 

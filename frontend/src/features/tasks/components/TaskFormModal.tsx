@@ -1,6 +1,8 @@
 import { useState } from "react";
 import ModalShell from "@/features/users/components/ModalShell";
 import { toast } from "react-hot-toast";
+import RichTextEditor from "@/components/editor/RichTextEditor";
+import { isRichTextEmpty } from "@/utils/richText";
 import type { TaskFormValues } from "@/features/tasks/types/task.types";
 
 // Re-export for any consumers that import TaskFormValues from this file
@@ -41,9 +43,7 @@ export default function TaskFormModal({
   if (!isOpen) return null;
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -81,7 +81,9 @@ export default function TaskFormModal({
 
       await onSubmit({
         title: form.title.trim(),
-        description: form.description.trim() || undefined,
+        description: isRichTextEmpty(form.description)
+          ? undefined
+          : form.description,
         assignedTo: assignedToId,
         priority: form.priority,
         deadline: form.deadline || undefined,
@@ -129,14 +131,14 @@ export default function TaskFormModal({
             <span className="mb-2 block text-sm font-medium text-slate-700">
               Description
             </span>
-            <textarea
-              name="description"
+            <RichTextEditor
               value={form.description}
-              onChange={handleChange}
+              onChange={(content) =>
+                setForm((prev) => ({ ...prev, description: content }))
+              }
               placeholder="Task description"
-              rows={3}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm
-               text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              height="120px"
+              simple
             />
           </label>
 

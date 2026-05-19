@@ -1,4 +1,4 @@
-import { FiEdit2, FiEye, FiPlus, FiTrash2, FiUsers } from "react-icons/fi";
+import { FiCheckCircle, FiEye, FiTrash2, FiUsers } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import type { User } from "@/features/users/types/user.types";
 import { useUser } from "@/context/UserContext";
@@ -59,16 +59,6 @@ function UserTable({
           <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             {totalRecords ?? users.length} records
           </div>
-          {isAdmin && !hideAddButton && (
-            <button
-              type="button"
-              onClick={onAdd}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-            >
-              <FiPlus className="h-4 w-4" />
-              {t("employees.addUser")}
-            </button>
-          )}
         </div>
       </div>
 
@@ -111,6 +101,74 @@ function UserTable({
                   />
                 )}
               </th>
+              <th
+                className={
+                  onSort
+                    ? "cursor-pointer select-none px-5 py-3 font-medium"
+                    : "px-5 py-3 font-medium"
+                }
+                onClick={() => onSort?.("department")}
+              >
+                Department
+                {onSort && (
+                  <SortArrow
+                    column="department"
+                    sortBy={sortBy ?? ""}
+                    sortOrder={sortOrder ?? ""}
+                  />
+                )}
+              </th>
+              <th
+                className={
+                  onSort
+                    ? "cursor-pointer select-none px-5 py-3 font-medium"
+                    : "px-5 py-3 font-medium"
+                }
+                onClick={() => onSort?.("position")}
+              >
+                Position
+                {onSort && (
+                  <SortArrow
+                    column="position"
+                    sortBy={sortBy ?? ""}
+                    sortOrder={sortOrder ?? ""}
+                  />
+                )}
+              </th>
+              <th
+                className={
+                  onSort
+                    ? "cursor-pointer select-none px-5 py-3 font-medium"
+                    : "px-5 py-3 font-medium"
+                }
+                onClick={() => onSort?.("employment_type")}
+              >
+                Emp. Type
+                {onSort && (
+                  <SortArrow
+                    column="employment_type"
+                    sortBy={sortBy ?? ""}
+                    sortOrder={sortOrder ?? ""}
+                  />
+                )}
+              </th>
+              <th
+                className={
+                  onSort
+                    ? "cursor-pointer select-none px-5 py-3 font-medium"
+                    : "px-5 py-3 font-medium"
+                }
+                onClick={() => onSort?.("office_branch")}
+              >
+                Office / Branch
+                {onSort && (
+                  <SortArrow
+                    column="office_branch"
+                    sortBy={sortBy ?? ""}
+                    sortOrder={sortOrder ?? ""}
+                  />
+                )}
+              </th>
               <th className="px-5 py-3 font-medium">{t("employees.status")}</th>
               <th className="px-5 py-3 font-medium text-right">
                 {t("employees.actions")}
@@ -129,9 +187,30 @@ function UserTable({
                     {user.name}
                   </td>
                   <td className="px-5 py-4 text-slate-600">{user.email}</td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {user.department ?? "—"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {user.position ?? "—"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600 capitalize">
+                    {user.employment_type
+                      ? user.employment_type.replace(/_/g, " ")
+                      : "—"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {user.office_branch ?? user.officeBranch ?? "—"}
+                  </td>
                   <td className="px-5 py-4">
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                      {user.status}
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                        user.status === "active"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      <FiCheckCircle className="h-3 w-3" />
+                      {user.status === "active" ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td className="px-5 py-4">
@@ -143,14 +222,6 @@ function UserTable({
                       >
                         <FiEye className="h-4 w-4" />
                         View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onEdit(user)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-                      >
-                        <FiEdit2 className="h-3.5 w-3.5" />
-                        Edit
                       </button>
                       <button
                         type="button"
@@ -166,7 +237,7 @@ function UserTable({
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-5 py-16 text-center">
+                <td colSpan={9} className="px-5 py-16 text-center">
                   <div className="flex flex-col items-center justify-center text-slate-400">
                     <FiUsers className="h-12 w-12 mb-3 opacity-30" />
                     <p className="text-sm">{emptyMessage}</p>

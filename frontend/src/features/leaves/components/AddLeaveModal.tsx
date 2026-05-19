@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
-import { useUser } from "@/context/UserContext";
+import RichTextEditor from "@/components/editor/RichTextEditor";
+import { isRichTextEmpty } from "@/utils/richText";
 
 interface Colleague {
   id: number;
@@ -23,7 +24,19 @@ interface AddLeaveModalProps {
   onSave: (formValues: AddLeaveFormValues) => Promise<void>;
   isSaving: boolean;
   colleagues: Colleague[];
+  isEditMode?: boolean;
+  initialValues?: Partial<AddLeaveFormValues>;
 }
+
+// Default empty form values
+const EMPTY_FORM: AddLeaveFormValues = {
+  type: "",
+  startDate: "",
+  endDate: "",
+  reason: "",
+  backupEmployeeId: "",
+  handoverNote: "",
+};
 
 function AddLeaveModal({
   isOpen,
@@ -31,28 +44,29 @@ function AddLeaveModal({
   onSave,
   isSaving,
   colleagues,
+  isEditMode = false,
+  initialValues,
 }: AddLeaveModalProps) {
-  const { user } = useUser();
-  const isManager = user?.role === "manager";
   const { t } = useTranslation();
-  const [formValues, setFormValues] = useState<AddLeaveFormValues>({
-    type: "",
-    startDate: "",
-    endDate: "",
-    reason: "",
-    backupEmployeeId: "",
-    handoverNote: "",
-  });
+  const [formValues, setFormValues] = useState<AddLeaveFormValues>(EMPTY_FORM);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setFormValues({
+      ...EMPTY_FORM,
+      ...initialValues,
+    });
+  }, [isOpen, initialValues]);
+
+  // Generic change handler for all form fields
   const handleChange = (
-    event: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
+  //========== Form submission handler ==========
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await onSave(formValues);
@@ -62,7 +76,7 @@ function AddLeaveModal({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={t("leaves.applyLeave")}
+      title={isEditMode ? t("leaves.editRequest") : t("leaves.applyLeave")}
       maxWidth="max-w-xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
@@ -123,54 +137,53 @@ function AddLeaveModal({
             <span className="mb-2 block text-sm font-medium text-slate-700">
               {t("leaves.reason")} <span className="text-red-500">*</span>
             </span>
-            <textarea
-              name="reason"
+            <RichTextEditor
               value={formValues.reason}
-              onChange={handleChange}
-              rows={2}
+              onChange={(content) =>
+                setFormValues((prev) => ({ ...prev, reason: content }))
+              }
               placeholder="Reason for leave"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-              required
+              height="110px"
+              simple
             />
           </label>
 
-          {/* Backup / Handover fields — hidden for managers */}
-          {!isManager && (
-            <>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">
-                  {t("leaves.handoverBackup")}
-                </span>
-                <select
-                  name="backupEmployeeId"
-                  value={formValues.backupEmployeeId}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-                >
-                  <option value="">{t("leaves.selectColleague")}</option>
-                  {colleagues.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          {/* ========== Backup / Handover fields ========== */}
+          <>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                {t("leaves.handoverBackup")}
+              </span>
+              <select
+                name="backupEmployeeId"
+                value={formValues.backupEmployeeId}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+              >
+                <option value="">{t("leaves.selectColleague")}</option>
+                {colleagues.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">
-                  {t("leaves.handoverNotes")}
-                </span>
-                <textarea
-                  name="handoverNote"
-                  value={formValues.handoverNote}
-                  onChange={handleChange}
-                  rows={2}
-                  placeholder={t("leaves.handoverPlaceholder")}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
-                />
-              </label>
-            </>
-          )}
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                {t("leaves.handoverNotes")}
+              </span>
+              <RichTextEditor
+                value={formValues.handoverNote}
+                onChange={(content) =>
+                  setFormValues((prev) => ({ ...prev, handoverNote: content }))
+                }
+                placeholder={t("leaves.handoverPlaceholder")}
+                height="105px"
+                simple
+              />
+            </label>
+          </>
         </div>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -179,14 +192,14 @@ function AddLeaveModal({
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isRichTextEmpty(formValues.reason)}
             className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
           >
-            {isSaving ? "Applying..." : "Apply"}
+            {isSaving ? t("leaves.applying") : t("leaves.apply")}
           </button>
         </div>
       </form>

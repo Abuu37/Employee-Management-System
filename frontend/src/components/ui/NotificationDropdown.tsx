@@ -12,6 +12,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import axios from "axios";
+import { getAccessToken } from "@/features/auth/services/authSession";
 
 interface Notification {
   id: number;
@@ -70,7 +71,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   }, [unreadCount]);
 
   const fetchNotifications = useCallback(async () => {
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (!token) return;
     try {
       const res = await axios.get("/api/notifications", {
@@ -89,7 +90,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   // Single interval that skips ticks while server is unreachable
   useEffect(() => {
-    if (!localStorage.getItem("token")) return;
+    if (!getAccessToken()) return;
     fetchNotifications(); // initial badge load
     const id = setInterval(() => {
       if (!pausedRef.current) fetchNotifications();
@@ -128,7 +129,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   }, [open]);
 
   const markOneRead = async (notif: Notification) => {
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (!notif.isRead && token) {
       await axios.patch(
         `/api/notifications/${notif.id}/read`,
@@ -144,7 +145,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   };
 
   const markAllRead = async () => {
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (!token) return;
     await axios.patch(
       "/api/notifications/read-all",
@@ -157,7 +158,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   const deleteOne = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (!token) return;
     await axios.delete(`/api/notifications/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -166,7 +167,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   };
 
   const clearAll = async () => {
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (!token) return;
     await axios.delete("/api/notifications/clear-all", {
       headers: { Authorization: `Bearer ${token}` },

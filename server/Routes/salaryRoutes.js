@@ -5,6 +5,7 @@ import {
   getSalaryByUserId,
   getMySalary,
   deleteSalary,
+  getSalaryStats,
 } from "../controller/salaryController.js";
 import { verifyToken } from "../Middlewares/authMiddleware.js";
 import { checkRole } from "../Middlewares/roleMiddleware.js";
@@ -13,6 +14,9 @@ const router = express.Router();
 
 // Admin: set/update salary
 router.post("/generate", verifyToken, checkRole("admin"), setSalary);
+
+// Salary stats
+router.get("/stats", verifyToken, checkRole("admin"), getSalaryStats);
 
 // Admin: get all salaries
 router.get("/", verifyToken, checkRole("admin"), getAllSalaries);

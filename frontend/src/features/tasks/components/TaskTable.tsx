@@ -1,8 +1,9 @@
-import { usePagination } from "@/Hook/usePagination";
+import { usePagination } from "@/hooks/usePagination";
 import { FiMessageCircle } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import TablePagination from "@/components/common/TablePagination";
 import type { TaskItem } from "@/features/tasks/types/task.types";
+import { richTextToPlainText } from "@/utils/richText";
 
 // Re-export for any consumers that import TaskItem from this file
 export type { TaskItem };
@@ -106,7 +107,7 @@ function TaskTable({
                       {task.assignedByName || "-"}
                     </td>
                     <td className="px-5 py-4 text-slate-600">
-                      {task.description || "-"}
+                      {richTextToPlainText(task.description) || "-"}
                     </td>
                     <td className="px-5 py-4">
                       <span

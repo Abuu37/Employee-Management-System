@@ -1,17 +1,31 @@
-import { usePagination } from "@/Hook/usePagination";
-import { FiEdit2, FiEye, FiPlus, FiTrash2, FiBriefcase } from "react-icons/fi";
+import {
+  FiEye,
+  FiTrash2,
+  FiBriefcase,
+  FiAlertTriangle,
+  FiClock,
+  FiCheckCircle,
+} from "react-icons/fi";
+import type { ReactNode } from "react";
+import SortArrow from "@/components/common/SortArrow";
 import { useTranslation } from "react-i18next";
 import type { ProjectItem } from "@/features/projects/types/project.types";
 import { useUser } from "@/context/UserContext";
 import TablePagination from "@/components/common/TablePagination";
-
-const PAGE_SIZE = 8;
 
 // Component for displaying a table of projects with actions to view, edit, or delete each project
 interface ProjectTableProps {
   title: string;
   projects: ProjectItem[];
   emptyMessage: string;
+  // server-side pagination
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  // sort
+  sortBy: string;
+  sortOrder: string;
+  onSort: (col: string) => void;
   onAdd: () => void;
   onView: (project: ProjectItem) => void;
   onEdit: (project: ProjectItem) => void;
@@ -33,26 +47,67 @@ const formatDate = (value: string) => {
   return date.toLocaleDateString("en-GB");
 };
 
-// Mapping of project status to corresponding CSS classes for styling in the project table
-const statusClassMap: Record<ProjectItem["status"], string> = {
-  pending: "bg-amber-50 text-amber-700",
-  in_progress: "bg-blue-50 text-blue-700",
-  complete: "bg-emerald-50 text-emerald-700",
+const statusConfig: Record<
+  ProjectItem["status"],
+  { bg: string; border: string; text: string; icon: ReactNode; label: string }
+> = {
+  pending: {
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    text: "text-amber-700",
+    icon: <FiAlertTriangle className="h-3.5 w-3.5" />,
+    label: "Pending",
+  },
+  in_progress: {
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    text: "text-blue-700",
+    icon: <FiClock className="h-3.5 w-3.5" />,
+    label: "In Progress",
+  },
+  complete: {
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    text: "text-emerald-700",
+    icon: <FiCheckCircle className="h-3.5 w-3.5" />,
+    label: "Complete",
+  },
 };
 
-// Mapping of project status to human-readable labels for display in the project table
-const statusLabelMap: Record<ProjectItem["status"], string> = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  complete: "Complete",
+const priorityConfig: Record<
+  NonNullable<ProjectItem["priority"]>,
+  { bg: string; border: string; text: string; label: string }
+> = {
+  low: {
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    text: "text-emerald-700",
+    label: "Low",
+  },
+  medium: {
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    text: "text-amber-700",
+    label: "Medium",
+  },
+  high: {
+    bg: "bg-rose-50",
+    border: "border-rose-200",
+    text: "text-rose-700",
+    label: "High",
+  },
 };
-
-// Determine if the current user is an admin to conditionally render certain columns and actions in the project table
 
 function ProjectTable({
   title,
   projects,
   emptyMessage,
+  page,
+  totalPages,
+  onPageChange,
+  sortBy,
+  sortOrder,
+  onSort,
   onAdd,
   onView,
   onEdit,
@@ -62,10 +117,12 @@ function ProjectTable({
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
   const { t } = useTranslation();
-  const { page, setPage, totalPages, paginated } = usePagination(
-    projects,
-    PAGE_SIZE,
-  );
+
+  const thSort = (col: string) => ({
+    onClick: () => onSort(col),
+    className:
+      "px-5 py-3 font-medium cursor-pointer select-none hover:text-slate-800",
+  });
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -83,31 +140,54 @@ function ProjectTable({
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">
+              <th {...thSort("name")}>
                 {t("projects.projectName")}
+                <SortArrow
+                  column="name"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder as "ASC" | "DESC"}
+                />
               </th>
-              <th className="px-5 py-3 font-medium">
+              <th {...thSort("startDate")}>
                 {t("projects.startDate")}
+                <SortArrow
+                  column="startDate"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder as "ASC" | "DESC"}
+                />
               </th>
-              <th className="px-5 py-3 font-medium">{t("projects.endDate")}</th>
-              <th className="px-5 py-3 font-medium">{t("projects.status")}</th>
+              <th {...thSort("endDate")}>
+                {t("projects.endDate")}
+                <SortArrow
+                  column="endDate"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder as "ASC" | "DESC"}
+                />
+              </th>
+              <th className="px-5 py-3 font-medium">Priority</th>
+              <th {...thSort("status")}>
+                {t("projects.status")}
+                <SortArrow
+                  column="status"
+                  sortBy={sortBy}
+                  sortOrder={sortOrder as "ASC" | "DESC"}
+                />
+              </th>
               {isAdmin && (
                 <th className="px-5 py-3 font-medium">
                   {t("projects.manager")}
                 </th>
               )}
-              <th className="px-5 py-3 justify-end font-medium">
-                {t("projects.actions")}
-              </th>
+              <th className="px-5 py-3 font-medium">{t("projects.actions")}</th>
             </tr>
           </thead>
 
           <tbody>
             {projects.length > 0 ? (
-              paginated.map((project, index) => (
+              projects.map((project, index) => (
                 <tr key={project.id} className="border-t border-slate-100">
                   <td className="px-5 py-4 font-semibold text-slate-900">
-                    {(page - 1) * PAGE_SIZE + index + 1}
+                    {(page - 1) * 10 + index + 1}
                   </td>
                   <td className="px-5 py-4 font-semibold text-slate-900">
                     {project.name}
@@ -120,17 +200,54 @@ function ProjectTable({
                     {formatDate(project.endDate)}
                   </td>
                   <td className="px-5 py-4">
-                    <select
-                      className={`rounded-xl border px-2 py-1 text-xs font-medium ${statusClassMap[project.status]}`}
-                      value={project.status}
-                      onChange={(e) => onUpdateStatus(project, e.target.value)}
-                    >
-                      <option value="pending">{t("projects.pending")}</option>
-                      <option value="in_progress">
-                        {t("projects.inProgress")}
-                      </option>
-                      <option value="complete">{t("projects.complete")}</option>
-                    </select>
+                    {(() => {
+                      const priority = project.priority ?? "medium";
+                      const cfg = priorityConfig[priority];
+                      return (
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.bg} ${cfg.border} ${cfg.text}`}
+                        >
+                          {cfg.label}
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-5 py-4">
+                    {(() => {
+                      const cfg =
+                        statusConfig[project.status] ?? statusConfig.pending;
+                      return (
+                        <div className="relative inline-flex">
+                          {/* visible badge */}
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold pointer-events-none ${
+                              cfg.bg
+                            } ${cfg.border} ${cfg.text}`}
+                          >
+                            {cfg.icon}
+                            {cfg.label}
+                          </span>
+                          {/* invisible select overlay for editing */}
+                          <select
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            value={project.status}
+                            onChange={(e) =>
+                              onUpdateStatus(project, e.target.value)
+                            }
+                          >
+                            <option value="pending">
+                              {t("projects.pending")}
+                            </option>
+                            <option value="in_progress">
+                              {t("projects.inProgress")}
+                            </option>
+                            <option value="complete">
+                              {t("projects.complete")}
+                            </option>
+                          </select>
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   {isAdmin && (
@@ -150,15 +267,6 @@ function ProjectTable({
                       </button>
                       <button
                         type="button"
-                        onClick={() => onEdit(project)}
-                        className="inline-flex items-center gap-1 rounded-lg border
-                         border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-                      >
-                        <FiEdit2 className="h-3.5 w-3.5" />
-                        {t("common.edit")}
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => onDelete(project)}
                         className="inline-flex items-center gap-1 rounded-lg border
                          border-red-200 bg-white px-3 py-1.5 text-xs font-medium
@@ -174,7 +282,7 @@ function ProjectTable({
             ) : (
               <tr>
                 <td
-                  colSpan={isAdmin ? 7 : 6}
+                  colSpan={isAdmin ? 8 : 7}
                   className="px-5 py-16 text-center"
                 >
                   <div className="flex flex-col items-center justify-center text-slate-400">
@@ -190,7 +298,7 @@ function ProjectTable({
       <TablePagination
         page={page}
         totalPages={totalPages}
-        onPageChange={setPage}
+        onPageChange={onPageChange}
       />
     </section>
   );

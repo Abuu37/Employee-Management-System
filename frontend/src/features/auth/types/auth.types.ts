@@ -11,6 +11,11 @@ export interface LoginFormErrors {
 export interface LoginResponse {
   message: string;
   token: string;
+  accessToken?: string;
+  "user-role"?: string;
+  "user-name"?: string;
+  "user-email"?: string;
+  "user-id"?: number | string;
   field?: string;
 }
 

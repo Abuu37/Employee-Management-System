@@ -6,10 +6,19 @@ import UserTable from "./UserTable";
 import AddUserModal from "./AddUserModal";
 import ViewUserModal from "./ViewUserModal";
 import EditUserModal from "./EditUserModal";
-import DeleteUserModal from "./DeleteUserModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
+import {
+  getAccessToken,
+  clearAuthSession,
+} from "@/features/auth/services/authSession";
 import type { AddUserFormValues } from "./AddUserModal";
 import type { EditUserFormValues } from "./EditUserModal";
-import type { Feedback, User, UserRole } from "@/features/users/types/user.types";
+import type {
+  Feedback,
+  User,
+  UserRole,
+} from "@/features/users/types/user.types";
 
 const API_BASE_URL = "http://localhost:5000/api/user";
 
@@ -61,6 +70,7 @@ function UserManagementSection({
   triggerAddCount = 0,
   hideTableAddButton = false,
 }: UserManagementSectionProps) {
+  const deleteConfirmation = useDeleteConfirmation();
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -78,7 +88,7 @@ function UserManagementSection({
     // Fetch users from the API and handle authentication errors
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getAccessToken();
 
         if (!token) {
           setError("No auth token found. Please login again.");
@@ -104,7 +114,7 @@ function UserManagementSection({
           const statusCode = err.response?.status;
 
           if (statusCode === 401 || statusCode === 400) {
-            localStorage.removeItem("token");
+            clearAuthSession();
             navigate("/login");
             return;
           }
@@ -148,6 +158,13 @@ function UserManagementSection({
   const handleOpenDelete = (user: User) => {
     setActiveUser(user);
     setDeleteOpen(true);
+    deleteConfirmation.requestDelete({
+      title: "Delete",
+      message: `Are you sure you want to delete ${user.name}?`,
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      onConfirm: handleDelete,
+    });
   };
 
   const handleAddUser = () => {
@@ -165,7 +182,7 @@ function UserManagementSection({
       setIsCreating(true);
       setFeedback(null);
 
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
 
       await axios.post(`${API_BASE_URL}/create-user`, formValues, {
         headers: {
@@ -218,7 +235,7 @@ function UserManagementSection({
       setIsSaving(true);
       setFeedback(null);
 
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
 
       await axios.put(
         `${API_BASE_URL}/update-user/${activeUser.id}`,
@@ -273,7 +290,7 @@ function UserManagementSection({
       setIsDeleting(true);
       setFeedback(null);
 
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
 
       await axios.delete(`${API_BASE_URL}/delete-user/${activeUser.id}`, {
         headers: {
@@ -382,12 +399,21 @@ function UserManagementSection({
         }
         isSaving={isSaving}
       />
-      <DeleteUserModal
-        isOpen={deleteOpen}
-        onClose={closeAllModals}
-        onConfirm={handleDelete}
-        user={activeUser}
-        isDeleting={isDeleting}
+      <DeleteConfirmModal
+        isOpen={deleteConfirmation.isOpen}
+        title={deleteConfirmation.dialog?.title ?? "Delete"}
+        message={
+          deleteConfirmation.dialog?.message ??
+          "Are you sure you want to delete this user?"
+        }
+        confirmLabel={deleteConfirmation.dialog?.confirmLabel ?? "Delete"}
+        cancelLabel={deleteConfirmation.dialog?.cancelLabel ?? "Cancel"}
+        isProcessing={isDeleting || deleteConfirmation.isProcessing}
+        onClose={() => {
+          deleteConfirmation.closeDialog();
+          closeAllModals();
+        }}
+        onConfirm={deleteConfirmation.confirmDelete}
       />
     </>
   );

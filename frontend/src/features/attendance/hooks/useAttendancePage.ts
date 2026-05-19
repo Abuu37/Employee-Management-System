@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@/context/UserContext";
-import { useTableQueryParams } from "@/Hook/useTableQueryParams";
+import { useTableQueryParams } from "@/hooks/useTableQueryParams";
 import { attendanceService } from "@/features/attendance/services/attendance.service";
 import type {
   AttendanceRecord,

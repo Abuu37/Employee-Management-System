@@ -1,4 +1,4 @@
-import { useTableQueryParams } from "@/Hook/useTableQueryParams";
+import { useTableQueryParams } from "@/hooks/useTableQueryParams";
 
 interface FilterOptions {
   defaultSortBy?: string;

@@ -1,20 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useProjects } from "@/features/projects/hooks/useProjects";
 import { useProjectTasks } from "@/features/projects/hooks/useProjectTasks";
 import { useProjectModals } from "@/features/projects/hooks/useProjectModals";
+import { useTableQueryParams } from "@/hooks/useTableQueryParams";
 import type { TaskFormValues } from "@/features/tasks/types/task.types";
 import type {
   ProjectFormValues,
   ProjectItem,
+  ProjectQueryParams,
 } from "@/features/projects/types/project.types";
 
 /**
  * Orchestrates the Projects page: wires together useProjects, useProjectTasks,
- * and useProjectModals, adds search filtering, and exposes a flat handler API
- * to the page component.
- *
- * Concern: page-level orchestration only — no direct API calls.
+ * and useProjectModals with URL-driven server-side filtering and pagination.
  */
 export const useProjectsPage = () => {
   const {
@@ -23,17 +22,21 @@ export const useProjectsPage = () => {
     stats,
     error,
     feedback,
+    loading,
     isCreating,
     isSaving,
     isDeleting,
+    totalPages,
     employeeOptions,
     userNameById,
     setFeedback,
     loadInitial,
+    fetchProjects,
+    reloadProjects,
     createProject,
     editProject,
     removeProject,
-    updateStatus,
+    updateStatus: rawUpdateStatus,
   } = useProjects();
 
   const { tasks, setTasks, fetchTasks, createTask, removeTask, clearTasks } =
@@ -52,34 +55,47 @@ export const useProjectsPage = () => {
     closeAllModals,
   } = useProjectModals();
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // ─── URL-driven filter/sort/page state ────────────────────────────────────
+  const {
+    searchParams,
+    page,
+    search,
+    status: statusFilter,
+    sortBy,
+    sortOrder,
+    setPage,
+    setSearch,
+    setStatus: setStatusFilter,
+    handleSort,
+    updateParams,
+  } = useTableQueryParams({ defaultSortBy: "id", defaultSortOrder: "DESC" });
+
+  const currentParams: ProjectQueryParams = {
+    search: search || null,
+    status: statusFilter !== "all" ? statusFilter : null,
+    sortBy,
+    sortOrder,
+    page,
+    limit: 10,
+  };
 
   // ─── Initial load ─────────────────────────────────────────────────────────
-
   useEffect(() => {
     void loadInitial();
   }, [loadInitial]);
 
-  // ─── Derived data ─────────────────────────────────────────────────────────
-
-  const displayedProjects = projects.filter((project) => {
-    const query = searchTerm.toLowerCase().trim();
-    if (!query) return true;
-    return (
-      project.name.toLowerCase().includes(query) ||
-      (project.managerName ?? "").toLowerCase().includes(query) ||
-      project.status.toLowerCase().includes(query)
-    );
-  });
+  // ─── Re-fetch when URL params change (skip on first render — loadInitial handles it) ──
+  useEffect(() => {
+    void fetchProjects(currentParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, statusFilter, sortBy, sortOrder, page]);
 
   // ─── Shared close helper ──────────────────────────────────────────────────
-
   const handleCloseModal = useCallback(() => {
     closeAllModals(clearTasks);
   }, [closeAllModals, clearTasks]);
 
   // ─── Modal open handlers ──────────────────────────────────────────────────
-
   const handleCreateOpen = useCallback(() => {
     setFeedback(null);
     openCreate();
@@ -114,31 +130,45 @@ export const useProjectsPage = () => {
     [setFeedback, openDelete],
   );
 
-  // ─── CRUD handlers ────────────────────────────────────────────────────────
+  // Switch from view drawer → edit form without clearing activeProject
+  const handleSwitchToEdit = useCallback(() => {
+    if (!activeProject) return;
+    const project = activeProject;
+    clearTasks();
+    closeAllModals();
+    setFeedback(null);
+    openEdit(project);
+  }, [activeProject, clearTasks, closeAllModals, setFeedback, openEdit]);
 
+  // ─── CRUD handlers ────────────────────────────────────────────────────────
   const handleCreate = useCallback(
     async (formValues: ProjectFormValues) => {
-      const ok = await createProject(formValues);
+      const ok = await createProject(formValues, currentParams);
       if (ok) handleCloseModal();
     },
-    [createProject, handleCloseModal],
+    [createProject, handleCloseModal, currentParams],
   );
 
   const handleEdit = useCallback(
     async (formValues: ProjectFormValues) => {
-      const ok = await editProject(activeProject, formValues);
+      const ok = await editProject(activeProject, formValues, currentParams);
       if (ok) handleCloseModal();
     },
-    [editProject, activeProject, handleCloseModal],
+    [editProject, activeProject, handleCloseModal, currentParams],
   );
 
   const handleDelete = useCallback(async () => {
-    const ok = await removeProject(activeProject);
+    const ok = await removeProject(activeProject, currentParams);
     if (ok) handleCloseModal();
-  }, [removeProject, activeProject, handleCloseModal]);
+  }, [removeProject, activeProject, handleCloseModal, currentParams]);
+
+  const handleUpdateStatus = useCallback(
+    (project: ProjectItem, status: string) =>
+      rawUpdateStatus(project, status, currentParams),
+    [rawUpdateStatus, currentParams],
+  );
 
   // ─── Task handlers ────────────────────────────────────────────────────────
-
   const handleCreateTask = useCallback(
     async (values: TaskFormValues) => {
       if (!activeProject) return;
@@ -173,7 +203,7 @@ export const useProjectsPage = () => {
 
   return {
     // ── Data ────────────────────────────────────────────────────────────────
-    displayedProjects,
+    projects,
     managers,
     stats,
     error,
@@ -183,6 +213,7 @@ export const useProjectsPage = () => {
     activeProject,
 
     // ── Loading states ───────────────────────────────────────────────────────
+    loading,
     isCreating,
     isSaving,
     isDeleting,
@@ -193,21 +224,30 @@ export const useProjectsPage = () => {
     editOpen,
     deleteOpen,
 
-    // ── Search ───────────────────────────────────────────────────────────────
-    searchTerm,
-    setSearchTerm,
+    // ── Filter / sort / page (URL-driven) ────────────────────────────────────
+    search,
+    statusFilter,
+    sortBy,
+    sortOrder,
+    page,
+    totalPages,
+    setSearch,
+    setStatusFilter,
+    setPage,
+    handleSort,
 
     // ── Handlers ─────────────────────────────────────────────────────────────
     handleCreateOpen,
     handleViewOpen,
     handleEditOpen,
     handleDeleteOpen,
+    handleSwitchToEdit,
     handleCreate,
     handleEdit,
     handleDelete,
     handleCreateTask,
     handleDeleteTask,
     handleCloseModal,
-    updateStatus,
+    updateStatus: handleUpdateStatus,
   };
 };

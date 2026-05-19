@@ -6,7 +6,7 @@ import { FiX } from "react-icons/fi";
 interface ModalShellProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: ReactNode;
   maxWidth?: string;
   overlayClassName?: string;
   panelClassName?: string;

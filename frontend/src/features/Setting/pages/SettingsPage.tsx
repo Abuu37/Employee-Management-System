@@ -16,6 +16,10 @@ import {
 } from "react-icons/md";
 import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
+import {
+  clearAuthSession,
+  getAccessToken,
+} from "@/features/auth/services/authSession";
 
 function PasswordField({
   label,
@@ -99,7 +103,7 @@ function Settings() {
     try {
       setIsSaving(true);
 
-      const token = localStorage.getItem("token");
+      const token = getAccessToken();
       if (!token) {
         navigate("/login");
         return;
@@ -129,8 +133,7 @@ function Settings() {
         const status = err.response?.status;
 
         if (status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user-role");
+          clearAuthSession();
           navigate("/login");
           return;
         }

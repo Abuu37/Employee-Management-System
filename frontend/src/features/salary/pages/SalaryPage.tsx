@@ -1,54 +1,62 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Sidebar from "@/layouts/Sidebar";
 import Header from "@/layouts/Header";
 import SalaryTable from "@/features/salary/components/SalaryTable";
 import SetSalaryModal from "@/features/salary/components/SetSalaryModal";
-import DeleteSalaryModal from "@/features/salary/components/DeleteSalaryModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import type { SalaryFormValues } from "@/features/salary/components/SetSalaryModal";
-import { FiPlus } from "react-icons/fi";
+import { useSalary } from "@/features/salary/hooks/useSalary";
+import StatCard from "@/features/attendance/components/StatCard";
+import {
+  FiPlus,
+  FiDollarSign,
+  FiUsers,
+  FiTrendingUp,
+  FiCreditCard,
+} from "react-icons/fi";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import {
-  getAllSalaries,
   setSalary,
   deleteSalary,
   type SalaryRecord,
-} from "@/services/salary.service";
+} from "../services/salary.service";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
 
 export default function SalaryPage() {
   const { t } = useTranslation();
-  const [data, setData] = useState<SalaryRecord[]>([]);
-  const [search, setSearch] = useState("");
+  const deleteConfirmation = useDeleteConfirmation();
+  const {
+    filteredData,
+    stats,
+    search,
+    setSearch,
+    sortBy,
+    sortOrder,
+    handleSort,
+    refetch,
+    refetchStats,
+  } = useSalary();
   const [formOpen, setFormOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<SalaryRecord | null>(null);
   const [deleteRecord, setDeleteRecord] = useState<SalaryRecord | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchSalaries = () => {
-    getAllSalaries()
-      .then(setData)
-      .catch((err) => {
-        console.error(err);
-        toast.error("Failed to load salary records");
-      });
-  };
-
-  useEffect(() => {
-    fetchSalaries();
-  }, []);
-
+  //============== Load users when modal opens =============
   const handleAdd = () => {
     setEditRecord(null);
     setFormOpen(true);
   };
 
+  //==============  function handle edit ===================
   const handleEdit = (record: SalaryRecord) => {
     setEditRecord(record);
     setFormOpen(true);
   };
 
+  //==============  function handle save ===================
   const handleSave = async (values: SalaryFormValues) => {
     setSaving(true);
     try {
@@ -62,7 +70,8 @@ export default function SalaryPage() {
       toast.success(editRecord ? "Salary updated" : "Salary set successfully");
       setFormOpen(false);
       setEditRecord(null);
-      fetchSalaries();
+      refetch();
+      refetchStats();
     } catch (err: any) {
       console.error(err);
       toast.error(err?.response?.data?.message ?? "Failed to save salary");
@@ -71,6 +80,8 @@ export default function SalaryPage() {
     }
   };
 
+  //=========== handle delete confirmtaion =============
+
   const handleDeleteConfirm = async () => {
     if (!deleteRecord) return;
     setDeleting(true);
@@ -78,7 +89,8 @@ export default function SalaryPage() {
       await deleteSalary(deleteRecord.id);
       toast.success("Salary record deleted");
       setDeleteRecord(null);
-      fetchSalaries();
+      refetch();
+      refetchStats();
     } catch (err: any) {
       console.error(err);
       toast.error(
@@ -87,6 +99,17 @@ export default function SalaryPage() {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleDeleteRequest = (record: SalaryRecord) => {
+    setDeleteRecord(record);
+    deleteConfirmation.requestDelete({
+      title: t("common.delete"),
+      message: t("salary.deleteConfirm", { name: record.name }),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      onConfirm: handleDeleteConfirm,
+    });
   };
 
   return (
@@ -118,6 +141,53 @@ export default function SalaryPage() {
               </button>
             </div>
 
+            {/* Stat cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard
+                label={t("salary.totalRecords", {
+                  defaultValue: "Total Records",
+                })}
+                value={stats.total}
+                icon={<FiUsers />}
+                color=""
+                featured
+                subtitle={t("salary.allRecords")}
+              />
+              <StatCard
+                label={t("salary.avgBase", { defaultValue: "Avg Base Salary" })}
+                value={stats.avgBase.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
+                icon={<FiDollarSign />}
+                color="bg-blue-100 text-blue-600"
+                subtitle={t("salary.perEmployee", {
+                  defaultValue: "Per employee",
+                })}
+              />
+              <StatCard
+                label={t("salary.totalGross", { defaultValue: "Total Gross" })}
+                value={stats.totalGross.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
+                icon={<FiTrendingUp />}
+                color="bg-amber-100 text-amber-600"
+                subtitle={t("salary.monthlyGross", {
+                  defaultValue: "Monthly gross payout",
+                })}
+              />
+              <StatCard
+                label={t("salary.totalNet", { defaultValue: "Total Net" })}
+                value={stats.totalNet.toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
+                icon={<FiCreditCard />}
+                color="bg-emerald-100 text-emerald-600"
+                subtitle={t("salary.monthlyNet", {
+                  defaultValue: "Monthly net payout",
+                })}
+              />
+            </div>
+
             {/* Search bar */}
             <div className="relative w-full max-w-sm">
               <AnimatedSearchIcon />
@@ -131,15 +201,13 @@ export default function SalaryPage() {
             </div>
 
             <SalaryTable
-              data={data.filter((r) => {
-                const name = r.user?.name?.toLowerCase() ?? "";
-                const email = r.user?.email?.toLowerCase() ?? "";
-                const q = search.toLowerCase();
-                return name.includes(q) || email.includes(q);
-              })}
+              data={filteredData}
               onAdd={handleAdd}
               onEdit={handleEdit}
-              onDelete={setDeleteRecord}
+              onDelete={handleDeleteRequest}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
             />
           </div>
 
@@ -154,12 +222,25 @@ export default function SalaryPage() {
             salary={editRecord}
           />
 
-          <DeleteSalaryModal
-            isOpen={!!deleteRecord}
-            onClose={() => setDeleteRecord(null)}
-            onConfirm={handleDeleteConfirm}
-            salary={deleteRecord}
-            isDeleting={deleting}
+          <DeleteConfirmModal
+            isOpen={deleteConfirmation.isOpen}
+            title={deleteConfirmation.dialog?.title ?? t("common.delete")}
+            message={
+              deleteConfirmation.dialog?.message ??
+              "Are you sure you want to delete this salary record?"
+            }
+            confirmLabel={
+              deleteConfirmation.dialog?.confirmLabel ?? t("common.delete")
+            }
+            cancelLabel={
+              deleteConfirmation.dialog?.cancelLabel ?? t("common.cancel")
+            }
+            isProcessing={deleting || deleteConfirmation.isProcessing}
+            onClose={() => {
+              deleteConfirmation.closeDialog();
+              setDeleteRecord(null);
+            }}
+            onConfirm={deleteConfirmation.confirmDelete}
           />
         </div>
       </main>

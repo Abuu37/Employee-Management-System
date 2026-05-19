@@ -1,9 +1,10 @@
 import api from "@/services/axios";
 import type {
   ProjectFormValues,
+  ProjectListResponse,
+  ProjectQueryParams,
   ProjectStats,
   ProjectStatus,
-  RawProject,
   RawUser,
 } from "@/features/projects/types/project.types";
 
@@ -14,10 +15,12 @@ export const projectService = {
     return res.data;
   },
 
-  // Fetch all projects
-  getProjects: async () => {
-    const res = await api.get(`/project/all`);
-    return res.data;
+  // Fetch all projects with optional server-side filtering and pagination
+  getProjects: async (
+    params?: ProjectQueryParams,
+  ): Promise<ProjectListResponse> => {
+    const res = await api.get(`/project/all`, { params });
+    return res.data as ProjectListResponse;
   },
 
   // Fetch project statistics for dashboard display
@@ -30,10 +33,13 @@ export const projectService = {
   createProject: async (payload: ProjectFormValues) => {
     const res = await api.post(`/project/create`, {
       name: payload.name,
+      code: payload.code || undefined,
       description: payload.description,
       managerId: payload.managerId,
       startDate: payload.startDate,
       endDate: payload.endDate || undefined,
+      status: payload.status,
+      priority: payload.priority,
     });
     return res.data;
   },
@@ -42,11 +48,13 @@ export const projectService = {
   updateProject: async (id: number, payload: ProjectFormValues) => {
     const res = await api.put(`/project/update/${id}`, {
       name: payload.name,
+      code: payload.code || undefined,
       description: payload.description,
       managerId: payload.managerId,
       startDate: payload.startDate,
       endDate: payload.endDate || undefined,
       status: payload.status,
+      priority: payload.priority,
     });
     return res.data;
   },

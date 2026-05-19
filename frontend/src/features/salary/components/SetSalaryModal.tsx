@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ModalShell from "@/features/users/components/ModalShell";
 import { useTranslation } from "react-i18next";
-import type { SalaryRecord } from "@/services/salary.service";
+import { getAccessToken } from "@/features/auth/services/authSession";
+import type { SalaryRecord } from "../services/salary.service";
 
 export interface SalaryFormValues {
   user_id: number;
@@ -25,6 +26,7 @@ interface SetSalaryModalProps {
   salary?: SalaryRecord | null;
 }
 
+// This component is used for both creating a new salary record and editing an existing one. If `salary` prop is provided, it will be in edit mode and pre-fill the form with the existing values. Otherwise, it will be in create mode with empty form fields.
 export default function SetSalaryModal({
   isOpen,
   onClose,
@@ -40,14 +42,16 @@ export default function SetSalaryModal({
     allowance: 0,
     tax_percentage: 0,
   });
+
   const [users, setUsers] = useState<UserOption[]>([]);
 
+  //============== Load users when modal opens =============
   useEffect(() => {
     if (!isOpen) return;
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     axios
       .get("http://localhost:5000/api/user/view-users", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       .then((res) => {
         const list = Array.isArray(res.data)
@@ -58,6 +62,7 @@ export default function SetSalaryModal({
       .catch(console.error);
   }, [isOpen]);
 
+  //============== Load salary data when modal opens =============
   useEffect(() => {
     if (salary) {
       setFormValues({
@@ -79,6 +84,7 @@ export default function SetSalaryModal({
     });
   }, [salary, isOpen]);
 
+  //==============  handle form changes ===================
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
@@ -89,6 +95,7 @@ export default function SetSalaryModal({
     }));
   };
 
+  //==============  fuction handle submit ===================
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await onSave(formValues);

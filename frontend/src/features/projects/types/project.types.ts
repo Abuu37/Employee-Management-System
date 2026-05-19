@@ -3,12 +3,14 @@ export type ProjectStatus = "pending" | "in_progress" | "complete";
 export interface ProjectItem {
   id: number;
   name: string;
+  code?: string;
   description: string;
   managerId: number;
   managerName?: string;
   startDate: string;
   endDate: string;
   status: ProjectStatus;
+  priority?: "low" | "medium" | "high";
   deadline?: string;
 }
 
@@ -29,17 +31,22 @@ export interface ManagerOption {
 
 export interface ProjectFormValues {
   name: string;
+  code?: string;
   description: string;
   managerId: number;
   startDate: string;
   endDate: string;
   status?: ProjectStatus;
+  priority?: "low" | "medium" | "high";
 }
 
 export type RawProject = {
   id: number;
   name: string;
+  code?: string | null;
   description?: string | null;
+  managerName?: string | null;
+  manager?: { id: number; name: string } | null;
   managerId?: number;
   manager_id?: number;
   startDate?: string;
@@ -49,6 +56,7 @@ export type RawProject = {
   deadline?: string;
   deadline_date?: string;
   status?: ProjectItem["status"];
+  priority?: "low" | "medium" | "high";
 };
 
 export type RawUser = {
@@ -79,3 +87,19 @@ export type FeedbackState = {
   type: "success" | "error";
   message: string;
 } | null;
+
+export interface ProjectQueryParams {
+  search?: string | null;
+  status?: string | null;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ProjectListResponse {
+  data: RawProject[];
+  page: number;
+  totalPages: number;
+  total: number;
+}

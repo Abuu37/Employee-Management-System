@@ -1,6 +1,5 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { Op } from "sequelize";
 import Attendance from "../models/Attendance.js";
@@ -11,6 +10,20 @@ import {
   sendPasswordResetEmail,
 } from "../utils/sendEmail.js";
 import { LeaveBalance } from "../models/index.js";
+import { env } from "../config/env.js";
+import {
+  REFRESH_COOKIE_NAME,
+  clearRefreshCookie,
+  setRefreshCookie,
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt.js";
+
+const hashToken = (value) =>
+  crypto.createHash("sha256").update(value).digest("hex");
+
+const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ================= REGISTER =================
 export const register = async (req, res) => {
@@ -73,6 +86,8 @@ export const createUserByAdmin = async (req, res) => {
       address,
       emergency_contact,
       employment_type,
+      employee_id,
+      join_date,
       status,
       reports_to,
       office_branch,
@@ -83,8 +98,8 @@ export const createUserByAdmin = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const plainPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const provisionalPassword = crypto.randomBytes(24).toString("hex");
+    const hashedPassword = await bcrypt.hash(provisionalPassword, 12);
 
     const generatedEmployeeId = `EMP-${Date.now().toString().slice(-6)}-${crypto
       .randomBytes(2)
@@ -149,8 +164,14 @@ export const createUserByAdmin = async (req, res) => {
       status: status || "active",
     });
 
-    // ✅ Send credentials email
-    await sendCredentialsEmail(name, email, plainPassword);
+    // Send account setup link (never email plaintext passwords)
+    const setupToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = hashToken(setupToken);
+    user.resetPasswordExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    const setupUrl = `${env.frontendUrl}/reset-password?token=${setupToken}`;
+    await sendCredentialsEmail(name, email, setupUrl);
 
     // ✅ Create leave balance
     await LeaveBalance.create({
@@ -282,7 +303,10 @@ export const getEmployees = async (req, res) => {
 // ================= GET EMPLOYEE BY ID (ADMIN) =================
 export const getEmployeeById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "Invalid employee id" });
+    }
 
     const employee = await User.findOne({
       where: { id, role: "employee" },
@@ -291,6 +315,10 @@ export const getEmployeeById = async (req, res) => {
 
     if (!employee) {
       return res.status(404).json({ message: "Employee not found" });
+    }
+
+    if (req.user.role === "manager" && employee.manager_id !== req.user.id) {
+      return res.status(403).json({ message: "Not allowed." });
     }
 
     res.json(employee);
@@ -822,27 +850,27 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({
-        field: "email",
-        message: "User not found",
-      });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({
-        field: "password",
-        message: "Invalid password",
-      });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, "secretkey", {
-      expiresIn: "1d",
-    });
+    const token = signAccessToken({ id: user.id, role: user.role });
+    const refreshToken = signRefreshToken({ id: user.id, role: user.role });
+
+    user.refreshTokenHash = hashToken(refreshToken);
+    user.refreshTokenExpires = new Date(Date.now() + REFRESH_TTL_MS);
+    await user.save();
+
+    setRefreshCookie(res, refreshToken);
 
     res.json({
       message: "Login successful",
       token,
+      accessToken: token,
       "user-role": user.role,
       "user-name": user.name,
       "user-email": user.email,
@@ -851,6 +879,73 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const refreshToken = async (req, res) => {
+  try {
+    const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+    if (!rawRefreshToken) {
+      return res.status(401).json({ message: "Refresh token missing" });
+    }
+
+    const decoded = verifyRefreshToken(rawRefreshToken);
+    const user = await User.findByPk(decoded.id);
+
+    if (!user || !user.refreshTokenHash || !user.refreshTokenExpires) {
+      clearRefreshCookie(res);
+      return res.status(401).json({ message: "Invalid refresh session" });
+    }
+
+    const incomingHash = hashToken(rawRefreshToken);
+    const isExpired = user.refreshTokenExpires < new Date();
+    if (incomingHash !== user.refreshTokenHash || isExpired) {
+      clearRefreshCookie(res);
+      return res.status(401).json({ message: "Refresh token expired" });
+    }
+
+    const newAccessToken = signAccessToken({ id: user.id, role: user.role });
+    const nextRefreshToken = signRefreshToken({ id: user.id, role: user.role });
+    user.refreshTokenHash = hashToken(nextRefreshToken);
+    user.refreshTokenExpires = new Date(Date.now() + REFRESH_TTL_MS);
+    await user.save();
+
+    setRefreshCookie(res, nextRefreshToken);
+
+    return res.json({ accessToken: newAccessToken, token: newAccessToken });
+  } catch (error) {
+    clearRefreshCookie(res);
+    return res.status(401).json({ message: "Invalid refresh token" });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    let userId = req.user?.id;
+
+    if (!userId) {
+      const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+      if (rawRefreshToken) {
+        try {
+          const decoded = verifyRefreshToken(rawRefreshToken);
+          userId = decoded?.id;
+        } catch {
+          // Invalid refresh cookie still results in cookie clear below.
+        }
+      }
+    }
+
+    if (userId) {
+      await User.update(
+        { refreshTokenHash: null, refreshTokenExpires: null },
+        { where: { id: userId } },
+      );
+    }
+
+    clearRefreshCookie(res);
+    return res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -907,11 +1002,11 @@ export const forgotPassword = async (req, res) => {
     const token = crypto.randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    user.resetPasswordToken = token;
+    user.resetPasswordToken = hashToken(token);
     user.resetPasswordExpires = expires;
     await user.save();
 
-    const resetUrl = `http://localhost:5173/reset-password?token=${token}`;
+    const resetUrl = `${env.frontendUrl}/reset-password?token=${token}`;
     await sendPasswordResetEmail(user.name, user.email, resetUrl);
 
     res.json({ message: "If that email exists, a reset link has been sent." });
@@ -940,7 +1035,9 @@ export const resetPassword = async (req, res) => {
         .json({ message: "Password must be at least 6 characters." });
     }
 
-    const user = await User.findOne({ where: { resetPasswordToken: token } });
+    const user = await User.findOne({
+      where: { resetPasswordToken: hashToken(token) },
+    });
 
     if (
       !user ||
@@ -952,9 +1049,11 @@ export const resetPassword = async (req, res) => {
         .json({ message: "Reset link is invalid or has expired." });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = await bcrypt.hash(newPassword, 12);
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
+    user.refreshTokenHash = null;
+    user.refreshTokenExpires = null;
     await user.save();
 
     res.json({ message: "Password reset successfully. You can now log in." });

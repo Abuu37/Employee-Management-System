@@ -1,4 +1,4 @@
-import { usePagination } from "@/Hook/usePagination";
+import { usePagination } from "@/hooks/usePagination";
 import {
   FiCalendar,
   FiCheckCircle,

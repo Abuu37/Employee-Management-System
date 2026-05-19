@@ -13,12 +13,14 @@ import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
 import AddUserModal from "@/features/users/components/AddUserModal";
 import EditUserModal from "@/features/users/components/EditUserModal";
-import DeleteUserModal from "@/features/users/components/DeleteUserModal";
+import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import ManagerViewDrawer from "@/features/users/components/ManagerViewDrawer";
 import { useManagersPage } from "@/features/users/hooks/useManagersPage";
+import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
 
 export default function ManagerPage() {
   const { t } = useTranslation();
+  const deleteConfirmation = useDeleteConfirmation();
   const {
     managers,
     totalRecords,
@@ -55,6 +57,17 @@ export default function ManagerPage() {
     handleDelete,
     closeAllModals,
   } = useManagersPage();
+
+  const handleDeleteRequest = (manager: NonNullable<typeof selected>) => {
+    openDelete(manager);
+    deleteConfirmation.requestDelete({
+      title: t("common.delete"),
+      message: t("employees.deleteConfirm", { name: manager.name }),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
+      onConfirm: handleDelete,
+    });
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -244,7 +257,7 @@ export default function ManagerPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => openDelete(manager)}
+                              onClick={() => handleDeleteRequest(manager)}
                               className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-500 hover:text-white"
                             >
                               <FiTrash2 className="h-3.5 w-3.5" />
@@ -291,12 +304,25 @@ export default function ManagerPage() {
         roleOptions={["manager"]}
         isSaving={isSaving}
       />
-      <DeleteUserModal
-        isOpen={deleteOpen}
-        onClose={closeAllModals}
-        onConfirm={handleDelete}
-        user={selected}
-        isDeleting={isDeleting}
+      <DeleteConfirmModal
+        isOpen={deleteConfirmation.isOpen}
+        title={deleteConfirmation.dialog?.title ?? t("common.delete")}
+        message={
+          deleteConfirmation.dialog?.message ??
+          "Are you sure you want to delete this manager?"
+        }
+        confirmLabel={
+          deleteConfirmation.dialog?.confirmLabel ?? t("common.delete")
+        }
+        cancelLabel={
+          deleteConfirmation.dialog?.cancelLabel ?? t("common.cancel")
+        }
+        isProcessing={isDeleting || deleteConfirmation.isProcessing}
+        onClose={() => {
+          deleteConfirmation.closeDialog();
+          closeAllModals();
+        }}
+        onConfirm={deleteConfirmation.confirmDelete}
       />
     </div>
   );
