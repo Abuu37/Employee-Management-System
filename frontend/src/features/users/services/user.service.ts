@@ -24,7 +24,9 @@ export const userService = {
     api.get<UserListResponse>("/user/employees/", { params }).then((r) => ({
       ...r.data,
       data: Array.isArray(r.data.data) ? r.data.data.map(normalizeUser) : [],
+      conslole: console.log("Employee API response:", r),
     })),
+    
 
   getEmployeeById: (id: number): Promise<User> =>
     api.get<User>(`/user/employees/${id}`).then((r) => normalizeUser(r.data)),

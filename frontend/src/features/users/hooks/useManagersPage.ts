@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useUser } from "@/context/UserContext";
 import { useTableQueryParams } from "@/hooks/useTableQueryParams";
@@ -44,12 +44,16 @@ export const useManagersPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const managersFetchRef = useRef(false);
+  const managerDetailsFetchRef = useRef(false);
 
   const viewId = searchParams.get("view")
     ? Number(searchParams.get("view"))
     : null;
 
   const loadManagers = useCallback(async () => {
+    if (managersFetchRef.current) return;
+    managersFetchRef.current = true;
     try {
       setLoading(true);
       const payload = await userService.getManagers({
@@ -67,6 +71,7 @@ export const useManagersPage = () => {
       toast.error("Failed to load managers");
     } finally {
       setLoading(false);
+      managersFetchRef.current = false;
     }
   }, [page, search, statusFilter, sortBy, sortOrder]);
 
@@ -76,6 +81,8 @@ export const useManagersPage = () => {
 
   useEffect(() => {
     if (!viewId || Number.isNaN(viewId)) return;
+    if (managerDetailsFetchRef.current) return;
+    managerDetailsFetchRef.current = true;
     let active = true;
     (async () => {
       try {
@@ -90,6 +97,7 @@ export const useManagersPage = () => {
     })();
     return () => {
       active = false;
+      managerDetailsFetchRef.current = false;
     };
   }, [viewId, setParam]);
 

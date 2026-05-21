@@ -296,6 +296,9 @@ export default function AttendancePage() {
               subtitle={t("attendance.checkedInToday")}
               extra={`${stats?.attendanceRate ?? 0}% attendance rate`}
               extraClassName="text-green-600"
+              onClick={() =>
+                setStatusFilter(statusFilter === "present" ? "all" : "present")
+              }
             />
             <StatCard
               label={t("attendance.lateToday")}
@@ -311,6 +314,9 @@ export default function AttendancePage() {
                   : undefined
               }
               extraClassName="text-amber-600"
+              onClick={() =>
+                setStatusFilter(statusFilter === "late" ? "all" : "late")
+              }
             />
             <StatCard
               label={t("attendance.absentToday")}
@@ -320,6 +326,9 @@ export default function AttendancePage() {
               subtitle={t("attendance.notCheckedIn")}
               extra={`${stats?.onLeave ?? 0} on leave, ${stats?.absentToday ?? 0} no check-in`}
               extraClassName="text-slate-500"
+              onClick={() =>
+                setStatusFilter(statusFilter === "absent" ? "all" : "absent")
+              }
             />
           </section>
 

@@ -160,8 +160,9 @@ function EditUserModal({
         headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       .then((res) => {
+        
         setDepartments(
-          (Array.isArray(res.data) ? res.data : []).map((d: any) => ({
+          (Array.isArray(res.data.departments) ? res.data.departments : []).map((d: any) => ({
             id: d.id,
             name: d.name,
           })),
@@ -706,10 +707,6 @@ function EditUserModal({
                               <option value="">Select gender</option>
                               <option value="male">Male</option>
                               <option value="female">Female</option>
-                              <option value="other">Other</option>
-                              <option value="prefer_not_to_say">
-                                Prefer not to say
-                              </option>
                             </select>
                           </td>
                         </tr>

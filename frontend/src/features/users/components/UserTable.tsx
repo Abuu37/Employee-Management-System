@@ -44,7 +44,9 @@ function UserTable({
   sortBy,
   sortOrder,
   onSort,
-}: UserTableProps) {
+}: UserTableProps) 
+
+{
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
   const { t } = useTranslation();
@@ -226,7 +228,8 @@ function UserTable({
                       <button
                         type="button"
                         onClick={() => onDelete(user)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-200
+                        bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
                       >
                         <FiTrash2 className="h-3.5 w-3.5" />
                         Delete

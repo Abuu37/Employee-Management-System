@@ -297,7 +297,7 @@ function LeavesTable({
                               ((isManager &&
                                 isMyLeaves &&
                                 leave.overallStatus === "rejected_by_hr") ||
-                                (isManager && !isMyLeaves && isRejected));
+                                (!isManager && isMyLeaves && isRejected));
                             const canDeleteRequest =
                               Boolean(onDeleteRequest) &&
                               ((isMyLeaves && isRejected) ||

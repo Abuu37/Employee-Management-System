@@ -27,6 +27,8 @@ const sendCredentialsEmail = async (name, email, setupUrl) => {
   }
 };
 
+
+
 const sendPasswordResetEmail = async (name, email, resetUrl) => {
   try {
     await transporter.sendMail({

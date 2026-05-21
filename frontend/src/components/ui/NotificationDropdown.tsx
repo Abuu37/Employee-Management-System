@@ -58,6 +58,8 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const bellLottieRef = useRef<LottieRefCurrentProps>(null);
   const pausedRef = useRef(false); // true when server is unreachable
+  const fetchingRef = useRef(false);
+  const lastFetchAtRef = useRef(0);
   const navigate = useNavigate();
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -73,6 +75,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   const fetchNotifications = useCallback(async () => {
     const token = getAccessToken();
     if (!token) return;
+    const now = Date.now();
+    if (fetchingRef.current || now - lastFetchAtRef.current < 2000) return;
+    fetchingRef.current = true;
     try {
       const res = await axios.get("/api/notifications", {
         headers: { Authorization: `Bearer ${token}` },
@@ -85,6 +90,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       if (axios.isAxiosError(err) && !err.response) {
         pausedRef.current = true; // ECONNREFUSED — pause interval ticks silently
       }
+    } finally {
+      fetchingRef.current = false;
+      lastFetchAtRef.current = Date.now();
     }
   }, [onCountChange]);
 

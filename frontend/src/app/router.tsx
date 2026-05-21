@@ -67,7 +67,7 @@ export default function AppRouter() {
         <Route
           path="/employee"
           element={
-            <RoleRoute allowedRoles={["admin"]}>
+            <RoleRoute allowedRoles={["admin", "manager"]}>
               <Users />
             </RoleRoute>
           }

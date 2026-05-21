@@ -24,6 +24,7 @@ import { DashboardRoute } from "./Routes/dashboardRoutes.js";
 import AttendanceRoute from "./Routes/Attendances.js";
 import DepartmentRoute from "./Routes/departmentRoutes.js";
 import NotificationRoute from "./Routes/notificationRoutes.js";
+import ReportRoute from "./Routes/reportRoutes.js";
 
 // ===================== MODEL RELATIONSHIPS =====================
 import "./models/index.js";
@@ -48,6 +49,7 @@ const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === "GET", // skip rate limiting for GET requests
 });
 
 // ===================== GLOBAL MIDDLEWARE =====================
@@ -99,6 +101,7 @@ app.use("/api/dashboard", DashboardRoute);
 app.use("/api/attendance", AttendanceRoute);
 app.use("/api/departments", DepartmentRoute);
 app.use("/api/notifications", NotificationRoute);
+app.use("/api/reports", ReportRoute);
 
 // ===================== 404 HANDLER =====================
 app.use((req, res) => {

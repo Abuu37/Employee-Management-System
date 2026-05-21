@@ -80,14 +80,15 @@ export const getAttendanceStats = async (req, res) => {
     const totalEmployees = employeeIds.length;
     const todayBase = { user_id: { [Op.in]: employeeIds }, date: today };
 
-    const [presentToday, lateToday, halfDayToday] = await Promise.all([
-      Attendance.count({ where: { ...todayBase, status: "present" } }),
-      Attendance.count({ where: { ...todayBase, status: "late" } }),
-      Attendance.count({ where: { ...todayBase, status: "half_day" } }),
-    ]);
+    const [presentToday, lateToday, halfDayToday, absentToday] =
+      await Promise.all([
+        Attendance.count({ where: { ...todayBase, status: "present" } }),
+        Attendance.count({ where: { ...todayBase, status: "late" } }),
+        Attendance.count({ where: { ...todayBase, status: "half_day" } }),
+        Attendance.count({ where: { ...todayBase, status: "absent" } }),
+      ]);
 
     const checkedIn = presentToday + lateToday + halfDayToday;
-    const absentToday = Math.max(0, totalEmployees - checkedIn);
 
     const attendanceRate =
       totalEmployees > 0 ? Math.round((checkedIn / totalEmployees) * 100) : 0;

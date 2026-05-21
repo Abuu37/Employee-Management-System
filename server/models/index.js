@@ -35,6 +35,8 @@ Department.hasMany(User, {
   as: "employees",
   ...nc,
 });
+
+// Department <-> Attendance relationship
 User.belongsTo(Department, { foreignKey: "department_id", as: "dept", ...nc });
 
 // User <-> Attendance relationship
@@ -64,11 +66,14 @@ Payroll.belongsTo(User, { foreignKey: "user_id", as: "user", ...nc });
 User.hasMany(Document, { foreignKey: "user_id", as: "documents", ...nc });
 Document.belongsTo(User, { foreignKey: "user_id", as: "owner", ...nc });
 
+// User <-> Document relationships (uploaded by)
 User.hasMany(Document, {
   foreignKey: "uploaded_by",
   as: "uploadedDocuments",
   ...nc,
 });
+
+// Document.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader", ...nc });
 Document.belongsTo(User, { foreignKey: "uploaded_by", as: "uploader", ...nc });
 
 // User <-> Project relationships
@@ -79,6 +84,8 @@ User.hasMany(Project, {
 });
 Project.belongsTo(User, { foreignKey: "createdBy", as: "creator", ...nc });
 
+
+// User <-> Project relationships (manager)
 User.hasMany(Project, {
   foreignKey: "managerId",
   as: "managedProjects",
@@ -97,6 +104,7 @@ Task.belongsTo(User, { foreignKey: "assignedBy", as: "assigner", ...nc });
 // User <-> Task relationships (who is responsible for the task)
 TaskComment.belongsTo(User, { foreignKey: "userId", as: "user", ...nc });
 
+// User <-> TaskComment relationships
 User.hasMany(TaskComment, {
   foreignKey: "userId",
   as: "comments",

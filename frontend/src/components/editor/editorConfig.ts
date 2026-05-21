@@ -19,6 +19,8 @@ export const simpleToolbar = {
     [{ list: "ordered" }, { list: "bullet" }],
     ["link"],
     ["clean"],
+    ["image", "video"],
+    ["bullet"],
   ],
 };
 

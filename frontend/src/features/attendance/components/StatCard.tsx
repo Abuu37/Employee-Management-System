@@ -6,6 +6,7 @@ export default function StatCard({
   icon,
   color,
   featured = false,
+  onClick,
 }: {
   label: string;
   value: number | string;
@@ -15,6 +16,7 @@ export default function StatCard({
   extra?: string;
   extraClassName?: string;
   featured?: boolean;
+  onClick?: () => void;
 }) {
   const iconFrameTone = color.includes("green")
     ? "border-green-200 ring-green-200/70"
@@ -29,8 +31,9 @@ export default function StatCard({
   if (featured) {
     return (
       <article
-        className="rounded-2xl px-5 py-4 shadow-sm border border-slate-100"
+        className={`rounded-2xl px-5 py-4 shadow-sm border border-slate-100${onClick ? " cursor-pointer hover:opacity-90 transition-opacity" : ""}`}
         style={{ background: NAVY }}
+        onClick={onClick}
       >
         <div className="flex items-center gap-3">
           <div className="rounded-2xl border border-white/30 p-2.5 bg-white/20 text-white shadow-sm [&>svg]:h-5 [&>svg]:w-5 flex items-center justify-center">
@@ -50,7 +53,10 @@ export default function StatCard({
   }
 
   return (
-    <article className="rounded-2xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
+    <article
+      className={`rounded-2xl border border-slate-100 bg-white px-5 py-4 shadow-sm${onClick ? " cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+      onClick={onClick}
+    >
       <div className="flex items-center gap-3">
         <div
           className={`rounded-2xl border ring-1 ring-inset p-2.5 shrink-0 shadow-sm flex items-center justify-center [&>svg]:h-5 [&>svg]:w-5 ${iconFrameTone} ${color}`}

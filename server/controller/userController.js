@@ -135,6 +135,7 @@ export const createUserByAdmin = async (req, res) => {
       }
     }
 
+    
     const user = await User.create({
       name,
       email,
@@ -150,8 +151,7 @@ export const createUserByAdmin = async (req, res) => {
           : department_id || null,
       position: position || null,
       phone: phone || null,
-      employee_id:
-        role === "employee" ? employee_id || generatedEmployeeId : null,
+      employee_id: role === "employee" ? employee_id || generatedEmployeeId : null,
       gender: role === "employee" ? gender || null : null,
       date_of_birth: role === "employee" ? date_of_birth || null : null,
       address: role === "employee" ? address || null : null,
@@ -160,7 +160,7 @@ export const createUserByAdmin = async (req, res) => {
       join_date: role === "employee" ? join_date || defaultJoinDate : null,
       manager_id: assignedManagerId,
       reports_to: role === "manager" ? reports_to || null : null,
-      office_branch: role === "manager" ? office_branch || null : null,
+      office_branch ,
       status: status || "active",
     });
 
