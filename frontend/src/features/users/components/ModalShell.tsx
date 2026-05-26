@@ -67,7 +67,8 @@ function ModalShell({
       onClick={onClose}
     >
       <div
-        className={`flex w-full ${maxWidth} max-h-[90vh] flex-col rounded-3xl border border-slate-200 bg-white shadow-2xl transition-all duration-200 ${shown ? "scale-100 translate-y-0 opacity-100" : "scale-95 translate-y-2 opacity-0"} ${panelClassName ?? ""}`}
+        className={`flex w-full ${maxWidth} max-h-[90vh] flex-col rounded-3xl border
+         border-slate-200 bg-white shadow-2xl transition-all duration-200 ${shown ? "scale-100 translate-y-0 opacity-100" : "scale-95 translate-y-2 opacity-0"} ${panelClassName ?? ""}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">

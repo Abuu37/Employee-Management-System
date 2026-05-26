@@ -175,14 +175,9 @@ export default function PayrollTable({
                     {(page - 1) * PAGE_SIZE + idx + 1}
                   </td>
                   <td className="px-5 py-4 text-slate-600">
-                    <div>
-                      <span className="font-medium text-slate-900">
-                        {item.user?.name ?? `User #${item.user_id}`}
-                      </span>
-                      <p className="text-xs text-slate-400">
-                        ID: {item.user_id}
-                      </p>
-                    </div>
+                    <span className="font-medium text-slate-900">
+                      {item.user?.name ?? `User #${item.user_id}`}
+                    </span>
                   </td>
                   <td className="px-5 py-4 text-slate-600">
                     {monthNames[item.month]} {item.year}

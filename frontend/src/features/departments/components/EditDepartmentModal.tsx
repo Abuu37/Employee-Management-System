@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "@/services/axios";
 import { useTranslation } from "react-i18next";
-import type { Department, DeptFormValues } from "../types";
 import ModalShell from "../../users/components/ModalShell";
+import { DeptFormValues, Department } from "../types";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+
 
 interface Manager {
   id: number;
@@ -18,6 +21,15 @@ interface EditDepartmentModalProps {
   isSaving: boolean;
 }
 
+const validationSchema = Yup.object ({
+  name: Yup.string().required("Department name is required"),
+  code: Yup.string().required("Department code is required"),
+  manager_id: Yup.number().nullable().required("Manager is required"),
+  status: Yup.string().oneOf(["active", "inactive"]).required("Status is required"),
+
+});
+
+
 export default function EditDepartmentModal({
   isOpen,
   onClose,
@@ -25,28 +37,12 @@ export default function EditDepartmentModal({
   department,
   isSaving,
 }: EditDepartmentModalProps) {
-  const [form, setForm] = useState<DeptFormValues>({
-    name: "",
-    code: "",
-    description: "",
-    manager_id: "",
-    status: "active",
-  });
   const [managers, setManagers] = useState<Manager[]>([]);
   const { t } = useTranslation();
 
   useEffect(() => {
     if (!isOpen || !department) return;
-    setForm({
-      name: department.name,
-      code: department.code,
-      description: "",
-      manager_id: department.manager_id ?? "",
-      status: department.status,
-    });
-    axios
-      .get("/user/view-users")
-      .then((r) => {
+    axios .get("/user/view-users") .then((r) => {
         const mgrs = (Array.isArray(r.data) ? r.data : []).filter(
           (u: any) => u.role === "manager",
         );
@@ -55,22 +51,6 @@ export default function EditDepartmentModal({
       .catch(() => {});
   }, [isOpen, department]);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "manager_id" ? (value ? Number(value) : "") : value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSave(form);
-  };
 
   return (
     <ModalShell
@@ -79,62 +59,118 @@ export default function EditDepartmentModal({
       title={t("departments.editTitle")}
       maxWidth="max-w-lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+
+    <Formik
+    enableReinitialize
+    initialValues={{
+      name: department?.name || "",
+      code: department?.code || "",
+      manager_id: department?.manager_id ?? "",
+      status: department?.status || "active",
+    }}
+    validationSchema={validationSchema}
+    onSubmit={
+      async (values) => {
+        await onSave({
+          ...values,
+          manager_id: values.manager_id
+          ?Number(values.manager_id)
+          :null,
+        });
+      }
+    }
+    >
+      {( { errors, touched }) => (
+
+      <Form className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
+
+          {/*============  Department Name  ================= */}
           <label className="col-span-2 block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">
               {t("departments.departmentName")}{" "}
               <span className="text-red-500">*</span>
             </span>
-            <input
+            <Field
               type="text"
               name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
+              className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none
+                ${errors.name && touched.name
+                  ? "border-red-500 "
+                  : "border-slate-200 bg-slate-50 focus:border-blue-500"
+                }`}
             />
+             <ErrorMessage
+                name="name"
+                component="div"
+                className="mt-1 text-sm text-red-500"
+              /> 
           </label>
+
+
+            {/*============  Department Code  ================= */}
 
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">
               {t("departments.departmentCode")}{" "}
               <span className="text-red-500">*</span>
             </span>
-            <input
+            <Field
               type="text"
               name="code"
-              value={form.code}
-              onChange={handleChange}
-              required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white uppercase"
-            />
+              className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none
+                ${errors.code && touched.code
+                  ? "border-red-500 "
+                  : "border-slate-200 bg-slate-50 focus:border-blue-500"
+                }`}
+             />
+
+             <ErrorMessage
+                name="code"
+                component="div"
+                className="mt-1 text-sm text-red-500"
+              /> 
           </label>
+
+            {/*============  Status  ================= */}
 
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">
               {t("common.status")}
             </span>
-            <select
+            <Field
+              as="select"
               name="status"
-              value={form.status}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
-            >
+              className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none
+                ${errors.status && touched.status
+                  ? "border-red-500 "
+                    : "border-slate-200 bg-slate-50 focus:border-blue-500"  
+                }`} 
+             >
               <option value="active">{t("departments.active")}</option>
               <option value="inactive">{t("departments.inactive")}</option>
-            </select>
+            </Field>
+              <ErrorMessage
+              name="status"
+              component="div"
+              className="mt-1 text-sm text-red-500"
+               /> 
           </label>
+
+          {/*============  Manager Selection  ================= */  }
 
           <label className="col-span-2 block">
             <span className="mb-1.5 block text-sm font-medium text-slate-700">
               {t("departments.selectManager")}
             </span>
-            <select
+            <Field
+              as="select"
               name="manager_id"
-              value={form.manager_id}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
+              className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none
+                ${errors.manager_id && touched.manager_id
+                  ? "border-red-500 "
+                  : "border-slate-200 bg-slate-50 focus:border-blue-500"
+                }`} 
             >
               <option value="">{t("departments.noManager")}</option>
               {managers.map((m) => (
@@ -143,9 +179,16 @@ export default function EditDepartmentModal({
                   {m.department ? ` (${m.department})` : ""}
                 </option>
               ))}
-            </select>
+            </Field>
+              <ErrorMessage
+              name="manager_id"
+              component="div"
+              className="mt-1 text-sm text-red-500"
+                />
           </label>
         </div>
+
+          {/*============  Buttons  ================= */ }  
 
         <div className="flex justify-end gap-3 pt-1">
           <button
@@ -163,7 +206,10 @@ export default function EditDepartmentModal({
             {isSaving ? t("departments.saving") : t("departments.saveChanges")}
           </button>
         </div>
-      </form>
+      </Form>
+
+         )}
+      </Formik>
     </ModalShell>
   );
 }

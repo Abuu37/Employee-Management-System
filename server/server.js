@@ -24,7 +24,10 @@ import { DashboardRoute } from "./Routes/dashboardRoutes.js";
 import AttendanceRoute from "./Routes/Attendances.js";
 import DepartmentRoute from "./Routes/departmentRoutes.js";
 import NotificationRoute from "./Routes/notificationRoutes.js";
-import ReportRoute from "./Routes/reportRoutes.js";
+import AttendanceSummaryRoute from "./Routes/attendanceSummaryRoutes.js";
+import EmployeeSummaryRoute from "./Routes/employeeSummaryRoutes.js";
+import LeaveReportRoute from "./Routes/leaveReportRoutes.js";
+import PayrollReportRoute from "./Routes/payrollReportRoutes.js";
 
 // ===================== MODEL RELATIONSHIPS =====================
 import "./models/index.js";
@@ -101,7 +104,10 @@ app.use("/api/dashboard", DashboardRoute);
 app.use("/api/attendance", AttendanceRoute);
 app.use("/api/departments", DepartmentRoute);
 app.use("/api/notifications", NotificationRoute);
-app.use("/api/reports", ReportRoute);
+app.use("/api/reports/attendance", AttendanceSummaryRoute);
+app.use("/api/reports/employees", EmployeeSummaryRoute);
+app.use("/api/reports/leaves", LeaveReportRoute);
+app.use("/api/reports/payroll", PayrollReportRoute);
 
 // ===================== 404 HANDLER =====================
 app.use((req, res) => {

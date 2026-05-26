@@ -14,9 +14,12 @@ const ResetPasswordPage = lazy(
 const DashboardPage = lazy(
   () => import("@/features/dashboard/pages/DashboardPage"),
 );
-const Users = lazy(() => import("@/features/users/pages/Users"));
+const EmployeePage = lazy(() => import("@/features/users/pages/EmployeePage"));
 const ManagerPage = lazy(() => import("@/features/users/pages/ManagerPage"));
 const Reports = lazy(() => import("@/features/Report/pages/ReportsPage"));
+const AttendanceReportPage = lazy(
+  () => import("@/features/Report/pages/AttendanceReportPage"),
+);
 const TaskPage = lazy(() => import("@/features/tasks/pages/Tasks"));
 const Settings = lazy(() => import("@/features/Setting/pages/SettingsPage"));
 const ProjectsPage = lazy(() => import("@/features/projects/pages/Projects"));
@@ -68,7 +71,7 @@ export default function AppRouter() {
           path="/employee"
           element={
             <RoleRoute allowedRoles={["admin", "manager"]}>
-              <Users />
+              <EmployeePage />
             </RoleRoute>
           }
         />
@@ -157,7 +160,7 @@ export default function AppRouter() {
         <Route
           path="/reports"
           element={
-            <RoleRoute allowedRoles={["admin", "manager"]}>
+            <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
               <Reports />
             </RoleRoute>
           }
@@ -165,15 +168,15 @@ export default function AppRouter() {
         <Route
           path="/reports/attendance"
           element={
-            <RoleRoute allowedRoles={["admin", "manager"]}>
-              <Reports />
+            <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
+              <AttendanceReportPage />
             </RoleRoute>
           }
         />
         <Route
           path="/reports/leave"
           element={
-            <RoleRoute allowedRoles={["admin", "manager"]}>
+            <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
               <Reports />
             </RoleRoute>
           }
@@ -181,7 +184,7 @@ export default function AppRouter() {
         <Route
           path="/reports/payroll"
           element={
-            <RoleRoute allowedRoles={["admin", "manager"]}>
+            <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
               <Reports />
             </RoleRoute>
           }
@@ -189,7 +192,7 @@ export default function AppRouter() {
         <Route
           path="/reports/employee-summary"
           element={
-            <RoleRoute allowedRoles={["admin", "manager"]}>
+            <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
               <Reports />
             </RoleRoute>
           }

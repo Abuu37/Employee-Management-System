@@ -384,7 +384,7 @@ function TeamMemberCard({ member }: { member: TeamMember }) {
           )}
         </div>
         <span
-          className={`rounded-full px-2 py-1 text-[10px] font-semibold whitespace-nowrap flex-shrink-0 ${
+          className={`rounded-full px-2 py-1 text-[10px] font-semibold whitespace-nowrap shrink-0 ${
             isActiveStatus
               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
               : "bg-red-50 text-red-700 border border-red-200"

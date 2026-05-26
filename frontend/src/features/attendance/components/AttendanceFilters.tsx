@@ -37,14 +37,16 @@ export default function AttendanceFilters({
           placeholder={t("attendance.searchPlaceholder")}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2
+          focus:ring-blue-500 transition"
         />
       </div>
 
       <select
         value={statusFilter}
         onChange={(e) => onStatusChange(e.target.value)}
-        className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition"
+        className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm
+        text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition"
       >
         <option value="all">{t("attendance.allStatus")}</option>
         <option value="present">{t("attendance.present")}</option>
@@ -77,7 +79,8 @@ export default function AttendanceFilters({
           type="date"
           value={dateTo}
           onChange={(e) => onDateToChange(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className="rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm
+          text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition"
         />
       </div>
 

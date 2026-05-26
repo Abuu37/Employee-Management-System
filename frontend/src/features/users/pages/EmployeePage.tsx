@@ -5,7 +5,7 @@ import Sidebar from "@/layouts/Sidebar";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import UserTable from "@/features/users/components/UserTable";
 import UserForm from "@/features/users/components/UserForm";
-import UserDetails from "@/features/users/components/UserDetails";
+import EmployeeViewDrawer from "@/features/users/components/EmployeeViewDrawer";
 import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import { useUsers } from "@/features/users/hooks/useUsers";
 import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
@@ -69,7 +69,8 @@ export default function Users() {
         <Header searchTerm="" onSearchChange={() => {}} />
 
         <div className="p-6 space-y-5">
-          {/* ── Page header ──────────────────────────────────────────── */}
+
+          {/* ==================== Page header =========================== */}
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">
@@ -91,7 +92,7 @@ export default function Users() {
             )}
           </div>
 
-          {/* ── Filters ──────────────────────────────────────────────── */}
+          {/* ======================= Filters ============================ */}
           <div className="flex flex-wrap gap-2">
             <div className="relative">
               <AnimatedSearchIcon />
@@ -114,9 +115,10 @@ export default function Users() {
             </select>
           </div>
 
-          {/* ── Table ────────────────────────────────────────────────── */}
+          {/* ======================= Table ============================ */}
           {loading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 text-slate-400 text-sm shadow-sm">
+            <div className="flex items-center justify-center rounded-2xl border border-slate-200
+                bg-white py-20 text-slate-400 text-sm shadow-sm">
               {t("common.loading")}
             </div>
           ) : (
@@ -142,7 +144,7 @@ export default function Users() {
         </div>
       </main>
 
-      {/* ── Modals ─────────────────────────────────────────────────────── */}
+      {/* ======================= Modals ============================ */}
       <UserForm
         key={addOpen ? "user-form-add-open" : "user-form-add-closed"}
         mode="add"
@@ -152,7 +154,7 @@ export default function Users() {
         roleOptions={["employee"]}
         isSaving={isCreating}
       />
-      <UserDetails
+      <EmployeeViewDrawer
         isOpen={!!viewId}
         onClose={closeView}
         user={selected}

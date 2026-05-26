@@ -120,16 +120,9 @@ export default function SalaryTable({
                     {(page - 1) * PAGE_SIZE + idx + 1}
                   </td>
                   <td className="px-5 py-4 text-slate-600">
-                    <div>
-                      <span className="font-medium text-slate-900">
-                        {item.user?.name ?? `User #${item.user_id}`}
-                      </span>
-                      {item.user?.email && (
-                        <p className="text-xs text-slate-400">
-                          {item.user.email}
-                        </p>
-                      )}
-                    </div>
+                    <span className="font-medium text-slate-900">
+                      {item.user?.name ?? `User #${item.user_id}`}
+                    </span>
                   </td>
                   <td className="px-5 py-4 text-slate-600">
                     {Number(item.base_salary).toFixed(2)}

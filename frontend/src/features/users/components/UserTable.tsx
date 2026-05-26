@@ -185,24 +185,31 @@ function UserTable({
                   <td className="px-5 py-4 text-slate-600">
                     {(page - 1) * pageSize + index + 1}
                   </td>
+
                   <td className="px-5 py-4 font-semibold text-slate-900">
                     {user.name}
                   </td>
+
                   <td className="px-5 py-4 text-slate-600">{user.email}</td>
+
                   <td className="px-5 py-4 text-slate-600">
                     {user.department ?? "—"}
                   </td>
+
                   <td className="px-5 py-4 text-slate-600">
                     {user.position ?? "—"}
                   </td>
+
                   <td className="px-5 py-4 text-slate-600 capitalize">
                     {user.employment_type
                       ? user.employment_type.replace(/_/g, " ")
                       : "—"}
                   </td>
+
                   <td className="px-5 py-4 text-slate-600">
                     {user.office_branch ?? user.officeBranch ?? "—"}
                   </td>
+
                   <td className="px-5 py-4">
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -215,6 +222,7 @@ function UserTable({
                       {user.status === "active" ? "Active" : "Inactive"}
                     </span>
                   </td>
+                  
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -251,6 +259,8 @@ function UserTable({
           </tbody>
         </table>
       </div>
+
+      {/* =========== Pagination controls ============= */}
       <TablePagination
         page={page}
         totalPages={totalPages}

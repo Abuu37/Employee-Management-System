@@ -45,6 +45,7 @@ export function useTableQueryParams(options?: Options) {
     }
   }, [defaultPage, ensurePageParam, searchParams, setSearchParams]);
 
+  // Helper to update multiple params at once
   const updateParams = (updates: Record<string, string | null>) => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
@@ -61,14 +62,18 @@ export function useTableQueryParams(options?: Options) {
     });
   };
 
+  // Individual setters for common params
+
   const setParam = (key: string, value: string | null) => {
     updateParams({ [key]: value });
   };
 
+  //================= Pagination and filter setters =========================
   const setPage = (value: number) => {
     updateParams({ page: String(value) });
   };
 
+  //================= Search, status, type setters =========================
   const setSearch = (value: string) => {
     updateParams({
       search: value || null,
@@ -76,6 +81,7 @@ export function useTableQueryParams(options?: Options) {
     });
   };
 
+  //================= Status and type setters with "all" handling =========================
   const setStatus = (value: string) => {
     updateParams({
       status: value === "all" ? null : value,
@@ -83,6 +89,7 @@ export function useTableQueryParams(options?: Options) {
     });
   };
 
+  //================= Type setter with "all" handling =========================
   const setType = (value: string) => {
     updateParams({
       type: value === "all" ? null : value,
@@ -90,6 +97,7 @@ export function useTableQueryParams(options?: Options) {
     });
   };
 
+  //================= Sorting handler =========================
   const handleSort = (column: string) => {
     const nextOrder: SortOrder =
       sortBy === column && sortOrder === "ASC" ? "DESC" : "ASC";
@@ -101,6 +109,7 @@ export function useTableQueryParams(options?: Options) {
     });
   };
 
+  //================= Reset handler =========================
   const reset = () => {
     setSearchParams({ page: String(defaultPage) });
   };

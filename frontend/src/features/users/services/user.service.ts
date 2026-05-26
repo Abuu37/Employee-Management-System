@@ -17,26 +17,26 @@ export type {
 } from "@/features/users/types/user.types";
 
 export const userService = {
-  // ── Employees ──────────────────────────────────────────────────────────
+  // =======================  Employees ============================================
   getEmployees: (
     params?: Record<string, string | null>,
   ): Promise<UserListResponse> =>
     api.get<UserListResponse>("/user/employees/", { params }).then((r) => ({
       ...r.data,
       data: Array.isArray(r.data.data) ? r.data.data.map(normalizeUser) : [],
-      conslole: console.log("Employee API response:", r),
     })),
-    
 
+  //========================== get employee by id =========================//
   getEmployeeById: (id: number): Promise<User> =>
     api.get<User>(`/user/employees/${id}`).then((r) => normalizeUser(r.data)),
 
+  //========================== get employee insights =========================//
   getInsights: (id: number): Promise<EmployeeInsightsResponse> =>
     api
       .get<EmployeeInsightsResponse>(`/user/employees/${id}/insights`)
       .then((r) => r.data),
 
-  // ── Managers ───────────────────────────────────────────────────────────
+  // ======================== get Managers =========================
   getManagers: (
     params?: Record<string, string | null>,
   ): Promise<UserListResponse> =>
@@ -45,10 +45,11 @@ export const userService = {
       data: Array.isArray(r.data.data) ? r.data.data.map(normalizeUser) : [],
     })),
 
+  //========================== get manager by id =========================//
   getManagerById: (id: number): Promise<User> =>
     api.get<User>(`/user/managers/${id}`).then((r) => normalizeUser(r.data)),
 
-  // ── Shared CRUD ────────────────────────────────────────────────────────
+  // ==================Shared CRUD endpoints ========================================
   create: (data: AddUserFormValues) =>
     api.post("/user/create-user", data).then((r) => r.data),
 
@@ -57,4 +58,15 @@ export const userService = {
 
   delete: (id: number) =>
     api.delete(`/user/delete-user/${id}`).then((r) => r.data),
+
+  //================= getAdmin endpoints =================//
+
+  getAdmins: (): Promise<{ id: number; name: string }[]> =>
+    api
+      .get("/user/view-users")
+      .then((r) =>
+        (Array.isArray(r.data) ? r.data : [])
+          .filter((u: User) => u.role === "admin")
+          .map((u: User) => ({ id: u.id, name: u.name })),
+      ),
 };

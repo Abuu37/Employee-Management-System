@@ -76,6 +76,7 @@ export interface EditUserFormValues {
   manager_id?: number;
   reports_to?: number;
   office_branch?: string;
+  status?: string;
 }
 
 export interface EmployeeInsightsResponse {
