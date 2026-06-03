@@ -11,8 +11,10 @@ import type {
   AttendanceStatus,
   Pagination,
 } from "@/features/Report/types/attendanceReport.types";
-import { useAnimatedCount } from "@/hooks/useAnimatedCount";
-
+import {
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const STATUS: Record<AttendanceStatus, { label: string; cls: string }> = {
   present: {
     label: "Present",
@@ -169,23 +171,18 @@ export default function AttendanceReportTable({
   onSort,
   onPageChange,
 }: Props) {
-  const animatedTotal = useAnimatedCount(pagination.total, { durationMs: 800 });
+  const { count, visible } = useTableCountBadge({
+    total: pagination.total,
+    hideWhenZero: true,
+  });
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
       <div className="border-b border-slate-100 px-5 py-4">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
           Attendance Records
-          {pagination.total > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-linear-to-r from-blue-50 to-sky-100 px-2.5 py-1 text-xs font-semibold text-blue-700 shadow-sm">
-              <span
-                className="text-[11px] font-bold leading-none text-blue-600"
-                aria-hidden
-              >
-                +
-              </span>
-              <span>{animatedTotal}</span>
-            </span>
+          {visible && (
+            <TableCountBadge count={count} />
           )}
         </h3>
       </div>
@@ -295,5 +292,6 @@ export default function AttendanceReportTable({
     </div>
   );
 }
+
 
 

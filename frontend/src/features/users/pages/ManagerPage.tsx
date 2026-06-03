@@ -9,6 +9,7 @@ import {
 import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
+import ActionMenu from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
 import AddUserModal from "@/features/users/components/AddUserModal";
@@ -17,7 +18,11 @@ import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import ManagerViewDrawer from "@/features/users/components/ManagerViewDrawer";
 import { useManagersPage } from "@/features/users/hooks/useManagersPage";
 import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 export default function ManagerPage() {
   const { t } = useTranslation();
   const deleteConfirmation = useDeleteConfirmation();
@@ -57,6 +62,7 @@ export default function ManagerPage() {
     handleDelete,
     closeAllModals,
   } = useManagersPage();
+  const { count } = useTableCountBadge({ total: totalRecords });
 
   const handleDeleteRequest = (manager: NonNullable<typeof selected>) => {
     openDelete(manager);
@@ -130,9 +136,7 @@ export default function ManagerPage() {
               <h3 className="text-base font-semibold text-slate-800">
                 {t("employees.allManagers")}
               </h3>
-              <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                {totalRecords} records
-              </div>
+              <TableCountBadge count={count} />
             </div>
 
             {loading ? (
@@ -149,11 +153,11 @@ export default function ManagerPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
-                  <thead className="bg-slate-50 text-slate-500">
+                  <thead className="bg-[#1e3a5f] text-blue-100">
                     <tr>
-                      <th className="px-5 py-3 font-medium">S/N</th>
+                      <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
                       <th
-                        className="cursor-pointer select-none px-5 py-3 font-medium"
+                        className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                         onClick={() => handleSort("name")}
                       >
                         {t("employees.name")}
@@ -164,7 +168,7 @@ export default function ManagerPage() {
                         />
                       </th>
                       <th
-                        className="cursor-pointer select-none px-5 py-3 font-medium"
+                        className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                         onClick={() => handleSort("email")}
                       >
                         {t("employees.email")}
@@ -175,7 +179,7 @@ export default function ManagerPage() {
                         />
                       </th>
                       <th
-                        className="cursor-pointer select-none px-5 py-3 font-medium"
+                        className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                         onClick={() => handleSort("department")}
                       >
                         {t("employees.department")}
@@ -186,7 +190,7 @@ export default function ManagerPage() {
                         />
                       </th>
                       <th
-                        className="cursor-pointer select-none px-5 py-3 font-medium"
+                        className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                         onClick={() => handleSort("position")}
                       >
                         Position
@@ -196,12 +200,16 @@ export default function ManagerPage() {
                           sortOrder={sortOrder}
                         />
                       </th>
-                      <th className="px-5 py-3 font-medium">Employment Type</th>
-                      <th className="px-5 py-3 font-medium">Office / Branch</th>
-                      <th className="px-5 py-3 font-medium">
+                      <th className={TABLE_HEADER_CELL_CLASS}>
+                        Employment Type
+                      </th>
+                      <th className={TABLE_HEADER_CELL_CLASS}>
+                        Office / Branch
+                      </th>
+                      <th className={TABLE_HEADER_CELL_CLASS}>
                         {t("employees.status")}
                       </th>
-                      <th className="px-5 py-3 font-medium text-right">
+                      <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
                         {t("employees.actions")}
                       </th>
                     </tr>
@@ -246,24 +254,23 @@ export default function ManagerPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openView(manager)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-500 hover:text-white"
-                            >
-                              <FiEye className="h-4 w-4" />
-                              {t("common.view")}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteRequest(manager)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-500 hover:text-white"
-                            >
-                              <FiTrash2 className="h-3.5 w-3.5" />
-                              {t("common.delete")}
-                            </button>
-                          </div>
+                          <ActionMenu
+                            ariaLabel="Manager actions"
+                            align="center"
+                            items={[
+                              {
+                                label: t("common.view"),
+                                icon: FiEye,
+                                onClick: () => openView(manager),
+                              },
+                              {
+                                label: t("common.delete"),
+                                icon: FiTrash2,
+                                danger: true,
+                                onClick: () => handleDeleteRequest(manager),
+                              },
+                            ]}
+                          />
                         </td>
                       </tr>
                     ))}
@@ -275,6 +282,8 @@ export default function ManagerPage() {
               page={page}
               totalPages={totalPages}
               onPageChange={setPage}
+              totalRecords={totalRecords}
+              pageSize={PAGE_SIZE}
             />
           </section>
         </div>
@@ -327,3 +336,6 @@ export default function ManagerPage() {
     </div>
   );
 }
+
+
+

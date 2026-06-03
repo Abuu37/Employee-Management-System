@@ -59,6 +59,9 @@ export const userService = {
   delete: (id: number) =>
     api.delete(`/user/delete-user/${id}`).then((r) => r.data),
 
+  resendInvitation: (id: number): Promise<{ message: string }> =>
+    api.post(`/user/employees/${id}/resend-invitation`).then((r) => r.data),
+
   //================= getAdmin endpoints =================//
 
   getAdmins: (): Promise<{ id: number; name: string }[]> =>

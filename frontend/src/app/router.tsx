@@ -20,6 +20,15 @@ const Reports = lazy(() => import("@/features/Report/pages/ReportsPage"));
 const AttendanceReportPage = lazy(
   () => import("@/features/Report/pages/AttendanceReportPage"),
 );
+const LeaveReportPage = lazy(
+  () => import("@/features/Report/pages/LeaveReportPage"),
+);
+const PayrollReportPage = lazy(
+  () => import("@/features/Report/pages/PayrollReportPage"),
+);
+const EmployeeSummaryReportPage = lazy(
+  () => import("@/features/Report/pages/EmployeeSummaryReportPage"),
+);
 const TaskPage = lazy(() => import("@/features/tasks/pages/Tasks"));
 const Settings = lazy(() => import("@/features/Setting/pages/SettingsPage"));
 const ProjectsPage = lazy(() => import("@/features/projects/pages/Projects"));
@@ -42,15 +51,9 @@ const DepartmentsPage = lazy(
   () => import("@/features/departments/pages/DepartmentsPage"),
 );
 
-const RouteLoader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-slate-50">
-    <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
-  </div>
-);
-
 export default function AppRouter() {
   return (
-    <Suspense fallback={<RouteLoader />}>
+    <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<LoginPage />} />
@@ -177,23 +180,23 @@ export default function AppRouter() {
           path="/reports/leave"
           element={
             <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
-              <Reports />
+              <LeaveReportPage />
             </RoleRoute>
           }
         />
         <Route
           path="/reports/payroll"
           element={
-            <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
-              <Reports />
+            <RoleRoute allowedRoles={["admin"]}>
+              <PayrollReportPage />
             </RoleRoute>
           }
         />
         <Route
           path="/reports/employee-summary"
           element={
-            <RoleRoute allowedRoles={["admin", "manager", "employee"]}>
-              <Reports />
+            <RoleRoute allowedRoles={["admin", "manager"]}>
+              <EmployeeSummaryReportPage />
             </RoleRoute>
           }
         />

@@ -8,7 +8,7 @@ import {
 } from "react-icons/fi";
 import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
-import StatCard from "@/features/attendance/components/StatCard";
+import StatCard from "@/components/common/StatCrd";
 import ProjectTable from "@/features/projects/components/ProjectTable";
 import ProjectForm from "@/features/projects/components/ProjectForm";
 import ProjectDetails from "@/features/projects/components/ProjectDetails";
@@ -105,7 +105,7 @@ function Projects() {
               )}
             </div>
 
-            {/* ── Stat cards ──────────────────────────────────────────── */}
+            {/* ===============Stat cards =================== */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 label={t("projects.totalProjects")}

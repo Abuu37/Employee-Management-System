@@ -7,6 +7,7 @@ import {
 } from "react";
 import { usePagination } from "@/hooks/usePagination";
 import SortArrow from "@/components/common/SortArrow";
+import ActionMenu from "@/components/common/ActionMenu";
 import {
   FiClock,
   FiCalendar,
@@ -34,7 +35,11 @@ import {
   fmtHours,
 } from "@/features/attendance/utils/attendance.utils";
 import TablePagination from "@/components/common/TablePagination";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const PAGE_SIZE = 8;
 
 type AttendanceDrawerTab = "overview" | "day-summary" | "notes";
@@ -93,11 +98,10 @@ function AttendanceTabBar({
   return (
     <div
       ref={containerRef}
-      className="relative mt-3 inline-flex items-center overflow-x-auto rounded-full border border-slate-200 bg-white p-1"
+      className="relative flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1"
     >
       <span
-        aria-hidden
-        className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-[#1e3a5f] shadow-sm transition-all duration-300 ease-in-out"
+        className="absolute top-1 bottom-1 rounded-full bg-[#1e3a5f] shadow-sm transition-all duration-300 ease-in-out"
         style={{ left: slider.left, width: slider.width }}
       />
       {ATTENDANCE_TABS.map((tab, i) => {
@@ -232,6 +236,7 @@ export default function AdminAttendanceTable({
   if (selected) lastSelectedRef.current = selected;
   const drawerData = selected ?? lastSelectedRef.current;
   const { t } = useTranslation();
+  const { count } = useTableCountBadge({ total: records.length });
 
   const [activeTab, setActiveTab] = useState<AttendanceDrawerTab>("overview");
   useEffect(() => {
@@ -246,9 +251,7 @@ export default function AdminAttendanceTable({
             ? "All Attendance Records"
             : "Team Attendance Records"}
         </h3>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {records.length} records
-        </span>
+        <TableCountBadge count={count} />
       </div>
 
       {loading ? (
@@ -262,14 +265,14 @@ export default function AdminAttendanceTable({
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <thead className="bg-[#1e3a5f] text-xs font-semibold uppercase tracking-wider text-blue-100">
               <tr>
-                <th className="px-5 py-3">S/N</th>
-                <th className="px-5 py-3">Staff</th>
-                <th className="px-5 py-3">Department</th>
+                <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+                <th className={TABLE_HEADER_CELL_CLASS}>Staff</th>
+                <th className={TABLE_HEADER_CELL_CLASS}>Department</th>
 
                 <th
-                  className="px-5 py-3 cursor-pointer"
+                  className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                   onClick={() => onSort("date")}
                 >
                   {t("attendance.date")}
@@ -281,7 +284,7 @@ export default function AdminAttendanceTable({
                 </th>
 
                 <th
-                  className="px-5 py-3 cursor-pointer"
+                  className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                   onClick={() => onSort("check_in")}
                 >
                   {t("attendance.checkInTime")}
@@ -292,7 +295,7 @@ export default function AdminAttendanceTable({
                   />
                 </th>
                 <th
-                  className="px-5 py-3 cursor-pointer"
+                  className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                   onClick={() => onSort("check_out")}
                 >
                   {t("attendance.checkOutTime")}
@@ -303,7 +306,7 @@ export default function AdminAttendanceTable({
                   />
                 </th>
                 <th
-                  className="px-5 py-3 cursor-pointer"
+                  className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                   onClick={() => onSort("total_hours")}
                 >
                   {t("attendance.hours")}
@@ -314,7 +317,7 @@ export default function AdminAttendanceTable({
                   />
                 </th>
                 <th
-                  className="px-5 py-3 cursor-pointer"
+                  className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                   onClick={() => onSort("status")}
                 >
                   {t("attendance.status")}
@@ -324,8 +327,10 @@ export default function AdminAttendanceTable({
                     sortOrder={sortOrder}
                   />
                 </th>
-                <th className="px-5 py-3">Completed Tasks</th>
-                <th className="px-5 py-3">Action</th>
+                <th className={TABLE_HEADER_CELL_CLASS}>Completed Tasks</th>
+                <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
+                  Action
+                </th>
               </tr>
             </thead>
 
@@ -409,13 +414,19 @@ export default function AdminAttendanceTable({
                       </td>
 
                       <td className="px-5 py-4">
-                        <button
-                          onClick={() => onView(Number(rec.id))}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 hover:text-white transition"
-                        >
-                          <FiEye className="h-3.5 w-3.5" />
-                          View
-                        </button>
+                        <div className="flex justify-center">
+                          <ActionMenu
+                            ariaLabel="Attendance actions"
+                            align="center"
+                            items={[
+                              {
+                                label: "View",
+                                icon: FiEye,
+                                onClick: () => onView(Number(rec.id)),
+                              },
+                            ]}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
@@ -440,6 +451,8 @@ export default function AdminAttendanceTable({
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}
+          totalRecords={records.length}
+          pageSize={PAGE_SIZE}
         />
       )}
 
@@ -643,3 +656,6 @@ export default function AdminAttendanceTable({
     </div>
   );
 }
+
+
+

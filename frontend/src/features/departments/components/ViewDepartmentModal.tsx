@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import CountUp from "react-countup";
 import type { Department } from "../types";
 import {
   FiHash,
@@ -349,9 +350,20 @@ function StatCard({
   icon,
 }: {
   label: string;
-  value: string;
+  value: number | string;
   icon: ReactNode;
 }) {
+  const rawValue = String(value).trim();
+  const numericMatch = rawValue.match(/^(-?\d+(?:\.\d+)?)(.*)$/);
+  const animatedValue = numericMatch
+    ? {
+        end: Number.parseFloat(numericMatch[1]),
+        suffix: numericMatch[2] ?? "",
+      }
+    : null;
+  const shouldAnimate =
+    animatedValue !== null && Number.isFinite(animatedValue.end);
+
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
       <div className="flex items-center gap-3">
@@ -362,7 +374,19 @@ function StatCard({
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             {label}
           </p>
-          <p className="mt-1 text-lg font-bold text-slate-900">{value}</p>
+          <p className="mt-1 text-lg font-bold text-slate-900">
+            {shouldAnimate ? (
+              <CountUp
+                end={animatedValue.end}
+                duration={1.2}
+                separator=","
+                suffix={animatedValue.suffix}
+                preserveValue
+              />
+            ) : (
+              value
+            )}
+          </p>
         </div>
       </div>
     </div>

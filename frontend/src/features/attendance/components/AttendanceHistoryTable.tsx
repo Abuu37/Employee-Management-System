@@ -1,21 +1,12 @@
 import { usePagination } from "@/hooks/usePagination";
-import {
-  FiCalendar,
-  FiCheckCircle,
-  FiClock,
-  FiXCircle,
-  FiMinus,
-} from "react-icons/fi";
+import { FiCalendar, FiCheckCircle, FiClock, FiXCircle, FiMinus,} from "react-icons/fi";
 import SortArrow from "@/components/common/SortArrow";
 import { useTranslation } from "react-i18next";
 import type { AttendanceRecord } from "@/features/attendance/types/attendance.types";
-import {
-  statusConfig,
-  fmt,
-  fmtHours,
-} from "@/features/attendance/utils/attendance.utils";
+import { statusConfig, fmt, fmtHours,} from "@/features/attendance/utils/attendance.utils";
 import TablePagination from "@/components/common/TablePagination";
-
+import {TABLE_HEADER_CELL_CLASS, useTableCountBadge, } from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const PAGE_SIZE = 8;
 
 type Props = {
@@ -38,6 +29,7 @@ export default function AttendanceHistoryTable({
     records,
     PAGE_SIZE,
   );
+  const { count } = useTableCountBadge({ total: records.length });
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -45,30 +37,16 @@ export default function AttendanceHistoryTable({
         <h3 className="text-sm font-semibold text-slate-900">
           Attendance History
         </h3>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {records.length} records
-        </span>
+        <TableCountBadge count={count} />
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <thead className="bg-[#1e3a5f] text-xs font-semibold uppercase tracking-wider text-blue-100">
             <tr>
-              <th className="px-5 py-3">S/N</th>
-
+              <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>Date</th>
               <th
-                className="px-5 py-3 cursor-pointer"
-                onClick={() => onSort("date")}
-              >
-                {t("attendance.date")}{" "}
-                <SortArrow
-                  column="date"
-                  sortBy={sortBy}
-                  sortOrder={sortOrder}
-                />
-              </th>
-
-              <th
-                className="px-5 py-3 cursor-pointer"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                 onClick={() => onSort("check_in")}
               >
                 {t("attendance.checkInTime")}{" "}
@@ -78,9 +56,8 @@ export default function AttendanceHistoryTable({
                   sortOrder={sortOrder}
                 />
               </th>
-
               <th
-                className="px-5 py-3 cursor-pointer"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                 onClick={() => onSort("check_out")}
               >
                 {t("attendance.checkOutTime")}{" "}
@@ -91,7 +68,7 @@ export default function AttendanceHistoryTable({
                 />
               </th>
               <th
-                className="px-5 py-3 cursor-pointer"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                 onClick={() => onSort("total_hours")}
               >
                 {t("attendance.hours")}{" "}
@@ -102,7 +79,7 @@ export default function AttendanceHistoryTable({
                 />
               </th>
               <th
-                className="px-5 py-3 cursor-pointer"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer`}
                 onClick={() => onSort("status")}
               >
                 {t("attendance.status")}{" "}
@@ -199,8 +176,13 @@ export default function AttendanceHistoryTable({
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}
+          totalRecords={records.length}
+          pageSize={PAGE_SIZE}
         />
       )}
     </div>
   );
 }
+
+
+

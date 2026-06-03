@@ -1,7 +1,7 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getNavItemsByRole } from "@/config/navItems";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LogoutConfirmModal from "@/components/ui/LogoutConfirmModal";
 import { useUser } from "@/context/UserContext";
 import toast from "react-hot-toast";
@@ -52,6 +52,7 @@ const navIcons = {
 
 function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useUser();
   const { t } = useTranslation();
   // Only trust role from authenticated user state
@@ -62,6 +63,10 @@ function Sidebar() {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const isSettingsRoute = location.pathname === "/settings";
+  const isReportsRoute =
+    location.pathname === "/reports" ||
+    location.pathname.startsWith("/reports/");
 
   const settingsSubItems = [
     {
@@ -92,7 +97,27 @@ function Sidebar() {
       path: "/reports/employee-summary",
       icon: <FiPieChart className="h-4 w-4" />,
     },
-  ];
+  ].filter((item) => {
+    if (item.path === "/reports/payroll" && role !== "admin") {
+      return false;
+    }
+    if (item.path === "/reports/employee-summary" && role === "employee") {
+      return false;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (!collapsed && isReportsRoute) {
+      setReportsOpen(true);
+    }
+  }, [collapsed, isReportsRoute]);
+
+  useEffect(() => {
+    if (!collapsed && isSettingsRoute) {
+      setSettingsOpen(true);
+    }
+  }, [collapsed, isSettingsRoute]);
 
   const handleLogout = () => {
     setLogoutModalOpen(true);
@@ -171,12 +196,20 @@ function Sidebar() {
             <div key={item.key} className="relative">
               <button
                 type="button"
-                onClick={() => setSettingsOpen((p) => !p)}
+                onClick={() => {
+                  if (collapsed) {
+                    setCollapsed(false);
+                    setReportsOpen(false);
+                    setSettingsOpen(true);
+                    return;
+                  }
+                  setSettingsOpen((p) => !p);
+                }}
                 title={collapsed ? t(item.nameKey) : undefined}
                 className={`flex w-full items-center rounded-2xl py-2.5 text-left text-sm font-medium transition-all ${
                   collapsed ? "justify-center px-0" : "gap-3 px-4"
                 } ${
-                  settingsOpen
+                  settingsOpen || isSettingsRoute
                     ? "bg-white text-[#1e3a5f] shadow-lg font-bold"
                     : "text-blue-200 hover:bg-white/10 hover:text-white"
                 }`}
@@ -191,9 +224,9 @@ function Sidebar() {
                   </>
                 )}
               </button>
-              {settingsOpen && (
-                <div className="absolute left-full top-0 z-9999 ml-2 w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
-                  <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              {settingsOpen && !collapsed && (
+                <div className="mt-1 ml-8 space-y-1 rounded-xl border border-white/10 bg-white/5 p-2">
+                  <p className="px-2 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-widest text-blue-200/80">
                     {t("settings.accountSettings")}
                   </p>
                   {settingsSubItems.map((sub) => (
@@ -202,9 +235,12 @@ function Sidebar() {
                       type="button"
                       onClick={() => {
                         navigate(sub.path);
-                        setSettingsOpen(false);
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
+                      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition ${
+                        location.pathname === sub.path
+                          ? "bg-white text-[#1e3a5f]"
+                          : "text-blue-100 hover:bg-white/15 hover:text-white"
+                      }`}
                     >
                       {sub.icon}
                       {t(sub.nameKey)}
@@ -217,12 +253,20 @@ function Sidebar() {
             <div key={item.key} className="relative">
               <button
                 type="button"
-                onClick={() => setReportsOpen((p) => !p)}
+                onClick={() => {
+                  if (collapsed) {
+                    setCollapsed(false);
+                    setSettingsOpen(false);
+                    setReportsOpen(true);
+                    return;
+                  }
+                  setReportsOpen((p) => !p);
+                }}
                 title={collapsed ? t(item.nameKey) : undefined}
                 className={`flex w-full items-center rounded-2xl py-2.5 text-left text-sm font-medium transition-all ${
                   collapsed ? "justify-center px-0" : "gap-3 px-4"
                 } ${
-                  reportsOpen
+                  reportsOpen || isReportsRoute
                     ? "bg-white text-[#1e3a5f] shadow-lg font-bold"
                     : "text-blue-200 hover:bg-white/10 hover:text-white"
                 }`}
@@ -237,9 +281,9 @@ function Sidebar() {
                   </>
                 )}
               </button>
-              {reportsOpen && (
-                <div className="absolute left-full top-0 z-9999 ml-2 w-52 rounded-xl border border-slate-200 bg-white py-2 shadow-xl">
-                  <p className="px-4 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              {reportsOpen && !collapsed && (
+                <div className="mt-1 ml-8 space-y-1 rounded-xl border border-white/10 bg-white/5 p-2">
+                  <p className="px-2 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-widest text-blue-200/80">
                     {t("nav.reportTypes")}
                   </p>
                   {reportSubItems.map((sub) => (
@@ -248,9 +292,12 @@ function Sidebar() {
                       type="button"
                       onClick={() => {
                         navigate(sub.path);
-                        setReportsOpen(false);
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
+                      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition ${
+                        location.pathname === sub.path
+                          ? "bg-white text-[#1e3a5f]"
+                          : "text-blue-100 hover:bg-white/15 hover:text-white"
+                      }`}
                     >
                       {sub.icon}
                       {t(sub.nameKey)}

@@ -10,7 +10,7 @@ import {
   FiLogOut,
 } from "react-icons/fi";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
-import StatCard from "@/features/attendance/components/StatCard";
+import StatCard from "@/components/common/StatCrd";
 import AttendanceHistoryTable from "@/features/attendance/components/AttendanceHistoryTable";
 import AttendanceFilters from "@/features/attendance/components/AttendanceFilters";
 import AdminAttendanceTable from "@/features/attendance/components/AdminAttendanceTable";

@@ -88,17 +88,23 @@ export const documentService = {
 
   /** Open document in a new browser tab. */
   view: async (id: number) => {
+    
     const res = await api.get(`/documents/download/${id}`, {
       responseType: "blob",
     });
-    const url = window.URL.createObjectURL(
-      new Blob([res.data], {
-        type: res.headers["content-type"] ?? "application/octet-stream",
-      }),
-    );
+
+    const blob = new Blob([res.data], { 
+      type: res.headers["content-type"] ?? "application/octet-stream",
+    });
+
+    const url = window.URL.createObjectURL(blob);
     window.open(url, "_blank", "noopener,noreferrer");
-    setTimeout(() => window.URL.revokeObjectURL(url), 10_000);
+
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 10000); // Revoke after 10 seconds
   },
+
 
   /** Delete a document by id. */
   delete: async (id: number) => {

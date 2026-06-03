@@ -107,6 +107,12 @@ User.init(
       allowNull: true,
     },
 
+    invitation_status: {
+      type: DataTypes.ENUM("sent", "failed", "accepted"),
+      allowNull: true,
+      defaultValue: null,
+    },
+
     resetPasswordToken: {
       type: DataTypes.STRING,
       allowNull: true,

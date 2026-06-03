@@ -11,9 +11,14 @@ import { useTranslation } from "react-i18next";
 import ViewLeaveModal from "./ViewLeaveModal";
 import CancelLeaveModal from "./CancelLeaveModal";
 import RejectLeaveModal from "./RejectLeaveModal";
+import ActionMenu from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 export interface Leave {
   id: number;
   type: string;
@@ -121,6 +126,7 @@ function LeavesTable({
     totalPages,
     paginated,
   } = usePagination(leaves, pageSize);
+  const { count } = useTableCountBadge({ total: leaves.length });
 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -163,23 +169,21 @@ function LeavesTable({
             ? t("leaves.teamLeaveRequests")
             : t("leaves.myLeaves")}
         </h3>
-        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {leaves.length} {t("leaves.records")}
-        </div>
+        <TableCountBadge count={count} />
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-[#1e3a5f] text-blue-100">
             <tr>
-              <th className="px-5 py-3 font-medium">S/N</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
               {isManager && !isMyLeaves && (
-                <th className="px-5 py-3 font-medium">
+                <th className={TABLE_HEADER_CELL_CLASS}>
                   {t("leaves.employee")}
                 </th>
               )}
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("type")}
               >
                 {t("leaves.type")}
@@ -190,7 +194,7 @@ function LeavesTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("startDate")}
               >
                 {t("leaves.startDate")}
@@ -201,7 +205,7 @@ function LeavesTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("endDate")}
               >
                 {t("leaves.endDate")}
@@ -212,7 +216,7 @@ function LeavesTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("days")}
               >
                 {t("leaves.days")}
@@ -223,7 +227,7 @@ function LeavesTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("overallStatus")}
               >
                 {t("leaves.status")}
@@ -233,7 +237,7 @@ function LeavesTable({
                   sortOrder={sortOrder}
                 />
               </th>
-              <th className="px-5 py-3 font-medium text-right">
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
                 {t("leaves.actions")}
               </th>
             </tr>
@@ -265,72 +269,69 @@ function LeavesTable({
                       {statusBadge(getDisplayStatus(leave), t)}
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Cancel button: employee on pending_manager; manager on own pending_manager or pending_hr */}
-                        {((leave.overallStatus === "pending_manager" &&
-                          (isMyLeaves || !isManager)) ||
-                          (isManager &&
-                            isMyLeaves &&
-                            leave.overallStatus === "pending_hr")) && (
-                          <button
-                            type="button"
-                            onClick={() => setCancelingLeave(leave)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
-                          >
-                            <FiX className="h-4 w-4" />
-                            {t("leaves.cancelLeave")}
-                          </button>
-                        )}
-
-                        {/* View always available � approve/reject inside the panel */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const isRejected =
-                              leave.overallStatus.startsWith("rejected");
-                            const canAct =
-                              isManager &&
-                              !isMyLeaves &&
-                              leave.overallStatus === "pending_manager";
-                            const canEditRejected =
-                              Boolean(onEditRejected) &&
-                              ((isManager &&
+                      <ActionMenu
+                        ariaLabel="Leave actions"
+                        align="center"
+                        items={[
+                          {
+                            label: t("leaves.view"),
+                            icon: FiEye,
+                            onClick: () => {
+                              const isRejected =
+                                leave.overallStatus.startsWith("rejected");
+                              const canAct =
+                                isManager &&
+                                !isMyLeaves &&
+                                leave.overallStatus === "pending_manager";
+                              const canEditRejected =
+                                Boolean(onEditRejected) &&
+                                ((isManager &&
+                                  isMyLeaves &&
+                                  leave.overallStatus === "rejected_by_hr") ||
+                                  (!isManager && isMyLeaves && isRejected));
+                              const canDeleteRequest =
+                                Boolean(onDeleteRequest) &&
+                                ((isMyLeaves && isRejected) ||
+                                  (isManager && !isMyLeaves && isRejected));
+                              setSelectedLeave(leave);
+                              setViewApprove(
+                                canAct
+                                  ? () => () => onManagerApprove(leave)
+                                  : undefined,
+                              );
+                              setViewReject(
+                                canAct
+                                  ? () => () => setRejectingLeave(leave)
+                                  : undefined,
+                              );
+                              setViewEdit(
+                                canEditRejected
+                                  ? () => () => onEditRejected?.(leave)
+                                  : undefined,
+                              );
+                              setViewDelete(
+                                canDeleteRequest
+                                  ? () => () => onDeleteRequest?.(leave)
+                                  : undefined,
+                              );
+                              setIsViewOpen(true);
+                            },
+                          },
+                          {
+                            label: t("leaves.cancelLeave"),
+                            icon: FiX,
+                            danger: true,
+                            onClick: () => setCancelingLeave(leave),
+                            hidden: !(
+                              (leave.overallStatus === "pending_manager" &&
+                                (isMyLeaves || !isManager)) ||
+                              (isManager &&
                                 isMyLeaves &&
-                                leave.overallStatus === "rejected_by_hr") ||
-                                (!isManager && isMyLeaves && isRejected));
-                            const canDeleteRequest =
-                              Boolean(onDeleteRequest) &&
-                              ((isMyLeaves && isRejected) ||
-                                (isManager && !isMyLeaves && isRejected));
-                            setSelectedLeave(leave);
-                            setViewApprove(
-                              canAct
-                                ? () => () => onManagerApprove(leave)
-                                : undefined,
-                            );
-                            setViewReject(
-                              canAct
-                                ? () => () => setRejectingLeave(leave)
-                                : undefined,
-                            );
-                            setViewEdit(
-                              canEditRejected
-                                ? () => () => onEditRejected?.(leave)
-                                : undefined,
-                            );
-                            setViewDelete(
-                              canDeleteRequest
-                                ? () => () => onDeleteRequest?.(leave)
-                                : undefined,
-                            );
-                            setIsViewOpen(true);
-                          }}
-                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 transition"
-                        >
-                          <FiEye className="h-4 w-4" />
-                          {t("leaves.view")}
-                        </button>
-                      </div>
+                                leave.overallStatus === "pending_hr")
+                            ),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
 
@@ -355,6 +356,8 @@ function LeavesTable({
         page={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        totalRecords={leaves.length}
+        pageSize={pageSize}
       />
 
       <ViewLeaveModal
@@ -390,3 +393,6 @@ function LeavesTable({
 
 export type { Leave };
 export default LeavesTable;
+
+
+

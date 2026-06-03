@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import CountUp from "react-countup";
 import {
   FiCheckCircle,
   FiEdit2,
@@ -13,6 +14,7 @@ import {
 import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
+import ActionMenu from "@/components/common/ActionMenu";
 import SortArrow from "@/components/common/SortArrow";
 import AddDepartmentModal from "@/features/departments/components/AddDepartmentModal";
 import EditDepartmentModal from "@/features/departments/components/EditDepartmentModal";
@@ -20,7 +22,11 @@ import ViewDepartmentModal from "@/features/departments/components/ViewDepartmen
 import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import { useDepartmentsPage } from "@/features/departments/hooks/useDepartmentsPage";
 import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 export default function DepartmentsPage() {
   const { t } = useTranslation();
   const deleteConfirmation = useDeleteConfirmation();
@@ -52,6 +58,7 @@ export default function DepartmentsPage() {
     closeDelete,
     handleToggle,
   } = useDepartmentsPage();
+  const { count } = useTableCountBadge({ total: departments.length });
 
   const handleDeleteRequest = (dept: NonNullable<typeof selected>) => {
     handleDelete(dept);
@@ -143,7 +150,12 @@ export default function DepartmentsPage() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-white leading-none">
-                          {card.value}
+                          <CountUp
+                            end={card.value}
+                            duration={1.2}
+                            separator=","
+                            preserveValue
+                          />
                         </p>
                         <p className="text-xs font-semibold uppercase tracking-wide text-blue-200 mt-0.5">
                           {card.label}
@@ -166,7 +178,12 @@ export default function DepartmentsPage() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-slate-900 leading-none">
-                        {card.value}
+                        <CountUp
+                          end={card.value}
+                          duration={1.2}
+                          separator=","
+                          preserveValue
+                        />
                       </p>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mt-0.5">
                         {card.label}
@@ -204,9 +221,12 @@ export default function DepartmentsPage() {
           {/* ── Table ────────────────────────────────────────────────── */}
           <div className="rounded-2xl bg-white shadow-sm border border-slate-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="text-base font-semibold text-slate-800">
-                {t("departments.allDepartments")}
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-slate-800">
+                  {t("departments.allDepartments")}
+                </h2>
+                <TableCountBadge count={count} />
+              </div>
             </div>
 
             {loading ? (
@@ -221,13 +241,15 @@ export default function DepartmentsPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <thead className="bg-[#1e3a5f] text-xs uppercase tracking-wide text-blue-100">
                     <tr>
-                      <th className="w-12 px-6 py-3 text-center">
+                      <th
+                        className={`${TABLE_HEADER_CELL_CLASS} w-12 text-center`}
+                      >
                         {t("departments.sn")}
                       </th>
                       <th
-                        className="px-6 py-3 text-left cursor-pointer select-none hover:bg-slate-100"
+                        className={`${TABLE_HEADER_CELL_CLASS} text-left cursor-pointer select-none hover:bg-slate-100`}
                         onClick={() => handleSort("name")}
                       >
                         {t("departments.department")}
@@ -238,7 +260,7 @@ export default function DepartmentsPage() {
                         />
                       </th>
                       <th
-                        className="px-6 py-3 text-left cursor-pointer select-none hover:bg-slate-100"
+                        className={`${TABLE_HEADER_CELL_CLASS} text-left cursor-pointer select-none hover:bg-slate-100`}
                         onClick={() => handleSort("code")}
                       >
                         {t("departments.code")}
@@ -249,7 +271,7 @@ export default function DepartmentsPage() {
                         />
                       </th>
                       <th
-                        className="px-6 py-3 text-left cursor-pointer select-none"
+                        className={`${TABLE_HEADER_CELL_CLASS} text-left cursor-pointer select-none`}
                         onClick={() => handleSort("manager")}
                       >
                         {t("departments.manager")}
@@ -260,7 +282,7 @@ export default function DepartmentsPage() {
                         />
                       </th>
                       <th
-                        className="px-6 py-3 text-left cursor-pointer select-none"
+                        className={`${TABLE_HEADER_CELL_CLASS} text-left cursor-pointer select-none`}
                         onClick={() => handleSort("employees")}
                       >
                         {t("departments.employees")}
@@ -271,7 +293,7 @@ export default function DepartmentsPage() {
                         />
                       </th>
                       <th
-                        className="px-6 py-3 text-left cursor-pointer select-none"
+                        className={`${TABLE_HEADER_CELL_CLASS} text-left cursor-pointer select-none`}
                         onClick={() => handleSort("status")}
                       >
                         {t("common.status")}
@@ -281,7 +303,7 @@ export default function DepartmentsPage() {
                           sortOrder={sortOrder}
                         />
                       </th>
-                      <th className="px-6 py-3 text-left">
+                      <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
                         {t("common.actions")}
                       </th>
                     </tr>
@@ -336,29 +358,28 @@ export default function DepartmentsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => openView(dept)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
-                            >
-                              <FiEye className="h-3.5 w-3.5" />
-                              {t("common.view")}
-                            </button>
-                            <button
-                              onClick={() => openEdit(dept)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                            >
-                              <FiEdit2 className="h-3.5 w-3.5" />
-                              {t("common.edit")}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteRequest(dept)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
-                            >
-                              <FiTrash2 className="h-3.5 w-3.5" />
-                              {t("common.delete")}
-                            </button>
-                          </div>
+                          <ActionMenu
+                            ariaLabel="Department actions"
+                            align="center"
+                            items={[
+                              {
+                                label: t("common.view"),
+                                icon: FiEye,
+                                onClick: () => openView(dept),
+                              },
+                              {
+                                label: t("common.edit"),
+                                icon: FiEdit2,
+                                onClick: () => openEdit(dept),
+                              },
+                              {
+                                label: t("common.delete"),
+                                icon: FiTrash2,
+                                danger: true,
+                                onClick: () => handleDeleteRequest(dept),
+                              },
+                            ]}
+                          />
                         </td>
                       </tr>
                     ))}

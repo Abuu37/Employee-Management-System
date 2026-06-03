@@ -8,7 +8,7 @@ import SetSalaryModal from "@/features/salary/components/SetSalaryModal";
 import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
 import type { SalaryFormValues } from "@/features/salary/components/SetSalaryModal";
 import { useSalary } from "@/features/salary/hooks/useSalary";
-import StatCard from "@/features/attendance/components/StatCard";
+import StatCard from "@/components/common/StatCrd";
 import {
   FiPlus,
   FiDollarSign,

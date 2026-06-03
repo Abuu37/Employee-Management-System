@@ -33,18 +33,52 @@ export const buildEmployeeFilters = (query) => {
     ...buildDateRangeFilter("join_date", joinDateFrom, joinDateTo),
   };
 
-  if (status && status !== "all") where.status = status;
-  if (employment_type && employment_type !== "all") where.employment_type = employment_type;
+  const normalizedStatus = status ? String(status).trim().toLowerCase() : "";
+  const normalizedEmploymentType = employment_type
+    ? String(employment_type)
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_")
+    : employment_type;
+  const normalizedSearch = search ? String(search).trim() : "";
+  const parsedDepartmentId = Number(department_id);
+
+  if (normalizedStatus && normalizedStatus !== "all") {
+    if (normalizedStatus === "active" || normalizedStatus === "inactive") {
+      where.status = normalizedStatus;
+    }
+  }
+  if (normalizedEmploymentType && normalizedEmploymentType !== "all") {
+    const variants = Array.from(
+      new Set([
+        normalizedEmploymentType,
+        normalizedEmploymentType.replace(/_/g, "-"),
+        normalizedEmploymentType.replace(/_/g, " "),
+      ]),
+    );
+    where.employment_type = { [Op.in]: variants };
+  }
   if (gender && gender !== "all") where.gender = gender;
   if (role && role !== "all") where.role = role;
-  if (department_id) where.department_id = Number(department_id);
+  if (
+    department_id &&
+    Number.isFinite(parsedDepartmentId) &&
+    parsedDepartmentId > 0
+  ) {
+    where.department_id = parsedDepartmentId;
+  }
 
-  if (search) {
-    where[Op.or] = [
-      { name:        { [Op.iLike]: `%${search}%` } },
-      { email:       { [Op.iLike]: `%${search}%` } },
-      { employee_id: { [Op.iLike]: `%${search}%` } },
-    ];
+  if (normalizedSearch) {
+    const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean);
+    const searchConditions = searchTerms.flatMap((term) => [
+      { name: { [Op.iLike]: `%${term}%` } },
+      { email: { [Op.iLike]: `%${term}%` } },
+      { employee_id: { [Op.iLike]: `%${term}%` } },
+    ]);
+
+    if (searchConditions.length) {
+      where[Op.or] = searchConditions;
+    }
   }
 
   return where;

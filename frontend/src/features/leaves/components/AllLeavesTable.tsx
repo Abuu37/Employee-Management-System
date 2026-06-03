@@ -10,9 +10,14 @@ import {
 import { useTranslation } from "react-i18next";
 import ViewLeaveModal from "./ViewLeaveModal";
 import RejectLeaveModal from "./RejectLeaveModal";
+import ActionMenu from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 interface Leave {
   id: number;
   employeeName?: string;
@@ -111,6 +116,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
     totalPages,
     paginated,
   } = usePagination(leaves, PAGE_SIZE);
+  const { count } = useTableCountBadge({ total: leaves.length });
 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -135,19 +141,19 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-base font-semibold text-slate-800">{tableTitle}</h3>
-        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {leaves.length} {t("leaves.records")}
-        </div>
+        <TableCountBadge count={count} />
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-[#1e3a5f] text-blue-100">
             <tr>
-              <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">{t("leaves.employee")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>
+                {t("leaves.employee")}
+              </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("type")}
               >
                 {t("leaves.type")}
@@ -158,7 +164,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("startDate")}
               >
                 {t("leaves.startDate")}
@@ -169,7 +175,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("endDate")}
               >
                 {t("leaves.endDate")}
@@ -180,7 +186,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("days")}
               >
                 {t("leaves.days")}
@@ -190,11 +196,11 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                   sortOrder={sortOrder}
                 />
               </th>
-              <th className="px-5 py-3 font-medium">
+              <th className={TABLE_HEADER_CELL_CLASS}>
                 {t("leaves.backupPerson")}
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("overallStatus")}
               >
                 {t("leaves.status")}
@@ -204,7 +210,7 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                   sortOrder={sortOrder}
                 />
               </th>
-              <th className="px-5 py-3 font-medium text-right">
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
                 {t("leaves.actions")}
               </th>
             </tr>
@@ -243,33 +249,32 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* View opens the slide panel with approve/reject inside */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Both tabs: HR approves/rejects only when status is pending_hr
-                            const canAct = leave.overallStatus === "pending_hr";
-
-                            setSelectedLeave(leave);
-                            setViewApprove(
-                              canAct
-                                ? () => () => onHrApprove(leave)
-                                : undefined,
-                            );
-                            setViewReject(
-                              canAct
-                                ? () => () => setRejectingLeave(leave)
-                                : undefined,
-                            );
-                            setIsViewOpen(true);
-                          }}
-                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
-                        >
-                          <FiEye className="h-4 w-4" />
-                          {t("leaves.view")}
-                        </button>
-                      </div>
+                      <ActionMenu
+                        ariaLabel="Leave actions"
+                        align="center"
+                        items={[
+                          {
+                            label: t("leaves.view"),
+                            icon: FiEye,
+                            onClick: () => {
+                              const canAct =
+                                leave.overallStatus === "pending_hr";
+                              setSelectedLeave(leave);
+                              setViewApprove(
+                                canAct
+                                  ? () => () => onHrApprove(leave)
+                                  : undefined,
+                              );
+                              setViewReject(
+                                canAct
+                                  ? () => () => setRejectingLeave(leave)
+                                  : undefined,
+                              );
+                              setIsViewOpen(true);
+                            },
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
 
@@ -294,6 +299,8 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
         page={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        totalRecords={leaves.length}
+        pageSize={PAGE_SIZE}
       />
 
       <ViewLeaveModal
@@ -318,3 +325,6 @@ const AllLeavesTable: React.FC<AllLeavesTableProps> = ({
 
 export type { Leave as AllLeave };
 export default AllLeavesTable;
+
+
+

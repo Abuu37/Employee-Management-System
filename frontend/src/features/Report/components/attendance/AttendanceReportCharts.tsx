@@ -188,8 +188,13 @@ export default function AttendanceReportCharts({ data, loading }: Props) {
                   stroke={COLORS[k]}
                   fill={`url(#grad-${k})`}
                   strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
+                  dot={{
+                    r: 2.8,
+                    strokeWidth: 1.5,
+                    stroke: COLORS[k],
+                    fill: "#ffffff",
+                  }}
+                  activeDot={{ r: 4.5, strokeWidth: 1.5, stroke: COLORS[k] }}
                 />
               ))}
             </AreaChart>

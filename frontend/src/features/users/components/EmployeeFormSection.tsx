@@ -299,9 +299,7 @@ const EmployeeFormSection = ({
                     <select
                       name="department_id"
                       value={values.department_id ?? ""}
-                      onChange={(e) => {
-                        const id = e.target.value
-                          ? Number(e.target.value)
+                      onChange={(e) => { const id = e.target.value ? Number(e.target.value)
                           : undefined;
                         setFieldValue("department_id", id);
                         const dept = departments.find((d) => d.id === id);
@@ -369,10 +367,7 @@ const EmployeeFormSection = ({
                         <select
                           name="manager_id"
                           value={values.manager_id ?? ""}
-                          onChange={(e) =>
-                            setFieldValue(
-                              "manager_id",
-                              e.target.value
+                          onChange={(e) => setFieldValue( "manager_id", e.target.value
                                 ? Number(e.target.value)
                                 : undefined,
                             )

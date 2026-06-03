@@ -21,8 +21,7 @@ export function usePagination<T>(data: T[], pageSize: number) {
 
   // If the data shrinks so that the current page no longer exists, snap back to last valid page
   const safePage = Math.min(page, totalPages);
-  const safeSetPage = (p: number) =>
-    setPage(Math.min(Math.max(1, p), totalPages));
+  const safeSetPage = (p: number) => setPage(Math.min(Math.max(1, p), totalPages));
 
   return {
     page: safePage,

@@ -163,6 +163,18 @@ export const useUsers = () => {
     }
   };
 
+  const handleResendInvitation = async (user: User) => {
+    try {
+      await userService.resendInvitation(user.id);
+      toast.success(`Invitation resent to ${user.name}`);
+      await loadUsers();
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ?? "Failed to resend invitation",
+      );
+    }
+  };
+
   return {
     // data
     users,
@@ -194,6 +206,7 @@ export const useUsers = () => {
     handleCreate,
     handleEdit,
     handleDelete,
+    handleResendInvitation,
     closeAllModals,
   };
 };

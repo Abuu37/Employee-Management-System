@@ -9,6 +9,8 @@ export interface User {
   department?: string;
   department_id?: number;
   manager_id?: number;
+  manager_name?: string | null;
+  managerName?: string | null;
   position?: string;
   phone?: string;
   employee_id?: string;
@@ -23,6 +25,7 @@ export interface User {
   reports_to?: number;
   officeBranch?: string;
   office_branch?: string;
+  invitation_status?: "sent" | "failed" | "accepted" | null;
 }
 
 export interface Feedback {

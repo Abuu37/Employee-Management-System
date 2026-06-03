@@ -24,10 +24,9 @@ const sendCredentialsEmail = async (name, email, setupUrl) => {
     });
   } catch (error) {
     console.log("Failed to send email:", error);
+    throw error;
   }
 };
-
-
 
 const sendPasswordResetEmail = async (name, email, resetUrl) => {
   try {
@@ -52,6 +51,7 @@ const sendPasswordResetEmail = async (name, email, resetUrl) => {
     });
   } catch (error) {
     console.log("Failed to send password reset email:", error);
+    throw error;
   }
 };
 

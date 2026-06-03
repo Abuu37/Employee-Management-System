@@ -1,12 +1,17 @@
 import { usePagination } from "@/hooks/usePagination";
 import toast from "react-hot-toast";
-import { FiPlus, FiEye, FiCreditCard } from "react-icons/fi";
+import { FiPlus, FiEye, FiCreditCard, FiCheckCircle } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { approvePayroll, markAsPaid } from "../services/payroll.service";
 import { useUser } from "@/context/UserContext";
+import ActionMenu from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const PAGE_SIZE = 8;
 
 interface PayrollRecord {
@@ -87,6 +92,7 @@ export default function PayrollTable({
 
   const { user } = useUser(); // for role-based action buttons
   const { t } = useTranslation(); // for translations
+  const { count } = useTableCountBadge({ total: data.length });
   const { page, setPage, totalPages, paginated } = usePagination(
     data,
     PAGE_SIZE,
@@ -99,20 +105,20 @@ export default function PayrollTable({
           {t("payroll.title")}
         </h3>
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {data.length} {t("payroll.records")}
-          </div>
+          <TableCountBadge count={count} />
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-[#1e3a5f] text-blue-100">
             <tr>
-              <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">{t("payroll.employee")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>
+                {t("payroll.employee")}
+              </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("year")}
               >
                 {t("payroll.period")}
@@ -123,7 +129,7 @@ export default function PayrollTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("base_salary")}
               >
                 {t("payroll.baseSalary")}
@@ -133,16 +139,16 @@ export default function PayrollTable({
                   sortOrder={sortOrder}
                 />
               </th>
-              <th className="px-5 py-3 font-medium">{t("payroll.bonus")}</th>
-              <th className="px-5 py-3 font-medium">
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("payroll.bonus")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>
                 {t("payroll.allowance")}
               </th>
-              <th className="px-5 py-3 font-medium">
+              <th className={TABLE_HEADER_CELL_CLASS}>
                 {t("payroll.deductions")}
               </th>
-              <th className="px-5 py-3 font-medium">{t("payroll.tax")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("payroll.tax")}</th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("net_salary")}
               >
                 {t("payroll.netPay")}
@@ -153,7 +159,7 @@ export default function PayrollTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("status")}
               >
                 {t("payroll.status")}
@@ -163,7 +169,9 @@ export default function PayrollTable({
                   sortOrder={sortOrder}
                 />
               </th>
-              <th className="px-5 py-3 font-medium">{t("payroll.actions")}</th>
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
+                {t("payroll.actions")}
+              </th>
             </tr>
           </thead>
 
@@ -208,44 +216,36 @@ export default function PayrollTable({
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      {item.status === "pending" &&
-                        (user?.role === "manager" ||
-                          user?.role === "admin") && (
-                          <button
-                            type="button"
-                            onClick={() => handleApprove(item.id)}
-                            className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium
-                           text-blue-700 transition hover:bg-blue-500 hover:text-white"
-                          >
-                            {t("payroll.approve")}
-                          </button>
-                        )}
-
-                      {item.status === "approved" && user?.role === "admin" && (
-                        <button
-                          type="button"
-                          onClick={() => handlePay(item.id)}
-                          className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium
-                           text-emerald-700 transition hover:bg-emerald-500 hover:text-white"
-                        >
-                          {t("payroll.markPaid")}
-                        </button>
-                      )}
-
-                      {item.status === "paid" && onView && (
-                        <button
-                          type="button"
-                          onClick={() => onView(item)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200
-                           bg-white px-3 py-1.5 text-xs font-medium text-blue-700 transition
-                           hover:bg-blue-500 hover:text-white"
-                        >
-                          <FiEye className="h-3.5 w-3.5" />
-                          {t("payroll.view")}
-                        </button>
-                      )}
-                    </div>
+                    <ActionMenu
+                      ariaLabel="Payroll actions"
+                      align="center"
+                      items={[
+                        {
+                          label: t("payroll.approve"),
+                          icon: FiCheckCircle,
+                          onClick: () => handleApprove(item.id),
+                          hidden:
+                            item.status !== "pending" ||
+                            !(
+                              user?.role === "manager" || user?.role === "admin"
+                            ),
+                        },
+                        {
+                          label: t("payroll.markPaid"),
+                          icon: FiCreditCard,
+                          onClick: () => handlePay(item.id),
+                          hidden:
+                            item.status !== "approved" ||
+                            user?.role !== "admin",
+                        },
+                        {
+                          label: t("payroll.view"),
+                          icon: FiEye,
+                          onClick: () => onView?.(item),
+                          hidden: item.status !== "paid" || !onView,
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))
@@ -266,7 +266,12 @@ export default function PayrollTable({
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        totalRecords={data.length}
+        pageSize={PAGE_SIZE}
       />
     </section>
   );
 }
+
+
+

@@ -5,11 +5,20 @@ import { Op } from "sequelize";
 import Attendance from "../models/Attendance.js";
 import Task from "../models/task.js";
 import Leave from "../models/Leave.js";
+import Project from "../models/project.js";
+import Department from "../models/Department.js";
 import {
   sendCredentialsEmail,
   sendPasswordResetEmail,
 } from "../utils/sendEmail.js";
-import { LeaveBalance } from "../models/index.js";
+import {
+  LeaveBalance,
+  Salary,
+  Payroll,
+  Document,
+  Notification,
+  TaskComment,
+} from "../models/index.js";
 import { env } from "../config/env.js";
 import {
   REFRESH_COOKIE_NAME,
@@ -135,7 +144,6 @@ export const createUserByAdmin = async (req, res) => {
       }
     }
 
-    
     const user = await User.create({
       name,
       email,
@@ -151,7 +159,8 @@ export const createUserByAdmin = async (req, res) => {
           : department_id || null,
       position: position || null,
       phone: phone || null,
-      employee_id: role === "employee" ? employee_id || generatedEmployeeId : null,
+      employee_id:
+        role === "employee" ? employee_id || generatedEmployeeId : null,
       gender: role === "employee" ? gender || null : null,
       date_of_birth: role === "employee" ? date_of_birth || null : null,
       address: role === "employee" ? address || null : null,
@@ -160,7 +169,7 @@ export const createUserByAdmin = async (req, res) => {
       join_date: role === "employee" ? join_date || defaultJoinDate : null,
       manager_id: assignedManagerId,
       reports_to: role === "manager" ? reports_to || null : null,
-      office_branch ,
+      office_branch,
       status: status || "active",
     });
 
@@ -168,10 +177,14 @@ export const createUserByAdmin = async (req, res) => {
     const setupToken = crypto.randomBytes(32).toString("hex");
     user.resetPasswordToken = hashToken(setupToken);
     user.resetPasswordExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    try {
+      const setupUrl = `${env.frontendUrl}/reset-password?token=${setupToken}`;
+      await sendCredentialsEmail(name, email, setupUrl);
+      user.invitation_status = "sent";
+    } catch {
+      user.invitation_status = "failed";
+    }
     await user.save();
-
-    const setupUrl = `${env.frontendUrl}/reset-password?token=${setupToken}`;
-    await sendCredentialsEmail(name, email, setupUrl);
 
     // ✅ Create leave balance
     await LeaveBalance.create({
@@ -286,10 +299,39 @@ export const getEmployees = async (req, res) => {
       offset,
     });
 
+    const managerIds = [
+      ...new Set(
+        rows
+          .map((row) => row.manager_id)
+          .filter((value) => Number.isInteger(value)),
+      ),
+    ];
+
+    let managerNameById = new Map();
+    if (managerIds.length > 0) {
+      const managers = await User.findAll({
+        where: { id: { [Op.in]: managerIds } },
+        attributes: ["id", "name"],
+      });
+      managerNameById = new Map(
+        managers.map((manager) => [manager.id, manager.name]),
+      );
+    }
+
+    const data = rows.map((row) => {
+      const json = row.toJSON();
+      return {
+        ...json,
+        manager_name: json.manager_id
+          ? (managerNameById.get(json.manager_id) ?? null)
+          : null,
+      };
+    });
+
     const totalPages = Math.max(1, Math.ceil(count / parsedLimit));
 
     res.json({
-      data: rows,
+      data,
       page: parsedPage,
       totalPages,
       total: count,
@@ -321,7 +363,17 @@ export const getEmployeeById = async (req, res) => {
       return res.status(403).json({ message: "Not allowed." });
     }
 
-    res.json(employee);
+    const manager = employee.manager_id
+      ? await User.findByPk(employee.manager_id, {
+          attributes: ["id", "name"],
+        })
+      : null;
+
+    const payload = employee.toJSON();
+    res.json({
+      ...payload,
+      manager_name: manager?.name ?? null,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });
@@ -788,6 +840,49 @@ export const deleteUser = async (req, res) => {
       });
     }
 
+    const taskIds = await Task.findAll({
+      attributes: ["id"],
+      where: {
+        [Op.or]: [{ assignedTo: user.id }, { assignedBy: user.id }],
+      },
+      raw: true,
+    }).then((rows) => rows.map((row) => row.id));
+
+    // Cascade-delete all child records that reference this user via FK
+    // Order matters: leaf records first, then join/balance tables.
+    await TaskComment.destroy({ where: { userId: user.id } });
+    if (taskIds.length > 0) {
+      await TaskComment.destroy({ where: { taskId: taskIds } });
+      await Task.destroy({
+        where: {
+          [Op.or]: [{ assignedTo: user.id }, { assignedBy: user.id }],
+        },
+      });
+    }
+    await Notification.destroy({ where: { userId: user.id } });
+    await Attendance.destroy({ where: { user_id: user.id } });
+    await Leave.destroy({ where: { userId: user.id } });
+    await LeaveBalance.destroy({ where: { userId: user.id } });
+    await Payroll.destroy({ where: { user_id: user.id } });
+    await Salary.destroy({ where: { user_id: user.id } });
+    await Document.destroy({ where: { user_id: user.id } });
+    await Document.destroy({ where: { uploaded_by: user.id } });
+    await Leave.update(
+      { backupEmployeeId: null },
+      { where: { backupEmployeeId: user.id } },
+    );
+    await Department.update(
+      { manager_id: null },
+      { where: { manager_id: user.id } },
+    );
+    await User.update({ manager_id: null }, { where: { manager_id: user.id } });
+    await User.update({ reports_to: null }, { where: { reports_to: user.id } });
+    await Project.destroy({
+      where: {
+        [Op.or]: [{ createdBy: user.id }, { managerId: user.id }],
+      },
+    });
+
     await user.destroy();
 
     res.json({ message: `User deleted: ${user.name}` });
@@ -1052,11 +1147,56 @@ export const resetPassword = async (req, res) => {
     user.password = await bcrypt.hash(newPassword, 12);
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
+    user.invitation_status = "accepted";
     user.refreshTokenHash = null;
     user.refreshTokenExpires = null;
     await user.save();
 
     res.json({ message: "Password reset successfully. You can now log in." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= RESEND INVITATION =================
+export const resendInvitation = async (req, res) => {
+  try {
+    const id = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Only allow resend if account not yet activated
+    if (user.invitation_status === "accepted") {
+      return res
+        .status(400)
+        .json({ message: "User has already activated their account." });
+    }
+
+    const setupToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = hashToken(setupToken);
+    user.resetPasswordExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    try {
+      const setupUrl = `${env.frontendUrl}/reset-password?token=${setupToken}`;
+      await sendCredentialsEmail(user.name, user.email, setupUrl);
+      user.invitation_status = "sent";
+    } catch {
+      user.invitation_status = "failed";
+      await user.save();
+      return res
+        .status(500)
+        .json({ message: "Failed to send invitation email." });
+    }
+
+    await user.save();
+    res.json({ message: "Invitation resent successfully." });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, type ReactNode } from "react";
 import Lottie from "lottie-react";
+import CountUp from "react-countup";
 import loadingIcon from "@/assets/icons/loading.json";
 import searchIcon from "@/assets/icons/search.json";
 import axios from "axios";
@@ -34,6 +35,7 @@ import {
   ResponsiveContainer,
   Label,
 } from "recharts";
+import { TABLE_HEADER_CELL_CLASS } from "@/hooks/useTableCountBadge";
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 const NAVY = "#1e3a5f";
@@ -156,6 +158,11 @@ function MiniCalendar() {
 // ================== Skeleton ======================
 function Sk({ cls }: { cls: string }) {
   return <div className={`animate-pulse rounded-2xl bg-slate-200 ${cls}`} />;
+}
+
+function KpiCount({ value }: { value: number }) {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return <CountUp end={safeValue} duration={1.2} separator="," preserveValue />;
 }
 
 type KpiIconTone = "blue" | "cyan" | "emerald" | "amber";
@@ -472,7 +479,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-              {/* Card 1 — navy */}
+              {/*======================= Card 1 — navy ==================*/}
               <div className={KPI_CARD_DARK} style={{ background: NAVY }}>
                 <KpiAccentDark />
                 <div className="relative z-10">
@@ -496,11 +503,15 @@ export default function Dashboard() {
                     />
                   </div>
                   <p className="text-4xl font-black leading-none tabular-nums">
-                    {isEmployee
-                      ? (summary?.tasks.pending ?? 0) +
-                        (summary?.tasks.in_progress ?? 0) +
-                        (summary?.tasks.completed ?? 0)
-                      : (summary?.totalEmployees ?? 0)}
+                    <KpiCount
+                      value={
+                        isEmployee
+                          ? (summary?.tasks.pending ?? 0) +
+                            (summary?.tasks.in_progress ?? 0) +
+                            (summary?.tasks.completed ?? 0)
+                          : (summary?.totalEmployees ?? 0)
+                      }
+                    />
                   </p>
                   <p className="text-xs text-blue-200 mt-2">
                     {isEmployee
@@ -527,7 +538,7 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
-                      {summary?.totalProjects ?? 0}
+                      <KpiCount value={summary?.totalProjects ?? 0} />
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
                       {t("dashboard.yourProjects")}
@@ -548,7 +559,7 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
-                      {summary?.totalProjects ?? 0}
+                      <KpiCount value={summary?.totalProjects ?? 0} />
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
                       {t("dashboard.yourProjects")}
@@ -569,7 +580,7 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
-                      {summary?.totalManagers ?? 0}
+                      <KpiCount value={summary?.totalManagers ?? 0} />
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
                       {t("dashboard.companyManagers")}
@@ -593,7 +604,7 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
-                      {totalLeaves}
+                      <KpiCount value={totalLeaves} />
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
                       {t("dashboard.totalLeaveRequests")}
@@ -614,9 +625,13 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
-                      {(summary?.tasks.pending ?? 0) +
-                        (summary?.tasks.in_progress ?? 0) +
-                        (summary?.tasks.completed ?? 0)}
+                      <KpiCount
+                        value={
+                          (summary?.tasks.pending ?? 0) +
+                          (summary?.tasks.in_progress ?? 0) +
+                          (summary?.tasks.completed ?? 0)
+                        }
+                      />
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
                       {t("dashboard.teamTasks")}
@@ -637,7 +652,7 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
-                      {summary?.totalProjects ?? 0}
+                      <KpiCount value={summary?.totalProjects ?? 0} />
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
                       {t("dashboard.allProjects")}
@@ -740,9 +755,13 @@ export default function Dashboard() {
                       />
                     </div>
                     <p className="text-4xl font-black text-slate-800 leading-none tabular-nums">
-                      {(summary?.tasks.pending ?? 0) +
-                        (summary?.tasks.in_progress ?? 0) +
-                        (summary?.tasks.completed ?? 0)}
+                      <KpiCount
+                        value={
+                          (summary?.tasks.pending ?? 0) +
+                          (summary?.tasks.in_progress ?? 0) +
+                          (summary?.tasks.completed ?? 0)
+                        }
+                      />
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
                       {t("dashboard.allTasks")}
@@ -968,7 +987,7 @@ export default function Dashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-slate-50">
+                        <tr className="bg-[#1e3a5f]">
                           {[
                             t("dashboard.file"),
                             t("dashboard.type"),
@@ -978,7 +997,7 @@ export default function Dashboard() {
                           ].map((h) => (
                             <th
                               key={h}
-                              className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400"
+                              className={`${TABLE_HEADER_CELL_CLASS} px-5 text-left text-[11px] font-bold uppercase tracking-wider text-blue-100`}
                             >
                               {h}
                             </th>
@@ -1084,3 +1103,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

@@ -73,32 +73,63 @@ const upload = multer({
 const router = express.Router();
 
 // Stats summary (role-aware)
-router.get("/stats", verifyToken, getDocumentStats);
+router.get(
+  "/stats", 
+  verifyToken, 
+  getDocumentStats
+);
 
 // Upload document (all authenticated roles — controller enforces type restrictions)
-router.post("/upload", verifyToken, upload.single("file"), uploadDocument);
+router.post(
+  "/upload", 
+  verifyToken, 
+  upload.single("file"), 
+  uploadDocument
+);
 
 // Admin: get all documents
-router.get("/all", verifyToken, checkRole("admin"), getAllDocuments);
+router.get(
+  "/all", 
+  verifyToken, 
+  checkRole("admin"), 
+  getAllDocuments
+);
 
 // Logged-in user: get own documents
-router.get("/my", verifyToken, getMyDocuments);
+router.get(
+  "/my", 
+  verifyToken, 
+  getMyDocuments
+);
 
 // Manager: get team documents
-router.get("/team", verifyToken, checkRole("manager"), getTeamDocuments);
+router.get(
+  "/team", 
+  verifyToken, 
+  checkRole("manager"), 
+  getTeamDocuments
+);
 
 // Admin + Manager: verify document
 router.patch(
   "/verify/:id",
   verifyToken,
   checkRole("admin", "manager"),
-  verifyDocument,
+  verifyDocument
 );
 
 // Download document (access-controlled in controller)
-router.get("/download/:id", verifyToken, downloadDocument);
+router.get(
+  "/download/:id",
+   verifyToken, 
+   downloadDocument
+  );
 
 // Delete document (access-controlled in controller)
-router.delete("/:id", verifyToken, deleteDocument);
+router.delete(
+  "/:id", 
+  verifyToken, 
+  deleteDocument
+);
 
 export default router;

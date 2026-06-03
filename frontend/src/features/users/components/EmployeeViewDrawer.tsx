@@ -117,6 +117,12 @@ export default function EmployeeViewDrawer({
   }, [isOpen, drawerData?.id]);
 
   useEffect(() => {
+    const managerLabel = drawerData?.manager_name ?? drawerData?.managerName;
+    if (isOpen && managerLabel) {
+      setManagerName(managerLabel);
+      return;
+    }
+
     if (!isOpen || !drawerData?.manager_id) {
       setManagerName("Not assigned");
       return;
@@ -149,7 +155,13 @@ export default function EmployeeViewDrawer({
     return () => {
       alive = false;
     };
-  }, [isOpen, drawerData?.manager_id, currentUser]);
+  }, [
+    isOpen,
+    drawerData?.manager_id,
+    drawerData?.manager_name,
+    drawerData?.managerName,
+    currentUser,
+  ]);
 
   const initials = useMemo(() => {
     if (!drawerData?.name) return "EM";
@@ -428,7 +440,7 @@ export default function EmployeeViewDrawer({
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="min-w-full text-left text-sm">
-                          <thead className="text-slate-500">
+                          <thead className="bg-[#1e3a5f] text-blue-100">
                             <tr>
                               <th className="px-2 py-2 font-medium">Date</th>
                               <th className="px-2 py-2 font-medium">

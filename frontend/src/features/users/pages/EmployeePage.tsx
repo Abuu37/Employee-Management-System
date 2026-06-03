@@ -47,6 +47,7 @@ export default function Users() {
     handleCreate,
     handleEdit,
     handleDelete,
+    handleResendInvitation,
     closeAllModals,
   } = useUsers();
 
@@ -69,7 +70,6 @@ export default function Users() {
         <Header searchTerm="" onSearchChange={() => {}} />
 
         <div className="p-6 space-y-5">
-
           {/* ==================== Page header =========================== */}
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -84,7 +84,8 @@ export default function Users() {
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm
+                font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
               >
                 <FiPlus className="h-4 w-4" />
                 {t("employees.addEmployee")}
@@ -101,13 +102,15 @@ export default function Users() {
                 placeholder={t("employees.searchEmployees")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full max-w-sm rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-full max-w-sm rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4
+                text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatus(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm
+              text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
             >
               <option value="all">All Status</option>
               <option value="active">{t("departments.active")}</option>
@@ -117,8 +120,10 @@ export default function Users() {
 
           {/* ======================= Table ============================ */}
           {loading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-slate-200
-                bg-white py-20 text-slate-400 text-sm shadow-sm">
+            <div
+              className="flex items-center justify-center rounded-2xl border border-slate-200
+                bg-white py-20 text-slate-400 text-sm shadow-sm"
+            >
               {t("common.loading")}
             </div>
           ) : (
@@ -131,6 +136,7 @@ export default function Users() {
               onView={openView}
               onEdit={openEdit}
               onDelete={handleDeleteRequest}
+              onResendInvitation={handleResendInvitation}
               hideAddButton={!isAdmin}
               page={page}
               totalPages={totalPages}

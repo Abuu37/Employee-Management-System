@@ -2,9 +2,14 @@ import { usePagination } from "@/hooks/usePagination";
 import { FiEdit2, FiPlus, FiTrash2, FiDollarSign } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import type { SalaryRecord } from "../services/salary.service";
+import ActionMenu from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const PAGE_SIZE = 8;
 
 interface SalaryTableProps {
@@ -40,6 +45,7 @@ export default function SalaryTable({
     data,
     PAGE_SIZE,
   );
+  const { count } = useTableCountBadge({ total: data.length });
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -48,20 +54,20 @@ export default function SalaryTable({
           {t("salary.allRecords")}
         </h3>
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {data.length} {t("salary.records")}
-          </div>
+          <TableCountBadge count={count} />
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-[#1e3a5f] text-blue-100">
             <tr>
-              <th className="px-5 py-3 font-medium">S/N</th>
-              <th className="px-5 py-3 font-medium">{t("salary.employee")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>
+                {t("salary.employee")}
+              </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("base_salary")}
               >
                 {t("salary.baseSalary")}
@@ -72,7 +78,7 @@ export default function SalaryTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("bonus")}
               >
                 {t("salary.bonus")}
@@ -83,7 +89,7 @@ export default function SalaryTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("allowance")}
               >
                 {t("salary.allowance")}
@@ -94,7 +100,7 @@ export default function SalaryTable({
                 />
               </th>
               <th
-                className="px-5 py-3 font-medium cursor-pointer select-none"
+                className={`${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none`}
                 onClick={() => onSort?.("tax_percentage")}
               >
                 {t("salary.tax")}&nbsp;%
@@ -104,9 +110,9 @@ export default function SalaryTable({
                   sortOrder={sortOrder}
                 />
               </th>
-              <th className="px-5 py-3 font-medium">{t("salary.gross")}</th>
-              <th className="px-5 py-3 font-medium">{t("salary.netPay")}</th>
-              <th className="px-5 py-3 font-medium">
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("salary.gross")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("salary.netPay")}</th>
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
                 {t("common.actions", { defaultValue: "Actions" })}
               </th>
             </tr>
@@ -143,24 +149,23 @@ export default function SalaryTable({
                     {computeNet(item).toFixed(2)}
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onEdit(item)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-                      >
-                        <FiEdit2 className="h-3.5 w-3.5" />
-                        {t("common.edit", { defaultValue: "Edit" })}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(item)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
-                      >
-                        <FiTrash2 className="h-3.5 w-3.5" />
-                        {t("common.delete", { defaultValue: "Delete" })}
-                      </button>
-                    </div>
+                    <ActionMenu
+                      ariaLabel="Salary actions"
+                      align="center"
+                      items={[
+                        {
+                          label: t("common.edit", { defaultValue: "Edit" }),
+                          icon: FiEdit2,
+                          onClick: () => onEdit(item),
+                        },
+                        {
+                          label: t("common.delete", { defaultValue: "Delete" }),
+                          icon: FiTrash2,
+                          danger: true,
+                          onClick: () => onDelete(item),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))
@@ -181,7 +186,12 @@ export default function SalaryTable({
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        totalRecords={data.length}
+        pageSize={PAGE_SIZE}
       />
     </section>
   );
 }
+
+
+

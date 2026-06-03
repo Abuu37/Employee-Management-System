@@ -9,6 +9,8 @@ export const normalizeUser = (user: Partial<User>): User => ({
   department: user.department,
   department_id: user.department_id,
   manager_id: user.manager_id,
+  manager_name: user.manager_name ?? user.managerName ?? null,
+  managerName: user.managerName ?? user.manager_name ?? null,
   position: user.position,
   phone: user.phone,
   employee_id: user.employee_id,
@@ -23,4 +25,5 @@ export const normalizeUser = (user: Partial<User>): User => ({
   reports_to: user.reports_to,
   officeBranch: user.officeBranch,
   office_branch: user.office_branch,
+  invitation_status: user.invitation_status ?? null,
 });

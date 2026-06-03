@@ -6,7 +6,7 @@ import { Op, where } from "sequelize";
 
 
 // Helper to build dynamic filters for attendance queries based on request query parameters.
-const buildAttendnaceFilters = (query) => {
+const buildAttendanceFilters = (query) => {
   const { search, status, dateFrom, dateTo, sortBy = "date", sortOrder = "DESC" } = query;
 
   const attendanceWhere = {};
@@ -210,8 +210,9 @@ export const getAllAttendance = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
 
-    const offset = (page - 1) * limit;
-    const { attendanceWhere, order } = buildAttendnaceFilters(req.query);
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const { attendanceWhere, order } = buildAttendanceFilters(req.query);
 
     const { rows, count } = await Attendance.findAndCountAll({
       where: attendanceWhere,
@@ -231,7 +232,7 @@ export const getAllAttendance = async (req, res) => {
       data: rows,
       total: count,
       page: Number(page),
-      totalPages: Math.ceil(count / limit),
+      totalPages: Math.ceil(count / Number(limit)),
     });
   } catch (error) {
     console.error("Error fetching attendance:", error);
@@ -253,7 +254,10 @@ export const getTeamAttendance = async (req, res) => {
     const offset = (page - 1) * limit;
     const { attendanceWhere, order } = buildAttendnaceFilters(req.query);
 
-    attendanceWhere.user_id = teamIds;
+    attendanceWhere.user_id = {
+      [Op.in]: teamIds,
+
+    };
 
     const { rows, count } = await Attendance.findAndCountAll({
       where: attendanceWhere,

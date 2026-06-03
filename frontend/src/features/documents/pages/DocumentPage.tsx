@@ -8,7 +8,7 @@ import {
 } from "react-icons/fi";
 import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
-import StatCard from "@/features/attendance/components/StatCard";
+import StatCard from "@/components/common/StatCrd";
 import DocumentTable from "@/features/documents/components/DocumentTable";
 import UploadDocumentModal from "@/features/documents/components/UploadDocumentModal";
 import DeleteConfirmModal from "@/components/common/DeleteConfirmModal";
@@ -140,13 +140,15 @@ export default function DocumentPage() {
                 placeholder={t("documents.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm
+                text-slate-700 shadow-sm placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
             </div>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm
+              text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
             >
               <option value="all">All Status</option>
               <option value="verified">Verified</option>
@@ -155,7 +157,8 @@ export default function DocumentPage() {
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm
+              text-slate-700 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
             >
               <option value="all">All Types</option>
               <option value="contract">Contract</option>

@@ -12,7 +12,7 @@ import {
 } from "react-icons/fi";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import axios from "axios";
-import StatCard from "@/features/attendance/components/StatCard";
+import StatCard from "@/components/common/StatCrd";
 import Header from "@/layouts/Header";
 import Sidebar from "@/layouts/Sidebar";
 import LeavesTable from "@/features/leaves/components/LeavesTable";

@@ -552,44 +552,95 @@ export const deleteDocument = async (req, res) => {
 
 // ================= DOWNLOAD DOCUMENT =================
 export const downloadDocument = async (req, res) => {
-  try {
+  try{
     const { id } = req.params;
-    const userRole = req.user.role;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     const doc = await Document.findByPk(id);
     if (!doc) {
-      return res.status(404).json({ message: "Document not found" });
+      return res.status(404).json({
+        message: "Document not found",
+      });
     }
 
-    // Access control
-    if (
-      userRole === "employee" &&
-      doc.user_id !== userId &&
-      doc.uploaded_by !== userId
-    ) {
-      return res.status(403).json({ message: "Access denied" });
+    //------------------- ADMIN ---------------------
+    if (userRole === "admin") {
+      return res.download(doc.file_path, doc.file_name);
     }
 
-    if (userRole === "manager") {
+    //------------------- EMPLOYEE ---------------------
+    if (userRole === "employee") {
+      const user = await User.findByPk(userId);
+
+      let allowed = false;
+
+      // own documents
+      if (doc.user_id === userId || doc.uploaded_by === userId) {
+        allowed = true;
+      }
+
+      //Team visibility
+      else if (doc.visibility === "team" && user?.manager_id) {
+        const teamMembers = await User.findAll({
+          where: { manager_id: user.manager_id },
+          attributes: ["id"],
+        });
+
+        const teamIds = teamMembers.map((u) => u.id);
+        teamIds.push(user.manager_id);
+
+        if(teamIds.includes(doc.uploaded_by)) {
+          allowed = true;
+        }
+      }
+
+      if (!allowed) {
+        return res.status(403).json({
+          message: "You do not have permission to access this document",
+        });
+      }
+
+    }  //------------------- MANAGER ---------------------
+     else if (userRole === "manager") {
       const teamMembers = await User.findAll({
         where: { manager_id: userId },
         attributes: ["id"],
       });
-      const teamIds = teamMembers.map((u) => u.id);
-      teamIds.push(userId);
 
-      if (!teamIds.includes(doc.user_id) && doc.uploaded_by !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      const teamIds = teamMembers.map((user) => user.id);
+      teamIds.push(userId); // manager can access their own uploads
+      
+      let allowed = false;
+
+      //team documents
+      if(teamIds.includes(doc.user_id) || teamIds.includes(doc.uploaded_by)) {
+        allowed = true;
       }
+
+      //Team visibility docs
+      if (doc.visibility === "team" && teamIds.includes(doc.uploaded_by)) {
+        allowed = true;
+      }
+
+      if (!allowed) {
+        return res.status(403).json({
+          message: "You do not have permission to access this document",
+        });
+      }
+
     }
 
-    if (!fs.existsSync(doc.file_path)) {
-      return res.status(404).json({ message: "File not found on server" });
-    }
+    //=========== file Exist ============
+     if (!fs.existsSync(doc.file_path)) {
+      return res.status(404).json({
+        message: "File not found on server",
+      });
+     }
 
-    res.download(doc.file_path, doc.file_name);
-  } catch (error) {
+     return res.download(doc.file_path, doc.file_name);
+}
+  catch (error) {
     console.error("Error downloading document:", error);
     res.status(500).json({ message: "Internal server error" });
   }

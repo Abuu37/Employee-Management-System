@@ -1,10 +1,15 @@
 import { usePagination } from "@/hooks/usePagination";
 import { FiMessageCircle } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import ActionMenu from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import type { TaskItem } from "@/features/tasks/types/task.types";
 import { richTextToPlainText } from "@/utils/richText";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 // Re-export for any consumers that import TaskItem from this file
 export type { TaskItem };
 
@@ -55,30 +60,33 @@ function TaskTable({
     PAGE_SIZE,
   );
   const { t } = useTranslation();
+  const { count } = useTableCountBadge({ total: tasks.length });
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {tasks.length} records
-        </div>
+        <TableCountBadge count={count} />
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-[#1e3a5f] text-blue-100">
             <tr>
-              <th className="px-5 py-3 font-medium">{t("tasks.task")}</th>
-              <th className="px-5 py-3 font-medium">{t("tasks.project")}</th>
-              <th className="px-5 py-3 font-medium">{t("tasks.assignedBy")}</th>
-              <th className="px-5 py-3 font-medium">
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("tasks.task")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("tasks.project")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>
+                {t("tasks.assignedBy")}
+              </th>
+              <th className={TABLE_HEADER_CELL_CLASS}>
                 {t("tasks.description")}
               </th>
-              <th className="px-5 py-3 font-medium">{t("tasks.priority")}</th>
-              <th className="px-5 py-3 font-medium">{t("tasks.deadline")}</th>
-              <th className="px-5 py-3 font-medium">{t("tasks.status")}</th>
-              <th className="px-5 py-3 font-medium">{t("tasks.comments")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("tasks.priority")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("tasks.deadline")}</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>{t("tasks.status")}</th>
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
+                {t("tasks.comments")}
+              </th>
             </tr>
           </thead>
 
@@ -141,14 +149,17 @@ function TaskTable({
 
                     {!isadmin && (
                       <td className="px-5 py-4">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                          onClick={() => onViewTask(task)}
-                        >
-                          <FiMessageCircle className="h-3.5 w-3.5" />
-                          {t("tasks.comment")}
-                        </button>
+                        <ActionMenu
+                          ariaLabel="Task actions"
+                          align="center"
+                          items={[
+                            {
+                              label: t("tasks.comment"),
+                              icon: FiMessageCircle,
+                              onClick: () => onViewTask(task),
+                            },
+                          ]}
+                        />
                       </td>
                     )}
                   </tr>
@@ -171,9 +182,14 @@ function TaskTable({
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        totalRecords={tasks.length}
+        pageSize={PAGE_SIZE}
       />
     </section>
   );
 }
 
 export default TaskTable;
+
+
+

@@ -73,17 +73,11 @@ function EditUserModal({
 }: EditUserModalProps) {
   const { user: currentUser } = useUser();
   const currentUserRole = currentUser?.role ?? null;
-  const isManagerMode =
-    roleOptions.length === 1 && roleOptions[0] === "manager";
-
+  const isManagerMode = roleOptions.length === 1 && roleOptions[0] === "manager";
   const [managers, setManagers] = useState<{ id: number; name: string }[]>([]);
-  const [supervisors, setSupervisors] = useState<
-    { id: number; name: string }[]
-  >([]);
+  const [supervisors, setSupervisors] = useState<{ id: number; name: string }[]>([]);
   const [loadingManagers, setLoadingManagers] = useState(false);
-  const [departments, setDepartments] = useState<
-    { id: number; name: string }[]
-  >([]);
+  const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [activeTab, setActiveTab] = useState<"personal" | "work">("personal");
 
   useEffect(() => {
@@ -93,8 +87,7 @@ function EditUserModal({
       setLoadingManagers(true);
       userService
         .getManagers()
-        .then((data) =>
-          setManagers(data.map((m) => ({ id: m.id, name: m.name }))),
+        .then((res) => setManagers(res.data.map((m) => ({ id: m.id, name: m.name }))),
         )
         .catch(() => {})
         .finally(() => setLoadingManagers(false));
@@ -103,7 +96,7 @@ function EditUserModal({
     if (isManagerMode) {
       userService
         .getAdmins()
-        .then((admins) => setSupervisors(admins))
+        .then((admins) => setSupervisors(admins.map((a) => ({ id: a.id, name: a.name }))))
         .catch(() => {});
     }
 

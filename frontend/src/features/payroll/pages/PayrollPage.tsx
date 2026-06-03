@@ -8,7 +8,7 @@ import Header from "@/layouts/Header";
 import PayrollTable from "@/features/payroll/components/PayrollTable";
 import GeneratePayrollModal from "@/features/payroll/components/GeneratePayrollModal";
 import ViewPayslipModal from "@/features/payslip/components/ViewPayslipModal";
-import StatCard from "@/features/attendance/components/StatCard";
+import StatCard from "@/components/common/StatCrd";
 import type { PayrollFormValues } from "@/features/payroll/components/GeneratePayrollModal";
 import { useUser } from "@/context/UserContext";
 import { usePayroll } from "@/features/payroll/hooks/usePayroll";

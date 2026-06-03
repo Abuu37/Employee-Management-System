@@ -1,18 +1,24 @@
 import {
   FiEye,
   FiTrash2,
+  FiEdit2,
   FiBriefcase,
   FiAlertTriangle,
   FiClock,
   FiCheckCircle,
 } from "react-icons/fi";
 import type { ReactNode } from "react";
+import ActionMenu from "@/components/common/ActionMenu";
 import SortArrow from "@/components/common/SortArrow";
 import { useTranslation } from "react-i18next";
 import type { ProjectItem } from "@/features/projects/types/project.types";
 import { useUser } from "@/context/UserContext";
 import TablePagination from "@/components/common/TablePagination";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 // Component for displaying a table of projects with actions to view, edit, or delete each project
 interface ProjectTableProps {
   title: string;
@@ -117,6 +123,7 @@ function ProjectTable({
   const { user } = useUser();
   const isAdmin = user?.role === "admin";
   const { t } = useTranslation();
+  const { count } = useTableCountBadge({ total: projects.length });
 
   const thSort = (col: string) => ({
     onClick: () => onSort(col),
@@ -129,18 +136,16 @@ function ProjectTable({
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 className="text-base font-semibold text-slate-800">{title}</h3>
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {projects.length} {t("projects.records")}
-          </div>
+          <TableCountBadge count={count} />
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-[#1e3a5f] text-blue-100">
             <tr>
-              <th className="px-5 py-3 font-medium">S/N</th>
-              <th {...thSort("name")}>
+              <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+              <th {...thSort("name")} className={TABLE_HEADER_CELL_CLASS}>
                 {t("projects.projectName")}
                 <SortArrow
                   column="name"
@@ -148,7 +153,7 @@ function ProjectTable({
                   sortOrder={sortOrder as "ASC" | "DESC"}
                 />
               </th>
-              <th {...thSort("startDate")}>
+              <th {...thSort("startDate")} className={TABLE_HEADER_CELL_CLASS}>
                 {t("projects.startDate")}
                 <SortArrow
                   column="startDate"
@@ -156,7 +161,7 @@ function ProjectTable({
                   sortOrder={sortOrder as "ASC" | "DESC"}
                 />
               </th>
-              <th {...thSort("endDate")}>
+              <th {...thSort("endDate")} className={TABLE_HEADER_CELL_CLASS}>
                 {t("projects.endDate")}
                 <SortArrow
                   column="endDate"
@@ -164,8 +169,8 @@ function ProjectTable({
                   sortOrder={sortOrder as "ASC" | "DESC"}
                 />
               </th>
-              <th className="px-5 py-3 font-medium">Priority</th>
-              <th {...thSort("status")}>
+              <th className={TABLE_HEADER_CELL_CLASS}>Priority</th>
+              <th {...thSort("status")} className={TABLE_HEADER_CELL_CLASS}>
                 {t("projects.status")}
                 <SortArrow
                   column="status"
@@ -174,11 +179,13 @@ function ProjectTable({
                 />
               </th>
               {isAdmin && (
-                <th className="px-5 py-3 font-medium">
+                <th className={TABLE_HEADER_CELL_CLASS}>
                   {t("projects.manager")}
                 </th>
               )}
-              <th className="px-5 py-3 font-medium">{t("projects.actions")}</th>
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
+                {t("projects.actions")}
+              </th>
             </tr>
           </thead>
 
@@ -256,26 +263,28 @@ function ProjectTable({
                     </td>
                   )}
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onView(project)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-500 transition hover:text-white"
-                      >
-                        <FiEye className="h-4 w-4" />
-                        {t("common.view")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(project)}
-                        className="inline-flex items-center gap-1 rounded-lg border
-                         border-red-200 bg-white px-3 py-1.5 text-xs font-medium
-                          text-red-700 hover:bg-red-500 transition hover:text-white"
-                      >
-                        <FiTrash2 className="h-3.5 w-3.5" />
-                        {t("common.delete")}
-                      </button>
-                    </div>
+                    <ActionMenu
+                      ariaLabel="Project actions"
+                      align="center"
+                      items={[
+                        {
+                          label: t("common.view"),
+                          icon: FiEye,
+                          onClick: () => onView(project),
+                        },
+                        {
+                          label: t("common.edit", { defaultValue: "Edit" }),
+                          icon: FiEdit2,
+                          onClick: () => onEdit(project),
+                        },
+                        {
+                          label: t("common.delete"),
+                          icon: FiTrash2,
+                          danger: true,
+                          onClick: () => onDelete(project),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))
@@ -305,3 +314,6 @@ function ProjectTable({
 }
 
 export default ProjectTable;
+
+
+

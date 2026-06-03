@@ -2,9 +2,14 @@ import React from "react";
 import { usePagination } from "@/hooks/usePagination";
 import { FiCheck, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import ActionMenu from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import { richTextToPlainText } from "@/utils/richText";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const PAGE_SIZE = 8;
 
 export interface PendingLeave {
@@ -30,6 +35,7 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
   onReject,
 }) => {
   const { t } = useTranslation();
+  const { count } = useTableCountBadge({ total: leaves.length });
   const { page, setPage, totalPages, paginated } = usePagination(
     leaves,
     PAGE_SIZE,
@@ -41,22 +47,22 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
         <h3 className="text-lg font-semibold text-slate-900">
           {t("leaves.pendingApprovals")}
         </h3>
-        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {leaves.length} {t("leaves.records")}
-        </div>
+        <TableCountBadge count={count} />
       </div>
       <table className="min-w-full text-left text-sm">
-        <thead className="bg-slate-50 text-slate-500">
+        <thead className="bg-[#1e3a5f] text-blue-100">
           <tr>
-            <th className="px-5 py-3 font-medium">S/N</th>
-            <th className="px-5 py-3 font-medium">{t("leaves.managerName")}</th>
-            <th className="px-5 py-3 font-medium">{t("leaves.type")}</th>
-            <th className="px-5 py-3 font-medium">{t("leaves.startDate")}</th>
-            <th className="px-5 py-3 font-medium">{t("leaves.endDate")}</th>
-            <th className="px-5 py-3 font-medium">{t("leaves.days")}</th>
-            <th className="px-5 py-3 font-medium">{t("leaves.reason")}</th>
-            <th className="px-5 py-3 font-medium">{t("leaves.status")}</th>
-            <th className="px-5 py-3 font-medium text-right">
+            <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+            <th className={TABLE_HEADER_CELL_CLASS}>
+              {t("leaves.managerName")}
+            </th>
+            <th className={TABLE_HEADER_CELL_CLASS}>{t("leaves.type")}</th>
+            <th className={TABLE_HEADER_CELL_CLASS}>{t("leaves.startDate")}</th>
+            <th className={TABLE_HEADER_CELL_CLASS}>{t("leaves.endDate")}</th>
+            <th className={TABLE_HEADER_CELL_CLASS}>{t("leaves.days")}</th>
+            <th className={TABLE_HEADER_CELL_CLASS}>{t("leaves.reason")}</th>
+            <th className={TABLE_HEADER_CELL_CLASS}>{t("leaves.status")}</th>
+            <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
               {t("leaves.actions")}
             </th>
           </tr>
@@ -94,26 +100,23 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
                   </span>
                 </td>
                 <td className="px-5 py-4">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onApprove(leave)}
-                      className="inline-flex items-center gap-1 rounded-lg border
-                     border-emerald-100 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition"
-                    >
-                      <FiCheck className="h-4 w-4" />
-                      {t("leaves.approve")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onReject(leave)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-red-100
-                     bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
-                    >
-                      <FiX className="h-4 w-4" />
-                      {t("leaves.reject")}
-                    </button>
-                  </div>
+                  <ActionMenu
+                    ariaLabel="Pending leave actions"
+                    align="center"
+                    items={[
+                      {
+                        label: t("leaves.approve"),
+                        icon: FiCheck,
+                        onClick: () => onApprove(leave),
+                      },
+                      {
+                        label: t("leaves.reject"),
+                        icon: FiX,
+                        danger: true,
+                        onClick: () => onReject(leave),
+                      },
+                    ]}
+                  />
                 </td>
               </tr>
             ))
@@ -133,9 +136,14 @@ const PendingLeavesTable: React.FC<PendingLeavesTableProps> = ({
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        totalRecords={leaves.length}
+        pageSize={PAGE_SIZE}
       />
     </section>
   );
 };
 
 export default PendingLeavesTable;
+
+
+

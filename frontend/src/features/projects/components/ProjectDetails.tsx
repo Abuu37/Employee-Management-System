@@ -34,7 +34,11 @@ import TablePagination from "@/components/common/TablePagination";
 import useDeleteConfirmation from "@/hooks/useDeleteConfirmation";
 import RichTextEditor from "@/components/editor/RichTextEditor";
 import { richTextToPlainText } from "@/utils/richText";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const PAGE_SIZE = 8;
 type DrawerTab = "info" | "tasks";
 const TAB_ITEMS: { key: DrawerTab; label: string }[] = [
@@ -257,6 +261,7 @@ function ProjectDetails({
   const { user } = useUser();
   const role = user?.role ?? null;
   const { t } = useTranslation();
+  const { count } = useTableCountBadge({ total: tasks.length });
 
   useEffect(() => {
     if (!isOpen) setActiveTab("info");
@@ -455,9 +460,7 @@ function ProjectDetails({
                         <span className="text-sm font-semibold text-slate-800">
                           {t("projects.tasks") || "Tasks"}
                         </span>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-                          {tasks.length}
-                        </span>
+                        <TableCountBadge count={count} />
                       </div>
                       {canCreateTask && (
                         <button
@@ -480,12 +483,30 @@ function ProjectDetails({
                         <div className="overflow-x-auto">
                           <table className="min-w-full text-left text-sm">
                             <thead>
-                              <tr className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                <th className="px-5 py-3">Task</th>
-                                <th className="px-4 py-3">Assigned To</th>
-                                <th className="px-4 py-3">Status</th>
-                                <th className="px-4 py-3">Deadline</th>
-                                <th className="px-4 py-3 text-right">
+                              <tr className="bg-[#1e3a5f] text-xs font-semibold uppercase tracking-wide text-blue-100">
+                                <th
+                                  className={`${TABLE_HEADER_CELL_CLASS} px-5`}
+                                >
+                                  Task
+                                </th>
+                                <th
+                                  className={`${TABLE_HEADER_CELL_CLASS} px-4`}
+                                >
+                                  Assigned To
+                                </th>
+                                <th
+                                  className={`${TABLE_HEADER_CELL_CLASS} px-4`}
+                                >
+                                  Status
+                                </th>
+                                <th
+                                  className={`${TABLE_HEADER_CELL_CLASS} px-4`}
+                                >
+                                  Deadline
+                                </th>
+                                <th
+                                  className={`${TABLE_HEADER_CELL_CLASS} px-4 text-right`}
+                                >
                                   Actions
                                 </th>
                               </tr>
@@ -589,6 +610,8 @@ function ProjectDetails({
                             page={taskPage}
                             totalPages={taskTotalPages}
                             onPageChange={setTaskPage}
+                            totalRecords={tasks.length}
+                            pageSize={PAGE_SIZE}
                           />
                         )}
                       </>
@@ -658,3 +681,6 @@ function ProjectDetails({
 }
 
 export default ProjectDetails;
+
+
+

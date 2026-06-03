@@ -17,11 +17,7 @@ import { buildAttendanceFilters } from "./helpers/buildAttendanceFilters.js";
  * If `departmentFilter` is provided the Department where clause is added
  * so Sequelize performs an inner join (INNER JOIN instead of LEFT JOIN).
  */
-const buildUserInclude = (
-  departmentFilter,
-  search,
-  withDisplayAttributes = true,
-) => {
+const buildUserInclude = ( departmentFilter, search, withDisplayAttributes = true,) => {
   const userWhere = {};
   if (search) {
     userWhere[Op.or] = [

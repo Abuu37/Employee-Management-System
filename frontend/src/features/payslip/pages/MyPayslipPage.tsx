@@ -8,7 +8,11 @@ import { getMyPayslips } from "@/features/payroll/services/payroll.service";
 import { FiFileText, FiEye } from "react-icons/fi";
 import { AnimatedSearchIcon } from "@/components/common/AnimatedSearchIcon";
 import TablePagination from "@/components/common/TablePagination";
-
+import {
+  TABLE_HEADER_CELL_CLASS,
+  useTableCountBadge,
+} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 const monthNames = [
   "",
   "January",
@@ -52,6 +56,8 @@ export default function MyPayslipPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const { count } = useTableCountBadge({ total: data.length });
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -101,31 +107,29 @@ export default function MyPayslipPage() {
                     <h3 className="text-base font-semibold text-slate-800">
                       All Payslips
                     </h3>
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                      {data.length} records
-                    </div>
+                    <TableCountBadge count={count} />
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-left text-sm">
-                      <thead className="bg-slate-50 text-slate-500">
+                      <thead className="bg-[#1e3a5f] text-blue-100">
                         <tr>
-                          <th className="px-5 py-3 font-medium">S/N</th>
-                          <th className="px-5 py-3 font-medium">
+                          <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+                          <th className={TABLE_HEADER_CELL_CLASS}>
                             {t("payslip.period")}
                           </th>
-                          <th className="px-5 py-3 font-medium">
+                          <th className={TABLE_HEADER_CELL_CLASS}>
                             {t("payslip.baseSalary")}
                           </th>
-                          <th className="px-5 py-3 font-medium">
+                          <th className={TABLE_HEADER_CELL_CLASS}>
                             {t("payroll.deductions")}
                           </th>
-                          <th className="px-5 py-3 font-medium">
+                          <th className={TABLE_HEADER_CELL_CLASS}>
                             {t("payslip.netSalary")}
                           </th>
-                          <th className="px-5 py-3 font-medium">
+                          <th className={TABLE_HEADER_CELL_CLASS}>
                             {t("payslip.status")}
                           </th>
-                          <th className="px-5 py-3 font-medium">
+                          <th className={TABLE_HEADER_CELL_CLASS}>
                             {t("common.actions")}
                           </th>
                         </tr>
@@ -210,6 +214,8 @@ export default function MyPayslipPage() {
                       page={page}
                       totalPages={Math.ceil(data.length / PAGE_SIZE)}
                       onPageChange={setPage}
+                      totalRecords={data.length}
+                      pageSize={PAGE_SIZE}
                     />
                   )}
                 </div>
@@ -227,3 +233,6 @@ export default function MyPayslipPage() {
     </div>
   );
 }
+
+
+

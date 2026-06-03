@@ -11,6 +11,7 @@ import { getManagerById } from "../controller/userController.js";
 import { updateUser } from "../controller/userController.js";
 import { deleteUser } from "../controller/userController.js";
 import { changePassword } from "../controller/userController.js";
+import { resendInvitation } from "../controller/userController.js";
 const router = express.Router();
 
 //only admin can access this route
@@ -96,6 +97,14 @@ router.put(
   verifyToken,
   checkRole("admin", "manager", "employee"),
   changePassword,
+);
+
+// resend invitation email
+router.post(
+  "/employees/:id/resend-invitation",
+  verifyToken,
+  checkRole("admin"),
+  resendInvitation,
 );
 
 export { router as UserRoute };

@@ -12,9 +12,12 @@ import {
   FiFileText,
 } from "react-icons/fi";
 import type { DocumentRecord } from "@/features/documents/types/document.types";
+import ActionMenu, { type ActionMenuItemConfig, } from "@/components/common/ActionMenu";
 import TablePagination from "@/components/common/TablePagination";
 import SortArrow from "@/components/common/SortArrow";
 import { useUser } from "@/context/UserContext";
+import { TABLE_HEADER_CELL_CLASS, useTableCountBadge,} from "@/hooks/useTableCountBadge";
+import TableCountBadge from "@/components/common/TableCountBadge";
 
 interface DocumentTableProps {
   data: DocumentRecord[];
@@ -84,13 +87,14 @@ export default function DocumentTable({
 }: DocumentTableProps) {
   const { t } = useTranslation();
   const { user } = useUser();
+  const { count } = useTableCountBadge({ total });
 
   // Sort helper for th props
   const thSort = (col: string) => ({
     onClick: () => onSort?.(col),
     className: onSort
-      ? "px-5 py-3 font-medium cursor-pointer select-none hover:text-slate-800"
-      : "px-5 py-3 font-medium",
+      ? `${TABLE_HEADER_CELL_CLASS} cursor-pointer select-none hover:text-slate-800`
+      : TABLE_HEADER_CELL_CLASS,
   });
 
   return (
@@ -99,16 +103,15 @@ export default function DocumentTable({
         <h3 className="text-base font-semibold text-slate-800">
           {t("documents.allDocuments")}
         </h3>
-        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          {total} records
-        </div>
+        <TableCountBadge count={count} />
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-[#1e3a5f] text-blue-100 ">
             <tr>
-              <th className="px-5 py-3 font-medium">S/N</th>
+              <th className={TABLE_HEADER_CELL_CLASS}>S/N</th>
+
               <th {...thSort("file_name")}>
                 {t("documents.fileName")}
                 <SortArrow
@@ -117,6 +120,7 @@ export default function DocumentTable({
                   sortOrder={sortOrder ?? "DESC"}
                 />
               </th>
+
               <th {...thSort("file_type")}>
                 {t("documents.type")}
                 <SortArrow
@@ -125,6 +129,7 @@ export default function DocumentTable({
                   sortOrder={sortOrder ?? "DESC"}
                 />
               </th>
+
               <th {...thSort("visibility")}>
                 {t("documents.visibility")}
                 <SortArrow
@@ -133,12 +138,17 @@ export default function DocumentTable({
                   sortOrder={sortOrder ?? "DESC"}
                 />
               </th>
-              <th className="px-5 py-3 font-medium">{t("documents.status")}</th>
+
+              <th className={TABLE_HEADER_CELL_CLASS}>
+                {t("documents.status")}
+              </th>
+
               {role !== "employee" && (
-                <th className="px-5 py-3 font-medium">
+                <th className={TABLE_HEADER_CELL_CLASS}>
                   {t("documents.uploadedBy")}
                 </th>
               )}
+
               <th {...thSort("created_at")}>
                 {t("documents.date")}
                 <SortArrow
@@ -147,9 +157,11 @@ export default function DocumentTable({
                   sortOrder={sortOrder ?? "DESC"}
                 />
               </th>
-              <th className="px-5 py-3 font-medium">
+
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-center`}>
                 {t("documents.actions")}
               </th>
+
             </tr>
           </thead>
 
@@ -188,7 +200,8 @@ export default function DocumentTable({
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${vis.bg} ${vis.border} ${vis.text}`}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium 
+                         ${vis.bg} ${vis.border} ${vis.text}`}
                       >
                         {vis.icon}
                         {doc.visibility
@@ -199,12 +212,14 @@ export default function DocumentTable({
                     </td>
                     <td className="px-5 py-4">
                       {doc.is_verified ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200
+                           bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">
                           <FiCheckCircle className="h-3.5 w-3.5" />
                           {t("documents.verifiedStatus")}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200
+                         bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600">
                           <FiAlertTriangle className="h-3.5 w-3.5" />
                           {t("documents.pendingStatus")}
                         </span>
@@ -223,45 +238,39 @@ export default function DocumentTable({
                         : "—"}
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onView(doc)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
-                          title="View"
-                        >
-                          <FiEye className="h-3.5 w-3.5" />
-                          View
-                        </button>
-
-                        {(role === "admin" || role === "manager") &&
-                          !doc.is_verified &&
-                          onVerify && (
-                            <button
-                              type="button"
-                              onClick={() => onVerify(doc)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-600 transition hover:bg-green-100"
-                              title="Verify"
-                            >
-                              <FiShield className="h-3.5 w-3.5" />
-                              {t("documents.verify")}
-                            </button>
-                          )}
-
-                        {(role === "admin" ||
-                          role === "manager" ||
-                          doc.uploaded_by === user?.id) && (
-                          <button
-                            type="button"
-                            onClick={() => onDelete(doc)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500 transition hover:text-white"
-                            title="Delete"
-                          >
-                            <FiTrash2 className="h-3.5 w-3.5" />
-                            {t("documents.delete")}
-                          </button>
-                        )}
-                      </div>
+                      <ActionMenu
+                        ariaLabel="Document actions"
+                        align="center"
+                        items={
+                          [
+                            {
+                              label: t("common.view", { defaultValue: "View" }),
+                              icon: FiEye,
+                              onClick: () => onView(doc),
+                            },
+                            {
+                              label: t("documents.verify"),
+                              icon: FiShield,
+                              onClick: () => onVerify?.(doc),
+                              hidden:
+                                !(role === "admin" || role === "manager") ||
+                                doc.is_verified ||
+                                !onVerify,
+                            },
+                            {
+                              label: t("documents.delete"),
+                              icon: FiTrash2,
+                              danger: true,
+                              onClick: () => onDelete(doc),
+                              hidden: !(
+                                role === "admin" ||
+                                role === "manager" ||
+                                doc.uploaded_by === user?.id
+                              ),
+                            },
+                          ] as ActionMenuItemConfig[]
+                        }
+                      />
                     </td>
                   </tr>
                 );
@@ -287,6 +296,8 @@ export default function DocumentTable({
         page={page}
         totalPages={totalPages}
         onPageChange={onPageChange}
+        totalRecords={total}
+        pageSize={10}
       />
     </section>
   );

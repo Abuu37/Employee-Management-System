@@ -72,31 +72,13 @@ export function useAttendanceReport() {
       [search, status, searchParams],
     );
 
-  const [filters, setFilters] =
-    useState<AttendanceReportFilters>(
-      appliedFilters,
-    );
-
-  const [cardStats, setCardStats] =
-    useState<AttendanceCardStats>(
-      EMPTY_CARD_STATS,
-    );
-
-  const [loadingSummary, setLoadingSummary] =
-    useState(true);
-
-  const [loadingDetails, setLoadingDetails] =
-    useState(true);
-
-  const [loadingTrends, setLoadingTrends] =
-    useState(true);
-
-  const [detailRows, setDetailRows] =
-    useState<AttendanceDetailRecord[]>([]);
-
-  const [trendRows, setTrendRows] =
-    useState<AttendanceTrendRecord[]>([]);
-
+  const [filters, setFilters] = useState<AttendanceReportFilters>( appliedFilters,);
+  const [cardStats, setCardStats] = useState<AttendanceCardStats>( EMPTY_CARD_STATS,);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingDetails, setLoadingDetails] = useState(true);
+  const [loadingTrends, setLoadingTrends] = useState(true);
+  const [detailRows, setDetailRows] = useState<AttendanceDetailRecord[]>([]);
+  const [trendRows, setTrendRows] = useState<AttendanceTrendRecord[]>([]);
   const [pagination, setPagination] =
     useState<Pagination>({
       total: 0,
@@ -107,11 +89,8 @@ export function useAttendanceReport() {
       hasPrev: false,
     });
 
-  const [error, setError] =
-    useState<string | null>(null);
-
-  const [exporting, setExporting] =
-    useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false); // to track export state
 
   useEffect(() => {
     setFilters(appliedFilters);
@@ -335,30 +314,23 @@ export function useAttendanceReport() {
     blob: Blob,
     filename: string,
   ) => {
-    const url =
-      window.URL.createObjectURL(blob);
-
-    const a =
-      document.createElement("a");
-
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
     a.href = url;
     a.download = filename;
-
     document.body.appendChild(a);
-
     a.click();
-
     a.remove();
-
     window.URL.revokeObjectURL(url);
   };
+
+  // EXPORT CSV
 
   const exportCsv = async () => {
     try {
       setExporting(true);
 
-      const blob =
-        await attendanceReportService.exportCsv(
+      const blob = await attendanceReportService.exportCsv(
           appliedFilters,
         );
 

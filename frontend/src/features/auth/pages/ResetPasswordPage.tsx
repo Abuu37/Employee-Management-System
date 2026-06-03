@@ -103,7 +103,7 @@ export default function ResetPasswordPage() {
                     }`}
                   >
                     <FiLock
-                      className={`h-4 w-4 mr-2 flex-shrink-0 ${errors.newPassword ? "text-red-400" : "text-slate-400"}`}
+                      className={`h-4 w-4 mr-2 shrink-0 ${errors.newPassword ? "text-red-400" : "text-slate-400"}`}
                     />
                     <input
                       type={showNew ? "text" : "password"}
@@ -149,7 +149,7 @@ export default function ResetPasswordPage() {
                     }`}
                   >
                     <FiLock
-                      className={`h-4 w-4 mr-2 flex-shrink-0 ${errors.confirmPassword ? "text-red-400" : "text-slate-400"}`}
+                      className={`h-4 w-4 mr-2 flex-shrink-0rors.confirmPassword ? "text-red-400" : "text-slate-400"}`}
                     />
                     <input
                       type={showConfirm ? "text" : "password"}
